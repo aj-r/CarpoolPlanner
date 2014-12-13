@@ -1,0 +1,119 @@
+﻿/* Move down content because we have a fixed navbar that is 50px tall */
+body {
+    padding-top: 50px;
+    padding-bottom: 20px;
+}
+
+/* Wrapping element */
+/* Set some basic padding to keep content from hitting the edges */
+.body-content {
+    padding-left: 15px;
+    padding-right: 15px;
+}
+
+.small {
+    font-size: 0.85em;
+}
+
+/* Set widths on the form inputs since otherwise they're 100% wide */
+input {
+    max-width: 280px;
+}
+
+input[type=radio], input[type=checkbox] {
+    max-width: none;
+}
+
+hr {
+    border-top: 1px solid #888;
+}
+
+.center {
+    text-align: center;
+}
+
+.light-separator {
+    border-bottom: 1px solid #CCC;
+}
+
+.panel {
+    background-color: #EEE;
+    border-radius: 10px;
+    max-width: 700px;
+    padding: 25px;
+}
+
+.form-control-inline {
+    display: inline-block;
+    width: auto;
+}
+
+.indent {
+    padding-left: 30px;
+}
+
+.editable-region-header {
+    display: inline-block;
+    margin-bottom:0;
+}
+
+.edit-buttons {
+    display: inline-block;
+    margin-left: 15px;
+}
+
+.image-button {
+    cursor: pointer;
+}
+
+.details-container {
+    display: inline-block;
+    position: relative;
+}
+
+.details {
+    position: absolute;
+    left: 5px;
+    top: -80px;
+    width: 330px;
+    background-color: #DDD;
+    border-radius: 8px;
+    padding: 20px;
+}
+
+.detail-header {
+    font-weight: bold;
+    font-size: 1.1em;
+    margin-bottom: 5px;
+}
+
+.x {
+    position: absolute;
+    right: 10px;
+    top: 10px;
+}
+
+@media (max-width: 768px) {
+    .details-container {
+        display: block;
+        position: absolute;
+        left: 20px;
+        top: 20px;
+        height: 0px; /* zero height so it doesn't prevent you from clicking on things */
+    }
+    .details {
+        left: 0px;
+        top: 0px;
+        right: 0px;
+    }
+}
+
+/* Responsive: Portrait tablets and up */
+@media screen and (min-width: 768px) {
+    .jumbotron {
+        margin-top: 20px;
+    }
+    .body-content {
+        padding: 0;
+    }
+}
