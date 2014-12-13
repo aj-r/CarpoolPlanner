@@ -1,7 +1,7 @@
 ﻿<%@ Control Language="C#" AutoEventWireup="true" CodeBehind="DateTimePicker.ascx.cs" Inherits="CarpoolPlanner.UserControls.DateTimePicker" %>
 <asp:TextBox ID="txtDate" CssClass="form-control form-control-inline" runat="server" />
 <script>
-  $("#<%: txtDate.ClientID %>").datepicker();<%-- TODO: use App.DateFormat somehow --%>
+    $("#<%: txtDate.ClientID %>").datepicker({ dateFormat: 'dd-M-yy' });
 </script>
 <span id="Time" runat="server">
     <c:NumericUpDown ID="nudHour" CssClass="form-control form-control-inline" Minimum="0" Maximum="23" Width="60px" runat="server" />
