@@ -7,7 +7,7 @@ using log4net;
 using log4net.Appender;
 using log4net.Core;
 
-namespace CarpoolPlanner.Model.Appender
+namespace CarpoolPlanner.ViewModel.Appender
 {
     public class CarpoolPlannerAppender : AppenderSkeleton
     {

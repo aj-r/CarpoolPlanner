@@ -26,14 +26,17 @@ namespace CarpoolPlanner.Model
         /// <summary>
         /// Indicates that the user will need a ride from someone else.
         /// </summary>
+        [Display(Name = "I will need a ride")]
         NeedRide,
         /// <summary>
         /// Indicates that the user can drive other people.
         /// </summary>
+        [Display(Name = "I am a driver")]
         Driver,
         /// <summary>
         /// Indicates that the user will get their own ride (separate from the carpool system).
         /// </summary>
+        [Display(Name = "I will have my own ride")]
         HaveRide
     }
 
@@ -55,9 +58,10 @@ namespace CarpoolPlanner.Model
             PhoneVisible = true;
         }
 
-        [Key, MaxLength(500)]
+        [Key, MaxLength(500), Required]
         public string Id { get; set; }
 
+        [Required]
         public string Name { get; set; }
 
         /// <summary>
@@ -131,6 +135,8 @@ namespace CarpoolPlanner.Model
         /// <summary>
         /// Gets or sets the user's e-mail address.
         /// </summary>
+        [DataType(DataType.EmailAddress)]
+        [Display(Name = "E-mail")]
         public string Email { get; set; }
 
         /// <summary>
@@ -143,6 +149,7 @@ namespace CarpoolPlanner.Model
         /// </summary>
         public bool EmailVisible { get; set; }
 
+        [DataType(DataType.PhoneNumber)]
         public string Phone { get; set; }
 
         /// <summary>
@@ -164,6 +171,7 @@ namespace CarpoolPlanner.Model
         /// <summary>
         /// Indicates that the user can drive other people if necessary, but would prefer not to. Does not apply if CommuteMethod is Driver.
         /// </summary>
+        [Display(Name = "I am willing to drive on days we need more drivers")]
         public bool CanDriveIfNeeded { get; set; }
 
         public int Seats { get; set; }

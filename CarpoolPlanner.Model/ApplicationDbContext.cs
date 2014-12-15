@@ -6,7 +6,6 @@ using System.Security.Cryptography;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Web;
-using CarpoolPlanner.Model;
 
 namespace CarpoolPlanner.Model
 {

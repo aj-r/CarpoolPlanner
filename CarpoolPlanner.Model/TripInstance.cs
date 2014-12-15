@@ -11,7 +11,7 @@ namespace CarpoolPlanner.Model
     {
         public TripInstance()
         {
-            UserTripInstances = new List<UserTripInstance>();
+            UserTripInstances = new UserTripInstanceCollection();
         }
 
         [Key]
@@ -30,7 +30,7 @@ namespace CarpoolPlanner.Model
         /// <summary>
         /// Gets or sets the list of UserTripInstances that belong to this trip instance.
         /// </summary>
-        public IList<UserTripInstance> UserTripInstances { get; private set; }
+        public UserTripInstanceCollection UserTripInstances { get; private set; }
 
         public int GetRequiredSeats()
         {
@@ -44,6 +44,10 @@ namespace CarpoolPlanner.Model
             return seatsAvailable;
         }
 
+        /// <summary>
+        /// Gets a string that lists the statuses of all users who are attending (or who want to attend).
+        /// </summary>
+        /// <returns>A string.</returns>
         public string GetStatusReport()
         {
             var drivers = (from uti in UserTripInstances

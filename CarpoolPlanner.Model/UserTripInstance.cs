@@ -61,6 +61,7 @@ namespace CarpoolPlanner.Model
         /// <summary>
         /// Indicates that the user can drive other people if necessary, but would prefer not to. Does not apply if CommuteMethod is Driver.
         /// </summary>
+        [Display(Name = "I am willing to drive if we need more drivers")]
         public bool CanDriveIfNeeded { get; set; }
 
         public int Seats { get; set; }

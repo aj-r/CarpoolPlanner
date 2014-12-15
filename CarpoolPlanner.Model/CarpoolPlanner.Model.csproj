@@ -7,7 +7,7 @@
     <ProjectGuid>{C609A869-DAD8-47E6-8BDF-7519D0966FD6}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>CarpoolPlanner.Model</RootNamespace>
+    <RootNamespace>CarpoolPlanner.ViewModel</RootNamespace>
     <AssemblyName>CarpoolPlanner.Model</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
@@ -61,6 +61,7 @@
     <Compile Include="User.cs" />
     <Compile Include="UserTrip.cs" />
     <Compile Include="UserTripInstance.cs" />
+    <Compile Include="UserTripInstanceCollection.cs" />
     <Compile Include="UserTripRecurrence.cs" />
   </ItemGroup>
   <ItemGroup>
