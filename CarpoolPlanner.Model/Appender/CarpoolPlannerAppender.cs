@@ -2,12 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Web;
-using CarpoolPlanner.Model;
 using log4net;
 using log4net.Appender;
 using log4net.Core;
 
-namespace CarpoolPlanner.ViewModel.Appender
+namespace CarpoolPlanner.Model.Appender
 {
     public class CarpoolPlannerAppender : AppenderSkeleton
     {
