@@ -395,7 +395,7 @@ namespace CarpoolPlanner.NotificationService
                     bool isDriver = userTripInstance.CommuteMethod == CommuteMethod.Driver;
                     sb.Append("Reply with yes/no. \n");
                     sb.Append("For more options, go to http://climbing.pororeplays.com"); // TODO: don't hard-code the url
-                    //SendNotification(userTripInstance.User, sb.ToString());
+                    SendNotification(userTripInstance.User, sb.ToString());
                     sb.Clear();
                 }
                 // Now periodically attempt to receive messages to get responses.
