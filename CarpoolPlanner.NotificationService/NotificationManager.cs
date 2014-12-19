@@ -331,33 +331,26 @@ namespace CarpoolPlanner.NotificationService
                             context.SaveChanges();
                     }));
                 }
-                lock (prevTripInstances)
+                if (tripInstance.DriversPicked)
                 {
-                    if (DateTime.Now > tripInstance.Date - FinalAdvanceNotificationTime)
+                    if (statusChanged)
                     {
-                        if (statusChanged)
+                        // Send a final notification update
+                        // TODO: send a special message that highlights the change, instead of just sending the whole thing again.
+                        // But make sure to mention if there are not enough drivers.
+                        SendFinalNotification(tripInstanceId, true);
+                    }
+                    else
+                    {
+                        // TEMP CODE for running NotificationService on my PC.
+                        // Check the DB to see if any data changed from the web app.
+                        TripInstance prevValue;
+                        if (prevTripInstances.TryGetValue(tripInstanceId, out prevValue) && HasCommuteDataChanged(tripInstance, prevValue))
                         {
-                            // Send a final notification update
-                            // TODO: send a special message that highlights the change, instead of just sending the whole thing again.
-                            // But make sure to mention if there are not enough drivers.
                             SendFinalNotification(tripInstanceId, true);
                         }
-                        else
-                        {
-                            // TEMP CODE for running NotificationService on my PC.
-                            // Check the DB to see if any data changed from the web app.
-                            if (tripInstance.DriversPicked)
-                            {
-                                TripInstance prevValue;
-                                if (prevTripInstances.TryGetValue(tripInstanceId, out prevValue) && HasCommuteDataChanged(tripInstance, prevValue))
-                                {
-                                    SendFinalNotification(tripInstanceId, true);
-                                }
-                            }
-                            // end temp code
-                        }
+                        // end temp code
                     }
-                    prevTripInstances[tripInstanceId] = tripInstance;
                 }
                 // Wait for tasks to finish before disposing the DB context.
                 await Task.WhenAll(tasks.ToArray()).ConfigureAwait(false);
@@ -463,12 +456,9 @@ namespace CarpoolPlanner.NotificationService
                     sb.Clear();
                 }
                 context.SaveChanges();
-                if (!isUpdate)
+                lock (prevTripInstances)
                 {
-                    lock (prevTripInstances)
-                    {
-                        prevTripInstances[tripInstanceId] = tripInstance;
-                    }
+                    prevTripInstances[tripInstanceId] = tripInstance;
                 }
             }
         }
