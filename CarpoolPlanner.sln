@@ -26,6 +26,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rest.Client", "..\Rest\Rest
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CarpoolPlannerMvc", "CarpoolPlannerMvc\CarpoolPlannerMvc.csproj", "{823E2434-E142-433B-9580-B6E497C8293B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AngularJS.Net", "..\AngularJS.Net\AngularJS.Net.csproj", "{550DA7EB-1D2A-4043-A468-9E80334A0201}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -68,6 +70,10 @@ Global
 		{823E2434-E142-433B-9580-B6E497C8293B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{823E2434-E142-433B-9580-B6E497C8293B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{823E2434-E142-433B-9580-B6E497C8293B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{550DA7EB-1D2A-4043-A468-9E80334A0201}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{550DA7EB-1D2A-4043-A468-9E80334A0201}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{550DA7EB-1D2A-4043-A468-9E80334A0201}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{550DA7EB-1D2A-4043-A468-9E80334A0201}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
