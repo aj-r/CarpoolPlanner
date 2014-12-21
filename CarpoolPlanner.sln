@@ -1,14 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
-VisualStudioVersion = 12.0.30501.0
+VisualStudioVersion = 12.0.21005.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CarpoolPlanner", "CarpoolPlanner\CarpoolPlanner.csproj", "{583E2376-F3E0-457C-89C5-4D54D83D860C}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{E6C58D31-B35D-428E-BB8C-DDF973E04C7E}"
-	ProjectSection(SolutionItems) = preProject
-		todo.txt = todo.txt
-	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TextNow.Net.Tests", "..\TextNow.Net\TextNow.Net.Tests\TextNow.Net.Tests.csproj", "{A1977C78-60BA-4C3D-B985-A728D3E6F85B}"
 EndProject
