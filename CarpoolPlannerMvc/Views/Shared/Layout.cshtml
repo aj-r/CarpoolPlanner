@@ -18,13 +18,32 @@
   <script type="text/javascript">
     var ngNetApp = angular.module('ngNetApp', []);
 
-    ngNetApp.controller('ngNetCtrl', ['$scope', '$http', function($scope, $http) {
-      $scope.userId = '@AppUtils.CurrentUserId';
-      $scope.model = @Html.RenderModel();
-      $scope.submit = function(url) {
-        if ($scope.model)
-          $scope.model.Message = "";
-        $http.post(url, $scope.model)
+    ngNetApp.controller('ngNetCtrl', ['$http', function($http) {
+      this.userId = '@AppUtils.CurrentUserId';
+      this.model = @Html.RenderModel();
+      if (this.model == null)
+        this.model = {};
+
+      this.validateForm = function(form) {
+        if (form.$valid) {
+          return true;
+        } else {
+          // Display validation summary
+          var msg = '';
+          $(form).find('.ng-invalid').each(function (i, elem) {
+            var currentMsg = $(elem).attr('error-message');
+            if (currentMsg)
+              msg += currentMsg + "<br />";
+          });
+          this.model.Message = msg;
+          this.model.MessageType = 2; // Error
+          return false;
+        }
+      };
+
+      this.submit = function(url) {
+        this.model.Message = "";
+        $http.post(url, this.model)
           .success(function(result) {
             if (result.redirectUrl) {
               location.href = result.redirectUrl;
@@ -33,16 +52,10 @@
             }
           });
       };
-      /*$scope.submitSync = function(url) {
-        $.ajax({ 
-          url: url,
-          async: false
-        });
-      };*/
     }]);
   </script>
 </head>
-<body ng-controller="ngNetCtrl">
+<body ng-controller="ngNetCtrl as ngNet">
   <div class="navbar navbar-inverse navbar-fixed-top">
     <div class="container">
       <div class="navbar-header">

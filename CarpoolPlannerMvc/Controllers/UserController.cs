@@ -48,9 +48,33 @@ namespace CarpoolPlanner.Controllers
             }
         }
 
+        public ActionResult Logout()
+        {
+            FormsAuthentication.SignOut();
+            return Redirect(FormsAuthentication.LoginUrl);
+        }
+
+        // TODO: move to some kind of controller base class
+        /// <summary>
+        /// Redirects an ajax request to the specified action.
+        /// </summary>
+        /// <param name="actionName">The name of the action method.</param>
+        /// <param name="controllerName">The name of the controller.</param>
+        /// <returns></returns>
         protected JsonResult AjaxRedirect(string actionName, string controllerName)
         {
-            return Json(new { redirectUrl = Url.Action(actionName, controllerName) });
+            return AjaxRedirect(Url.Action(actionName, controllerName));
+        }
+
+        // TODO: move to some kind of controller base class
+        /// <summary>
+        /// Redirects an ajax request to the specified URL.
+        /// </summary>
+        /// <param name="url">The URL to redirect to.</param>
+        /// <returns></returns>
+        protected JsonResult AjaxRedirect(string url)
+        {
+            return Json(new { redirectUrl = url });
         }
     }
 }
