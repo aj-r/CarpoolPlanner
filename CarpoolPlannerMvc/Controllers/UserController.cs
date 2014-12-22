@@ -29,7 +29,7 @@ namespace CarpoolPlanner.Controllers
                     switch (user.Status)
                     {
                         case UserStatus.Disabled:
-                            model.SetMessage("Your account has has been disabled.", MessageType.Error);
+                            model.SetMessage(Resources.AccountDisabled, MessageType.Error);
                             break;
                         default:
                             // Note: allow unapproved accounts to log in, but give them limited access.
@@ -41,7 +41,7 @@ namespace CarpoolPlanner.Controllers
                 }
                 else
                 {
-                    model.SetMessage("Invalid username or password.", MessageType.Error);
+                    model.SetMessage(Resources.InvalidUsernameOrPassword, MessageType.Error);
                 }
                 // Clear the password
                 model.Password = "";

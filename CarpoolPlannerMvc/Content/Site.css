@@ -15,6 +15,10 @@ body {
     font-size: 0.85em;
 }
 
+.preserve-newlines {
+    white-space: pre-wrap;
+}
+
 /* Set widths on the form inputs since otherwise they're 100% wide */
 input {
     max-width: 280px;
@@ -71,8 +75,14 @@ select.ng-dirty.ng-invalid,
 textarea.ng-dirty.ng-invalid,
 .ng-submitted .ng-invalid {
     border-color: #F00;
-    -webkit-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075), 0 0 8px rgba(255, 0, 0, 0.3);
-            box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075), 0 0 8px rgba(255, 0, 0, 0.3);
+}
+
+input.ng-dirty.ng-invalid:focus,
+select.ng-dirty.ng-invalid:focus,
+textarea.ng-dirty.ng-invalid:focus,
+.ng-submitted .ng-invalid:focus {
+    -webkit-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075), 0 0 8px rgba(255, 0, 0, 0.5);
+            box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075), 0 0 8px rgba(255, 0, 0, 0.5);
 }
 
 

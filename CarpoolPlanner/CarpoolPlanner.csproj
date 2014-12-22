@@ -254,7 +254,6 @@
       <DependentUpon>Users.aspx</DependentUpon>
     </Compile>
   </ItemGroup>
-  <ItemGroup />
   <ItemGroup>
     <ProjectReference Include="..\CarpoolPlanner.Model\CarpoolPlanner.Model.csproj">
       <Project>{c609a869-dad8-47e6-8bdf-7519d0966fd6}</Project>

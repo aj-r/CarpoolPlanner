@@ -26,17 +26,14 @@ namespace CarpoolPlanner.Model
         /// <summary>
         /// Indicates that the user will need a ride from someone else.
         /// </summary>
-        [Display(Name = "I will need a ride")]
         NeedRide,
         /// <summary>
         /// Indicates that the user can drive other people.
         /// </summary>
-        [Display(Name = "I am a driver")]
         Driver,
         /// <summary>
         /// Indicates that the user will get their own ride (separate from the carpool system).
         /// </summary>
-        [Display(Name = "I will have my own ride")]
         HaveRide
     }
 
@@ -46,7 +43,7 @@ namespace CarpoolPlanner.Model
 
         private const int saltSize = 24;
         private const int hashSize = 24;
-        private const int defualtIterationCount = 1000;
+        private const int defaultIterationCount = 1000;
 
         public User()
         {
@@ -82,7 +79,7 @@ namespace CarpoolPlanner.Model
                 var rng = new RNGCryptoServiceProvider();
                 Salt = new byte[saltSize];
                 rng.GetBytes(Salt);
-                Iterations = defualtIterationCount;
+                Iterations = defaultIterationCount;
                 Password = Crypto.PBKDF2(password, Salt, Iterations, hashSize);
                 log.Info(string.Concat("User '", Id, "' changed his/her password"));
             }
@@ -98,7 +95,6 @@ namespace CarpoolPlanner.Model
                 return Password == null;
             if (Password == null || Salt == null)
                 return false;
-            var rng = new RNGCryptoServiceProvider();
             var hash = Crypto.PBKDF2(password, Salt, Iterations, hashSize);
             return Crypto.SlowEquals(hash, Password);
         }
@@ -111,9 +107,8 @@ namespace CarpoolPlanner.Model
         {
             if (password == null)
                 return;
-            var rng = new RNGCryptoServiceProvider();
             var buffer = new byte[saltSize];
-            var hash = Crypto.PBKDF2(password, buffer, defualtIterationCount, hashSize);
+            var hash = Crypto.PBKDF2(password, buffer, defaultIterationCount, hashSize);
             Crypto.SlowEquals(hash, buffer);
         }
 
@@ -136,7 +131,6 @@ namespace CarpoolPlanner.Model
         /// Gets or sets the user's e-mail address.
         /// </summary>
         [DataType(DataType.EmailAddress)]
-        [Display(Name = "E-mail")]
         public string Email { get; set; }
 
         /// <summary>
@@ -171,7 +165,7 @@ namespace CarpoolPlanner.Model
         /// <summary>
         /// Indicates that the user can drive other people if necessary, but would prefer not to. Does not apply if CommuteMethod is Driver.
         /// </summary>
-        [Display(Name = "I am willing to drive on days we need more drivers")]
+        [Display(Name = "")]
         public bool CanDriveIfNeeded { get; set; }
 
         public int Seats { get; set; }

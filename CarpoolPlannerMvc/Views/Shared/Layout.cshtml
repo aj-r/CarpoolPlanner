@@ -20,40 +20,67 @@
 
     ngNetApp.controller('ngNetCtrl', ['$http', function($http) {
       var self = this;
-      this.userId = '@AppUtils.CurrentUserId';
-      this.model = @Html.RenderModel();
-      if (this.model == null)
-        this.model = {};
+      self.userId = '@AppUtils.CurrentUserId';
+      self.model = @Html.JSModel();
+      if (self.model == null)
+        self.model = {};
 
-      this.validateForm = function(form) {
+      self.validateForm = function(form) {
         if (form.$valid) {
           return true;
         } else {
           // Display validation summary
           var msg = '';
-          $(form).find('.ng-invalid').each(function (i, elem) {
+          var jForm = $('[name=' + form.$name + ']')
+          jForm.find('.ng-invalid').each(function (i, elem) {
             var currentMsg = $(elem).attr('error-message');
             if (currentMsg)
-              msg += currentMsg + '<br />';
+              msg += currentMsg + '\n';
           });
-          this.model.Message = msg;
-          this.model.MessageType = 2; // Error
+          self.model.Message = msg;
+          self.model.MessageType = 2; // Error
           return false;
         }
       };
 
       self.submit = function(url) {
         self.model.Message = '';
-        $http.post(url, self.model)
+        return $http.post(url, self.model)
           .success(function(result) {
             if (result.redirectUrl) {
               location.href = result.redirectUrl;
             } else {
-              self.model = result;
+              if (result.model != null)
+                self.model = result.model;
+              if (result.userId != null)
+                self.userId = result.userId;
             }
           });
       };
     }]);
+
+    ngNetApp.controller('validationCtrl', function($http) {
+      this.validateForm = function(form) {
+        if (form.$valid) {
+          return true;
+        } else {
+          // Display validation summary
+          var msg = '';
+          var jqForm = $('[name=' + form.$name + ']');
+          jqForm.find('.ng-invalid').each(function (i, elem) {
+            var currentMsg = $(elem).attr('error-message');
+            if (currentMsg)
+              msg += currentMsg + '\n';
+            // Move focus to the first invalid control
+            if (i == 0)
+              elem.focus();
+          });
+          this.model.Message = msg;
+          this.model.MessageType = 2; // Error
+          return false;
+        }
+      };
+    });
   </script>
 </head>
 <body ng-controller="ngNetCtrl as ngNet">
@@ -79,7 +106,7 @@
   }
         </ul>
         <ul class="nav navbar-nav navbar-right">
-          <li>@Html.ActionLink(AppUtils.CurrentUserId, "Manage", "User")</li>
+          <li>@Html.ActionLink("{{ ngNet.userId }}", "Manage", "User")</li>
           <li>@Html.ActionLink("Logout", "Logout", "User")</li>
         </ul>
 }

@@ -20,49 +20,52 @@
 
 <div class="row">
   <div class="col-md-12">
-  <h2>Upcoming Carpools</h2>
-  @if (/*AppUtils.IsUserStatus(CarpoolPlanner.Model.UserStatus.Active)*/ true)
-  {
-    <div ng-show="model.Trips.length > 0">
+    <h2>Upcoming Carpools</h2>
+@if (AppUtils.IsUserStatus(CarpoolPlanner.Model.UserStatus.Active))
+{
+    <div ng-show="ngNet.model.Trips.length > 0">
       <div>Select the days that you can come this week.</div><!-- TODO: generalize to not use the word "week" -->
-      @using (Html.BeginForm("Index", "Home"))
-      {
-        <div class="repeater-item" ng-repeat="trip in model.Trips">
-          <!-- TODO: make 1st letter lowercase? -->
-          <h3>{{trip.Name}}</h3>
-          @Html.TextBoxFor(m => m.Trips[0].Name)
+      <form method="post" name="tripInstanceForm"
+            ng-submit="ngNet.submit('@Url.Action("Index", "Home")')"
+            novalidate>
+        <div class="repeater-item" ng-repeat="trip in ngNet.model.Trips">
+          <h3>{{ trip.Name }}</h3>
           <div style="padding: 5px 0px;" ng-repeat="tripInstance in trip.Instances">
             <label style="margin-right:10px;">
               <input type="checkbox" ng-model="tripInstance.UserTripInstances[userId].Attending" class="checkbox" /><!-- todo: use indeterminate state -->
-              {{tripInstance.DisplayValue}}
+              {{ tripInstance.DisplayValue }}
             </label>
             <!-- TODO: accordion-ize this. Also set: IsExpanded = j == 1. Also add angular directives -->
             <!-- TODO: radio button list -->
-            <div style="margin-top:8px;">
-              <input type="checkbox" ng-model="tripInstance.UserTripInstances[userId].CanDriveIfNeeded" class="checkbox" />
-              @Html.LabelFor(m => m.Trips[0].Instances[0].UserTripInstances[AppUtils.CurrentUserId].CanDriveIfNeeded)
+            <div style="margin-top:8px;" class="checkbox">
+              <label>
+                <input type="checkbox" ng-model="tripInstance.UserTripInstances[ngNet.userId].CanDriveIfNeeded" />
+                @Resources.CanDriveIfNeededInstance
+              </label>
             </div>
             <div style="display: inline-block; margin-left: 20px;">
-              @Html.LabelFor(m => m.Trips[0].Instances[0].UserTripInstances[AppUtils.CurrentUserId].Seats)
-              <input type="number" ng-model="tripInstance.UserTripInstances[userId].Seats" min="1" class="form-control form-control-inline" style="width: 70px;" />
+              <label>
+                @Resources.Seats
+                <input type="number" ng-model="tripInstance.UserTripInstances[ngNet.userId].Seats" min="1" class="form-control form-control-inline" style="width: 70px;" />
+              </label>
             </div>
             <hr style="margin:7px 0px;" />
-            <div ng-class="{ textDanger: tripInstance.availableSeats < tripInstance.requiredSeats }"><b><!-- TODO: make this label driven by metadata-->Total seats:</b> {{tripInstance.AvailableSeats}}</div>
-            <div><b>Total coming:</b> {{tripInstance.RequiredSeats}}</div>
-            <div>{{tripInstance.StatusReport}}</div>
+            <div ng-class="{ textDanger: tripInstance.AvailableSeats < tripInstance.RequiredSeats }"><b>Total seats:</b> {{ tripInstance.AvailableSeats }}</div>
+            <div><b>Total coming:</b> {{ tripInstance.RequiredSeats }}</div>
+            <div>{{ tripInstance.StatusReport }}</div>
           </div>
         </div>
-        <input type="submit" value="Save" class="btn btn-default" onclick="return updateAttendance();" />
-      }
+        <input type="submit" value="@Resources.Save" class="btn btn-default" />
+      </form>
     </div>
-    <div ng-show="model.Trips.length === 0">
+    <div ng-show="ngNetApp.model.Trips.length === 0">
       <p>You have not selected any trips. Go to the @Html.ActionLink("trips", "Trips") page to select which trips to want to attend.</p>
     </div>
-  }
-  else
-  {
+}
+else
+{
     <div class="text-danger">You cannot see upcoming trips because your account has not yet been approved by an administrator.</div>
-  }
-  <!-- TODO: make a directive for this -->
-  <p id="message" ng-class="{ textSuccess: model.MessageType === 1, textDanger: model.MessageType === 2 }">{{ model.Message }}</p>
+}
+    @Html.Partial("Message")
+  </div>
 </div>
