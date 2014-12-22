@@ -19,6 +19,7 @@
     var ngNetApp = angular.module('ngNetApp', []);
 
     ngNetApp.controller('ngNetCtrl', ['$http', function($http) {
+      var self = this;
       this.userId = '@AppUtils.CurrentUserId';
       this.model = @Html.RenderModel();
       if (this.model == null)
@@ -33,7 +34,7 @@
           $(form).find('.ng-invalid').each(function (i, elem) {
             var currentMsg = $(elem).attr('error-message');
             if (currentMsg)
-              msg += currentMsg + "<br />";
+              msg += currentMsg + '<br />';
           });
           this.model.Message = msg;
           this.model.MessageType = 2; // Error
@@ -41,14 +42,14 @@
         }
       };
 
-      this.submit = function(url) {
-        this.model.Message = "";
-        $http.post(url, this.model)
+      self.submit = function(url) {
+        self.model.Message = '';
+        $http.post(url, self.model)
           .success(function(result) {
             if (result.redirectUrl) {
               location.href = result.redirectUrl;
             } else {
-              $scope.model = result;
+              self.model = result;
             }
           });
       };

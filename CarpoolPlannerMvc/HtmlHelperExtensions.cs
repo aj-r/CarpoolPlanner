@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Reflection;
 using System.Text;
 using System.Web;
 using System.Web.Helpers;
@@ -38,6 +39,18 @@ namespace CarpoolPlanner
                     sb.Append(htmlHelper.Label(value.ToString()).ToString());
             }
             return MvcHtmlString.Create(sb.ToString());
+        }
+
+        public static MvcHtmlString PropertyCaption<TModel, TProperty>(this HtmlHelper<TModel> htmlHelper, Expression<Func<TModel, TProperty>> expression)
+        {
+            var memberExpr = expression.Body as MemberExpression;
+            if (memberExpr == null)
+                return new MvcHtmlString(string.Empty);
+            var attr = memberExpr.Member.GetCustomAttributes(typeof(DisplayAttribute)).Cast<DisplayAttribute>().FirstOrDefault();
+            if (attr != null && attr.Name != null)
+                return new MvcHtmlString(attr.Name);
+            else
+                return new MvcHtmlString(memberExpr.Member.Name);
         }
 
         /// <summary>
