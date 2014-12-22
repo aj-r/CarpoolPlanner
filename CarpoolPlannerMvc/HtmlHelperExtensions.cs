@@ -1,10 +1,12 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
 using System.Web;
+using System.Web.Helpers;
 using System.Web.Mvc;
 using System.Web.Mvc.Html;
 
@@ -36,6 +38,19 @@ namespace CarpoolPlanner
                     sb.Append(htmlHelper.Label(value.ToString()).ToString());
             }
             return MvcHtmlString.Create(sb.ToString());
+        }
+
+        /// <summary>
+        /// Renders the properties of the current MVC model into the angular $scope object.
+        /// </summary>
+        /// <param name="htmlHelper">The HTML helper instance that this method extends.</param>
+        /// <returns>Javascript code that writes all properties of the MVC model into the $scope object.</returns>
+        public static MvcHtmlString RenderModel(this HtmlHelper htmlHelper)
+        {
+            var model = htmlHelper.ViewData.Model;
+            if (model == null)
+                return new MvcHtmlString("");
+            return new MvcHtmlString("JSON.parse('" + Json.Encode(htmlHelper.ViewData.Model) + "')");
         }
     }
 }

@@ -1,0 +1,44 @@
+﻿@using CarpoolPlanner;
+@using CarpoolPlanner.ViewModel;
+
+@model LoginViewModel
+
+@{
+  ViewBag.Title = "Login";
+  Layout = "~/Views/Shared/Layout.cshtml";
+}
+
+<h2>Login</h2>
+<div class="form-horizontal">
+  <form method="post" name="loginForm" ng-submit="loginForm.$valid && submit('@Url.Action("Login", "User")')" novalidate>
+    <div class="form-group">
+      <label class="col-md-2 control-label">User name</label><!-- TODO: read from ViewModel metadata? -->
+      <div class="col-md-10">
+        <input type="text" ng-model="model.UserName" class="form-control" required="required" />
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="col-md-2 control-label">Password</label><!-- TODO: read from ViewModel metadata? -->
+      <div class="col-md-10">
+        <input type="password" ng-model="model.Password" class="form-control" required="required" />
+      </div>
+    </div>
+    <!-- TODO: remember me-->
+    <div class="form-group">
+      <div class="col-md-offset-2 col-md-10">
+        <input type="submit" value="Login" class="btn btn-default" />
+      </div>
+    </div>
+    <div class="form-group">
+      <div class="col-md-offset-2 col-md-10" style="margin-top:15px;">
+        @Html.ActionLink("Register as a new user", "User", "Register")
+      </div>
+    </div>
+    <div class="form-group">
+      <div class="col-md-offset-2 col-md-10" style="margin-top:15px;">
+        <!-- TODO: make a directive for this -->
+        <p id="message" ng-class="{ 'text-success': model.MessageType === 1, 'text-danger': model.MessageType === 2 }">{{ model.Message }}</p>
+      </div>
+    </div>
+  </form>
+</div>

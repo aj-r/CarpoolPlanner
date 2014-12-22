@@ -27,11 +27,52 @@ namespace CarpoolPlanner.Model
 
         public bool DriversPicked { get; set; }
 
+        public string DisplayValue
+        {
+            get
+            {
+                var datePart = Date.Date;
+                if (datePart == DateTime.Today)
+                    return Date.ToString("dddd, MMM d '(today) at' h:mm tt");
+                else if (datePart == DateTime.Today.AddDays(1))
+                    return Date.ToString("dddd, MMM d '(tomorrow) at' h:mm tt");
+                else
+                    return Date.ToString("dddd, MMM d 'at' h:mm tt");
+            }
+        }
+
+        public int RequiredSeats
+        {
+            get
+            {
+                var seatsRequired = UserTripInstances.Count(uti => uti.User.Status == UserStatus.Active && uti.Attending == true && uti.CommuteMethod != CommuteMethod.HaveRide);
+                return seatsRequired;
+            }
+        }
+
+        public int AvailableSeats
+        {
+            get
+            {
+                var seatsAvailable = UserTripInstances.Sum(uti => (uti.User.Status == UserStatus.Active && uti.Attending == true && uti.CommuteMethod == CommuteMethod.Driver) ? uti.Seats : 0);
+                return seatsAvailable;
+            }
+        }
+
+        public string StatusReport
+        {
+            get
+            {
+                return GetStatusReport();
+            }
+        }
+
         /// <summary>
         /// Gets or sets the list of UserTripInstances that belong to this trip instance.
         /// </summary>
         public UserTripInstanceCollection UserTripInstances { get; private set; }
 
+        // TODO: remove these 2 functions
         public int GetRequiredSeats()
         {
             var seatsRequired = UserTripInstances.Count(uti => uti.User.Status == UserStatus.Active && uti.Attending == true && uti.CommuteMethod != CommuteMethod.HaveRide);
@@ -100,13 +141,7 @@ namespace CarpoolPlanner.Model
 
         public override string ToString()
         {
-            var datePart = Date.Date;
-            if (datePart == DateTime.Today)
-                return Date.ToString("dddd, MMM d '(today) at' h:mm tt");
-            else if (datePart == DateTime.Today.AddDays(1))
-                return Date.ToString("dddd, MMM d '(tomorrow) at' h:mm tt");
-            else
-                return Date.ToString("dddd, MMM d 'at' h:mm tt");
+            return DisplayValue;
         }
     }
 }

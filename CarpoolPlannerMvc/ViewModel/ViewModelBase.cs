@@ -17,18 +17,24 @@ namespace CarpoolPlanner.ViewModel
     {
         private static readonly string[] classNameMappings = { "", "text-success", "text-danger" };
 
-        private string message = string.Empty;
-        private MessageType messageType;
+        public ViewModelBase()
+        {
+            Message = string.Empty;
+            MessageType = MessageType.Info;
+        }
+
+        public string Message { get; set; }
+        public MessageType MessageType { get; set; }
 
         public void SetMessage(string message, MessageType type)
         {
-            this.message = message;
-            messageType = type;
+            Message = message;
+            MessageType = type;
         }
 
         public void ClearMessage()
         {
-            message = string.Empty;
+            Message = string.Empty;
         }
 
         /// <summary>
@@ -39,10 +45,10 @@ namespace CarpoolPlanner.ViewModel
         {
             // TODO: use angular instead of id/class?
             // Also, is there a better way to do this? It seems like we are putting view code in the model...
-            var index = (int)messageType;
+            var index = (int)MessageType;
             var result = string.Format("<p id=\"message\" class=\"{0}\">{1}</p>",
                 classNameMappings[index],
-                !string.IsNullOrWhiteSpace(message) ? message : "&nbsp;");
+                !string.IsNullOrWhiteSpace(Message) ? Message : "&nbsp;");
             return MvcHtmlString.Create(result);
         }
     }
