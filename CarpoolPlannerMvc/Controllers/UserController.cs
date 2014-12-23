@@ -9,7 +9,7 @@ using CarpoolPlanner.ViewModel;
 
 namespace CarpoolPlanner.Controllers
 {
-    public class UserController : NgController
+    public class UserController : ControllerBase
     {
         public ActionResult Login()
         {

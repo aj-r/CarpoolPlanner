@@ -21,7 +21,7 @@
 <h2>Login</h2>
 <div class="form-horizontal" ng-controller="loginCtrl as login">
   <form method="post" name="loginForm" ng-controller="validationCtrl as validation"
-        ng-submit="validation.validateForm(loginForm) && ngNet.submit('@Url.Action("Login")' + login.search).success(login.onComplete)"
+        ng-submit="validation.validateForm(loginForm) && ngNet.submit('@Url.Action("Login", "User")' + login.search).success(login.onComplete)"
         novalidate>
     <div class="form-group">
       <label class="col-md-2 control-label">@Resources.UserId</label>
@@ -29,7 +29,6 @@
         <input type="text" ng-model="ngNet.model.UserId" class="form-control" required="required" error-message="User name is required." />
       </div>
     </div>
-    <!-- TODO: focus password box after invalid username/password error -->
     <div class="form-group">
       <label class="col-md-2 control-label">@Resources.Password</label>
       <div class="col-md-10">

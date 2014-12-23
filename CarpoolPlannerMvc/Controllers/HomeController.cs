@@ -7,11 +7,14 @@ using CarpoolPlanner.ViewModel;
 
 namespace CarpoolPlanner.Controllers
 {
-    public class HomeController : Controller
+    public class HomeController : ControllerBase
     {
         public ActionResult Index()
         {
-            return View(new IndexViewModel());
+            if (AppUtils.CurrentUser != null)
+                return View(new IndexViewModel());
+            else
+                return RedirectToLogin();
         }
 
         [HttpPost]

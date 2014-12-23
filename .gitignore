@@ -4,6 +4,6 @@ obj
 *.user
 /CarpoolPlanner/App_Data/*.mdf
 /CarpoolPlanner/App_Data/*.ldf
-/CarpoolPlanner/Properties/PublishProfiles/*.pubxml
 packages/*.*.*
 /TestResults
+*.pubxml
