@@ -7,15 +7,12 @@ using CarpoolPlanner.ViewModel;
 
 namespace CarpoolPlanner.Controllers
 {
-    public class HomeController : ControllerBase
+    [Authorize]
+    public class HomeController : CarpoolControllerBase
     {
-        // TODO: use AuthorizeAttribute
         public ActionResult Index()
         {
-            if (AppUtils.CurrentUser != null)
-                return View(new IndexViewModel());
-            else
-                return RedirectToLogin();
+            return View(new IndexViewModel());
         }
 
         [HttpPost]

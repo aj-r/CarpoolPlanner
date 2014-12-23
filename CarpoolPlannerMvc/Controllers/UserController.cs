@@ -9,17 +9,19 @@ using CarpoolPlanner.ViewModel;
 
 namespace CarpoolPlanner.Controllers
 {
-    public class UserController : ControllerBase
+    [Authorize]
+    public class UserController : CarpoolControllerBase
     {
+        [AllowAnonymous]
         public ActionResult Login()
         {
             return View(new LoginViewModel());
         }
 
         [HttpPost]
+        [AllowAnonymous]
         public ActionResult Login(LoginViewModel model)
         {
-            // TODO: test throwing an exception - make sure some kind of error is displayed to the user.
             using (var context = ApplicationDbContext.Create())
             {
                 var user = context.FindUser(model.UserId, model.Password);
@@ -36,7 +38,7 @@ namespace CarpoolPlanner.Controllers
                             // Log the user in, redirect to the proper page.
                             FormsAuthentication.SetAuthCookie(model.UserId, model.RememberMe);
                             var returnUrl = Request.QueryString["ReturnUrl"];
-                            return returnUrl != null ? NgRedirect(returnUrl) : NgRedirect("Trips", "Home");
+                            return NgRedirect(returnUrl ?? Url.Action("Trips", "Home"));
                     }
                 }
                 else

@@ -32,6 +32,13 @@
               if (result.userId != null)
                 $scope.userId = result.userId;
             }
+          })
+          .error(function(result) {
+            var msg = "An unexpected error occurred. Please report this error to the website administrator.";
+            if (result && result != '' && result.indexOf('<!DOCTYPE') !== 0)
+              msg += "\nThe error is: " + result;
+            $scope.model.Message = msg;
+            $scope.model.MessageType = 2;
           });
       };
     }]);
@@ -46,6 +53,7 @@
           var msg = '';
           var jqForm = $('[name=' + form.$name + ']');
           jqForm.find('.ng-invalid').each(function (i, elem) {
+            // TODO: allow different types of error messages.
             var currentMsg = $(elem).attr('error-message');
             if (currentMsg)
               $scope.validationErrors.push(currentMsg);
@@ -71,28 +79,29 @@
         @Html.ActionLink(AppUtils.AppName, "Index", "Home", null, new { @class = "navbar-brand" })
       </div>
       <div class="navbar-collapse collapse">
-@if (AppUtils.IsUserAuthenticated())
-{
         <ul class="nav navbar-nav">
-          <li>@Html.ActionLink("Home", "Index", "Home")</li>
-          <li>@Html.ActionLink("Trips", "Trips", "Home")</li>
-  @if (AppUtils.IsUserStatus(UserStatus.Active))
-  {
-          <li>@Html.ActionLink("Users", "List", "User")</li>
-  }
+          @if (AppUtils.IsUserAuthenticated())
+          {
+            <li>@Html.ActionLink("Home", "Index", "Home")</li>
+            <li>@Html.ActionLink("Trips", "Trips", "Home")</li>
+            if (AppUtils.IsUserStatus(UserStatus.Active))
+            {
+              <li>@Html.ActionLink("Users", "List", "User")</li>
+            }
+          }
         </ul>
         <ul class="nav navbar-nav navbar-right">
-          <li>@Html.ActionLink("{{ ngNet.userId }}", "Manage", "User")</li>
-          <li>@Html.ActionLink("Logout", "Logout", "User")</li>
+          @if (AppUtils.IsUserAuthenticated())
+          {
+            <li>@Html.ActionLink("{{ userId }}", "Manage", "User")</li>
+            <li>@Html.ActionLink("Logout", "Logout", "User")</li>
+          }
+          else
+          {
+            <li>@Html.ActionLink("Register", "Register", "User")</li>
+            <li>@Html.ActionLink(Resources.Login, "Login", "User")</li>
+          }
         </ul>
-}
-else
-{
-        <ul class="nav navbar-nav navbar-right">
-          <li>@Html.ActionLink("Register", "Register", "User")</li>
-          <li>@Html.ActionLink("Login", "Login", "User")</li>
-        </ul>
-}
       </div>
     </div>
   </div>

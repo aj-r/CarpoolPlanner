@@ -27,17 +27,6 @@ namespace CarpoolPlanner.Controllers
         }
 
         /// <summary>
-        /// Redirects an ajax request to the specified action.
-        /// </summary>
-        /// <param name="actionName">The name of the action method.</param>
-        /// <param name="controllerName">The name of the controller.</param>
-        /// <returns></returns>
-        protected JsonResult NgRedirect(string actionName, string controllerName)
-        {
-            return NgRedirect(Url.Action(actionName, controllerName));
-        }
-
-        /// <summary>
         /// Redirects an ajax request to the specified URL.
         /// </summary>
         /// <param name="url">The URL to redirect to.</param>
