@@ -9,6 +9,7 @@ namespace CarpoolPlanner.Controllers
 {
     public class HomeController : ControllerBase
     {
+        // TODO: use AuthorizeAttribute
         public ActionResult Index()
         {
             if (AppUtils.CurrentUser != null)

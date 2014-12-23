@@ -32,7 +32,7 @@ input[type=radio], input[type=checkbox] {
 }
 
 .checkbox label input[type=checkbox] {
-  margin-top:1px;
+  margin-top: 1px;
 }
 
 hr {

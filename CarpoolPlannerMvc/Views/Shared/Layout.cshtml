@@ -16,49 +16,29 @@
   <script type="text/javascript">
     var ngNetApp = angular.module('ngNetApp', []);
 
-    ngNetApp.controller('ngNetCtrl', ['$http', function($http) {
-      var self = this;
-      self.userId = '@AppUtils.CurrentUserId';
-      self.model = @Html.JSModel();
-      if (self.model == null)
-        self.model = {};
+    ngNetApp.controller('ngNetCtrl', ['$scope', '$http', function($scope, $http) {
+      $scope.userId = '@AppUtils.CurrentUserId';
+      $scope.model = @Html.JSModel();
 
-      self.validateForm = function(form) {
-        if (form.$valid) {
-          return true;
-        } else {
-          // Display validation summary
-          var msg = '';
-          var jForm = $('[name=' + form.$name + ']')
-          jForm.find('.ng-invalid').each(function (i, elem) {
-            var currentMsg = $(elem).attr('error-message');
-            if (currentMsg)
-              msg += currentMsg + '\n';
-          });
-          self.model.Message = msg;
-          self.model.MessageType = 2; // Error
-          return false;
-        }
-      };
-
-      self.submit = function(url) {
-        self.model.Message = '';
-        return $http.post(url, self.model)
+      // Posts the current model to the specified URL
+      $scope.submitModel = function(url) {
+        return $http.post(url, this.model)
           .success(function(result) {
             if (result.redirectUrl) {
               location.href = result.redirectUrl;
             } else {
               if (result.model != null)
-                self.model = result.model;
+                $scope.model = result.model;
               if (result.userId != null)
-                self.userId = result.userId;
+                $scope.userId = result.userId;
             }
           });
       };
     }]);
 
-    ngNetApp.controller('validationCtrl', function($http) {
-      this.validateForm = function(form) {
+    ngNetApp.controller('validationCtrl', ['$scope', function($scope) {
+      $scope.validateForm = function(form) {
+        this.validationErrors = [];
         if (form.$valid) {
           return true;
         } else {
@@ -68,17 +48,15 @@
           jqForm.find('.ng-invalid').each(function (i, elem) {
             var currentMsg = $(elem).attr('error-message');
             if (currentMsg)
-              msg += currentMsg + '\n';
+              $scope.validationErrors.push(currentMsg);
             // Move focus to the first invalid control
             if (i == 0)
               elem.focus();
           });
-          this.model.Message = msg;
-          this.model.MessageType = 2; // Error
           return false;
         }
       };
-    });
+    }]);
   </script>
 </head>
 <body ng-controller="ngNetCtrl as ngNet">
