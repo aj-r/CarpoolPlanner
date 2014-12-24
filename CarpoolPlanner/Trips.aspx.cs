@@ -126,7 +126,7 @@ namespace CarpoolPlanner
             {
                 Every = (int)(nudEvery.Value ?? 1),
                 Type = (RecurrenceType)Enum.Parse(typeof(RecurrenceType), ddlRecurrenceType.SelectedValue),
-                Start = dtpStartDate.Value ?? default(DateTime),
+                Start = dtpStartDate.Value,
                 End = dtpEndDate.Value
             };
             return recurrence;
@@ -208,7 +208,7 @@ namespace CarpoolPlanner
             var dtpEndDate = (DateTimePicker)item.FindControl("dtpEndDate");
             nudEvery.Value = recurrence.Every;
             ddlRecurrenceType.SelectedValue = recurrence.Type.ToString();
-            dtpStartDate.Value = recurrence.Start != default(DateTime) ? (DateTime?)recurrence.Start : null;
+            dtpStartDate.Value = recurrence.Start;
             dtpEndDate.Value = recurrence.End;
         }
     }

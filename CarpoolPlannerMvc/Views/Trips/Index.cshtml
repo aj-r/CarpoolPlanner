@@ -17,11 +17,19 @@
       this.submitModel('@Url.Action("Index", "Trips")');
     };
     $scope.createTrip = function() {
-      if (!this.validateForm(this.createTripForm))
+      var ctrl = this;
+      if (!ctrl.validateForm(ctrl.createTripForm))
         return;
-      $scope.model.Message = "";
-      $scope.model.MessageType = 0;
-      this.submitModel('@Url.Action("CreateTrip", "Trips")');
+      $scope.model.CreateMessage = "Creating...";
+      $scope.model.CreateMessageType = 0;
+      this.submitModel('@Url.Action("CreateTrip", "Trips")')
+        .success(function(result) {
+          if (!result.model.CreateMessage) {
+            // If the trip was created successfully, treat the create trip like a new form
+            // (so pretend it was never submitted, otherwise errors will appear)
+            ctrl.createTripForm.$submitted = false;
+          }
+        });
     };
     $scope.addTripRecurrence = function(trip) {
       trip.Recurrences.push({ Every: 1, Type: 4 });
@@ -69,6 +77,9 @@
       </div>
       <div ng-show="model.Trips.length === 0">There are currently no trips. An administrator can create new trips.</div>
       <input type="submit" value="@Resources.Save" ng-show="model.Trips.length > 0" class="btn btn-default" />
+      <div class="form-group">
+        @Html.Partial("Message")
+      </div>
     </form>
     @if (AppUtils.CurrentUser.IsAdmin)
     {
@@ -115,13 +126,13 @@
                 <div class="dropdown">
                   <a class="dropdown-toggle" id="dropdown1" role="button" data-toggle="dropdown" data-target="#" href="#">
                     <div class="input-group">
-                      <input type="text" class="form-control" ng-model="tripRecurrence.StartDate" friendly-name="Start Date"
+                      <input type="text" class="form-control" ng-model="tripRecurrence.Start" friendly-name="Start Date"
                              datetime-format="ddd MMM Do YYYY, h:mm a" required />
                       <span class="input-group-addon"><i class="glyphicon glyphicon-calendar"></i></span>
                     </div>
                   </a>
                   <ul class="dropdown-menu" role="menu">
-                    <datetimepicker ng-model="tripRecurrence.StartDate" datetimepicker-config="{ dropdownSelector: '#dropdown1' }"></datetimepicker>
+                    <datetimepicker ng-model="tripRecurrence.Start" datetimepicker-config="{ dropdownSelector: '#dropdown1' }"></datetimepicker>
                   </ul>
                 </div>
               </div>
@@ -132,13 +143,13 @@
                 <div class="dropdown">
                   <a class="dropdown-toggle" id="dropdown2" role="button" data-toggle="dropdown" data-target="#" href="#">
                     <div class="input-group">
-                      <input type="text" class="form-control" ng-model="tripRecurrence.EndDate" friendly-name="End Date"
+                      <input type="text" class="form-control" ng-model="tripRecurrence.End" friendly-name="End Date"
                              datetime-format="ddd MMM Do YYYY, h:mm a" />
                       <span class="input-group-addon"><i class="glyphicon glyphicon-calendar"></i></span>
                     </div>
                   </a>
                   <ul class="dropdown-menu" role="menu">
-                    <datetimepicker ng-model="tripRecurrence.EndDate" datetimepicker-config="{ dropdownSelector: '#dropdown2' }"></datetimepicker>
+                    <datetimepicker ng-model="tripRecurrence.End" datetimepicker-config="{ dropdownSelector: '#dropdown2' }"></datetimepicker>
                   </ul>
                 </div>
               </div>
@@ -151,6 +162,7 @@
           <input type="submit" value="Create Trip" class="btn btn-default" />
         </div>
         <div class="form-group">
+          @Html.Partial("Message", new ViewDataDictionary { { "Prefix", "Create" } })
           @Html.Partial("ValidationSummary")
         </div>
       </form>

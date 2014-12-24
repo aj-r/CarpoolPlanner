@@ -15,5 +15,8 @@ namespace CarpoolPlanner.ViewModel
 
         public List<Trip> Trips { get; set; }
         public Trip NewTrip { get; set; }
+
+        public string CreateMessage { get; set; }
+        public MessageType CreateMessageType { get; set; }
     }
 }

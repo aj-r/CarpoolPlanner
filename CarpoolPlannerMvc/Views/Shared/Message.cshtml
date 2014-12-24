@@ -1,2 +1,2 @@
-﻿<p id="message" ng-class="{ 'text-success': model.MessageType === 1, 'text-danger': model.MessageType === 2 }"
-   class="preserve-newlines">{{ model.Message }}</p>
+﻿<p id="message" ng-class="{ 'text-success': model.@(ViewData["Prefix"])MessageType === 1, 'text-danger': model.@(ViewData["Prefix"])MessageType === 2 }"
+   class="preserve-newlines">{{ model.@(ViewData["Prefix"])Message }}</p>

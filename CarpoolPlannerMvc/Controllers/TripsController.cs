@@ -29,7 +29,7 @@ namespace CarpoolPlanner.Controllers
         public ActionResult Index(TripsViewModel model)
         {
             // TODO: save stuff
-            return Json(model);
+            return Ng(model);
         }
 
         [HttpPost]
@@ -44,7 +44,8 @@ namespace CarpoolPlanner.Controllers
             model.Trips.Add(model.NewTrip);
             model.NewTrip = new Trip();
             model.NewTrip.Recurrences.Add(new TripRecurrence());
-            return Json(model);
+            model.CreateMessage = "";
+            return Ng(model);
         }
     }
 }

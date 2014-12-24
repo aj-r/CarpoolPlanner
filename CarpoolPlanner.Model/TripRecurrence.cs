@@ -33,7 +33,7 @@ namespace CarpoolPlanner.Model
 
         public int Every { get; set; }
 
-        public DateTime Start { get; set; }
+        public DateTime? Start { get; set; }
 
         public DateTime? End { get; set; }
 
@@ -55,7 +55,9 @@ namespace CarpoolPlanner.Model
         /// <returns>A DateTime.</returns>
         public DateTime GetNextInstanceDate(DateTime afterDate)
         {
-            var date = Start;
+            if (Start == null)
+                return default(DateTime);
+            var date = Start.Value;
             while (date < afterDate)
             {
                 switch (Type)
@@ -98,11 +100,13 @@ namespace CarpoolPlanner.Model
         {
             get
             {
+                if (Start == null)
+                    return string.Empty;
                 var sb = new StringBuilder();
                 switch (Type)
                 {
                     case RecurrenceType.Yearly:
-                        sb.Append(Start.ToLongDateString());
+                        sb.Append(Start.Value.ToLongDateString());
                         sb.Append(" every ");
                         if (Every == 1)
                         {
@@ -118,7 +122,7 @@ namespace CarpoolPlanner.Model
                     case RecurrenceType.MonthlyByDayOfWeek:
                         // TODO: test
                         sb.Append("The ");
-                        int week = (Start.Day - 1) / 7 + 1;
+                        int week = (Start.Value.Day - 1) / 7 + 1;
                         sb.Append(week);
                         sb.Append(GetSuffix(week));
                         sb.AppendFormat(" {0:dddd} of", Start);
@@ -137,8 +141,8 @@ namespace CarpoolPlanner.Model
                         break;
                     case RecurrenceType.Monthly:
                         sb.Append("The ");
-                        sb.Append(Start.Day);
-                        sb.Append(GetSuffix(Start.Day));
+                        sb.Append(Start.Value.Day);
+                        sb.Append(GetSuffix(Start.Value.Day));
                         sb.Append(" of every ");
                         if (Every == 1)
                         {
@@ -158,7 +162,7 @@ namespace CarpoolPlanner.Model
                             sb.Append(GetSuffix(Every));
                             sb.Append(" ");
                         }
-                        sb.Append(Start.ToString("dddd"));
+                        sb.Append(Start.Value.ToString("dddd"));
                         break;
                     case RecurrenceType.Daily:
                         sb.Append("Every day ");
