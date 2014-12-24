@@ -96,7 +96,7 @@
             <div class="form-group">
               <span class="control-label col-sm-2">Every</span>
               <div class="col-sm-2">
-                <input type="number" value="0" min="1" class="form-control" friendly-name="Every" required />
+                <input type="number" ng-model="tripRecurrence.Every" min="1" class="form-control" friendly-name="Every" required />
               </div>
               <div class="col-sm-8">
                 <select class="form-control" ng-model="tripRecurrence.Type">
@@ -115,7 +115,8 @@
                 <div class="dropdown">
                   <a class="dropdown-toggle" id="dropdown1" role="button" data-toggle="dropdown" data-target="#" href="#">
                     <div class="input-group">
-                      <input type="text" class="form-control" data-ng-model="tripRecurrence.StartDate" id="startDate" friendly-name="Start Date" datetime-format="ddd MMM Do YYYY, h:mm a" required />
+                      <input type="text" class="form-control" ng-model="tripRecurrence.StartDate" friendly-name="Start Date"
+                             datetime-format="ddd MMM Do YYYY, h:mm a" required />
                       <span class="input-group-addon"><i class="glyphicon glyphicon-calendar"></i></span>
                     </div>
                   </a>
@@ -131,7 +132,8 @@
                 <div class="dropdown">
                   <a class="dropdown-toggle" id="dropdown2" role="button" data-toggle="dropdown" data-target="#" href="#">
                     <div class="input-group">
-                      <input type="text" class="form-control" ng-model="tripRecurrence.EndDate" id="endDate" friendly-name="End Date" datetime-format="ddd MMM Do YYYY, h:mm a" />
+                      <input type="text" class="form-control" ng-model="tripRecurrence.EndDate" friendly-name="End Date"
+                             datetime-format="ddd MMM Do YYYY, h:mm a" />
                       <span class="input-group-addon"><i class="glyphicon glyphicon-calendar"></i></span>
                     </div>
                   </a>
@@ -145,9 +147,13 @@
           </div>
           <a href="javascript:;" ng-click="addTripRecurrence(model.NewTrip)">Add Recurrence</a>
         </div>
-        <input type="submit" value="Create Trip" class="btn btn-default" />
+        <div class="form-group">
+          <input type="submit" value="Create Trip" class="btn btn-default" />
+        </div>
+        <div class="form-group">
+          @Html.Partial("ValidationSummary")
+        </div>
       </form>
-      @Html.Partial("ValidationSummary")
     }
   </div>
 </div>

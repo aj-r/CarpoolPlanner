@@ -49,9 +49,7 @@
     ngNetApp.controller('validationCtrl', ['$scope', function($scope) {
       var validationMessages = {
         required: '$1 is required.',
-        datetime: '$1 must be a valid date/time.',
-        email: '$1 must be a valid e-mail address.',
-        phone: '$1 must be a valid phone number.'
+        $default: '$1 is invalid.'
       };
       $scope.validateForm = function(form) {
         $scope.validationErrors = [];
@@ -63,7 +61,8 @@
             for (var i in form.$error[validator]) {
               var field = form.$error[validator][i];
               var name = field.friendlyName || field.$name || 'Unnamed field';
-              var message = validationMessages[validator].replace(/\$1(?![0-9])/g, name);
+              var message = validationMessages[validator] || validationMessages.$default;
+              message = message.replace(/\$1(?![0-9])/g, name);
               $scope.validationErrors.push(message);
             }
           }
@@ -102,7 +101,10 @@
             if (ctrl.$isEmpty(viewValue)) {
               return '';
             }
-            var moDate = moment(viewValue);
+            // Try to parse using the expected format. If that fails, use the default date parser.
+            var moDate = moment(viewValue, format);
+            if (!moDate.isValid())
+              moDate = moment(viewValue);
             var date = moDate.toDate();
             return date;
           });
@@ -115,9 +117,11 @@
             if (viewValue instanceof Date) {
               return true;
             }
-            
-            var date = moment(viewValue);
-            if (date && date.isValid() && date.year() > 1950 ) {
+            // Try to parse using the expected format. If that fails, use the default date parser.
+            var moDate = moment(viewValue, format);
+            if (!moDate.isValid())
+              moDate = moment(viewValue);
+            if (moDate && moDate.isValid() && moDate.year() > 1950) {
               return true;
             }
             return false;
@@ -129,6 +133,7 @@
     
     ngNetApp.directive('friendlyName', function () {
       return {
+        require: 'ngModel',
         restrict: 'A',
         link: function (scope, elm, attrs, ctrl) {
           ctrl.friendlyName = attrs.friendlyName;
