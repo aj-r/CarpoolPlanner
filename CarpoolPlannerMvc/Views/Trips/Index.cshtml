@@ -1,0 +1,153 @@
+﻿@using CarpoolPlanner;
+@using CarpoolPlanner.ViewModel;
+
+@model TripsViewModel
+
+@{
+  ViewBag.Title = Resources.AvailableCarpools;
+  Layout = "~/Views/Shared/Layout.cshtml";
+}
+
+@section headScripts{
+<script type="text/javascript">
+  var tripCtrl = ngNetApp.controller('tripCtrl', ['$scope', function($scope) {
+    $scope.saveTripRecurrences = function() {
+      $scope.model.Message = "Updating...";
+      $scope.model.MessageType = 0;
+      this.submitModel('@Url.Action("Index", "Trips")');
+    };
+    $scope.createTrip = function() {
+      if (!this.validateForm(this.createTripForm))
+        return;
+      $scope.model.Message = "";
+      $scope.model.MessageType = 0;
+      this.submitModel('@Url.Action("CreateTrip", "Trips")');
+    };
+    $scope.addTripRecurrence = function(trip) {
+      trip.Recurrences.push({ Every: 1, Type: 4 });
+    };
+    $scope.removeTripRecurrence = function(trip, index) {
+      trip.Recurrences.splice(index, 1);
+    };
+  }]);
+</script>
+}
+
+<div class="row" ng-controller="tripCtrl">
+  <div class="col-md-12">
+    <h2>@Resources.AvailableCarpools</h2>
+    <div>
+      Select the days you plan on coming. You will receive
+      <a href="@Url.Action("Index", "Notifications")" target="_blank" title="How do notifications work?">notifications</a>
+      only on the days that you select.
+    </div>
+
+    <form method="post" name="tripInstanceForm" ng-submit="saveTripRecurrences()" novalidate>
+      <div class="repeater-item" ng-repeat="trip in model.Trips">
+        <h3 class="editable-region-header">
+          <label class="checkbox">
+            <input type="checkbox" ng-model="trip.UserTrips[userId].Attending" />
+            {{ trip.Name }}
+          </label>
+        </h3>
+        @if (AppUtils.CurrentUser.IsAdmin)
+        { 
+          <div class="edit-buttons">
+            <a href="javascript:;">Edit</a>
+            &nbsp;&nbsp;
+            <a href="javascript:;">Delete</a>
+          </div>
+        }
+        <div class="indent">
+          <div ng-repeat="tripRecurrence in trip.Recurrences" class="checkbox">
+            <label>
+              <input type="checkbox" />
+              {{ tripRecurrence.DisplayValue }}
+            </label>
+          </div>
+        </div>
+      </div>
+      <div ng-show="model.Trips.length === 0">There are currently no trips. An administrator can create new trips.</div>
+      <input type="submit" value="@Resources.Save" ng-show="model.Trips.length > 0" class="btn btn-default" />
+    </form>
+    @if (AppUtils.CurrentUser.IsAdmin)
+    {
+      <hr />
+      <h2>Create New Trip</h2>
+      <form method="post" name="createTripForm" ng-controller="validationCtrl" ng-submit="createTrip()" novalidate>
+        <div class="form-horizontal">
+          <div class="form-group">
+            <span class="control-label col-md-2">Name</span>
+            <div class="col-md-10">
+              <input type="text" ng-model="model.NewTrip.Name" class="form-control" required />
+            </div>
+          </div>
+          <div class="form-group">
+            <span class="control-label col-md-2">Meeting Location</span>
+            <div class="col-md-10">
+              <input type="text" ng-model="model.NewTrip.Location" class="form-control" />
+            </div>
+          </div>
+        </div>
+        <div class="panel">
+          <h3 style="margin-top:0px;">Recurrence:</h3>
+          <div class="form-horizontal" ng-repeat="tripRecurrence in model.NewTrip.Recurrences">
+            <div><a ng-click="removeTripRecurrence(model.NewTrip, $index)" href="javascript:;">Delete Recurrence</a></div>
+            <div class="form-group">
+              <span class="control-label col-md-2">Every</span>
+              <div class="col-md-2">
+                <input type="number" ng-model="tripRecurrence.Every" min="1" class="form-control" required />
+              </div>
+              <div class="col-md-8">
+                <select class="form-control" ng-model="tripRecurrence.Type">
+                  <option value="5">Days</option>
+                  <option value="4">Weeks</option>
+                  <option value="2">Months</option>
+                  <option value="3">Months (by day of week)</option>
+                  <option value="0">Years</option>
+                  <option value="1">Years (by day of week)</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group">
+              <span class="control-label col-md-2">Starting on</span>
+              <div class="col-md-10">
+                <div class="dropdown">
+                  <a class="dropdown-toggle" id="dropdown1" role="button" data-toggle="dropdown" data-target="#" href="#">
+                    <div class="input-group">
+                      <input type="text" class="form-control" data-ng-model="tripRecurrence.StartDate" id="startDate" datetime-format="ddd MMM Do YYYY, h:mm a" required />
+                      <span class="input-group-addon"><i class="glyphicon glyphicon-calendar"></i></span>
+                    </div>
+                  </a>
+                  <ul class="dropdown-menu" role="menu">
+                    <datetimepicker ng-model="tripRecurrence.StartDate" datetimepicker-config="{ dropdownSelector: '#dropdown1' }" datetime-format="DD-MMM-YY h:mm a"></datetimepicker>
+                  </ul>
+                </div>
+              </div>
+            </div>
+            <div class="form-group">
+              <span class="control-label col-md-2">Ending on</span>
+              <div class="col-md-10">
+                <div class="dropdown">
+                  <a class="dropdown-toggle" id="dropdown2" role="button" data-toggle="dropdown" data-target="#" href="#">
+                    <div class="input-group">
+                      <input type="text" class="form-control" ng-model="tripRecurrence.EndDate" id="endDate" datetime-format="DD-MMM-YY hh:mm" />
+                      <span class="input-group-addon"><i class="glyphicon glyphicon-calendar"></i></span>
+                    </div>
+                  </a>
+                  <ul class="dropdown-menu" role="menu">
+                    <datetimepicker ng-model="tripRecurrence.EndDate" datetimepicker-config="{ dropdownSelector: '#dropdown2' }"></datetimepicker>
+                  </ul>
+                </div>
+              </div>
+            </div>
+            <hr />
+          </div>
+          <a href="javascript:;" ng-click="addTripRecurrence(model.NewTrip)">Add Recurrence</a>
+        </div>
+        <input type="submit" value="Create Trip" class="btn btn-default" />
+      </form>
+      Html.Partial("ValidationSummary");
+    }
+  </div>
+</div>

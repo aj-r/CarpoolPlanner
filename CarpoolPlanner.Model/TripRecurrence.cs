@@ -23,6 +23,7 @@ namespace CarpoolPlanner.Model
         public TripRecurrence()
         {
             Type = RecurrenceType.Weekly;
+            Every = 1;
         }
 
         [Key]
@@ -93,76 +94,84 @@ namespace CarpoolPlanner.Model
             return date;
         }
 
+        public string DisplayValue
+        {
+            get
+            {
+                var sb = new StringBuilder();
+                switch (Type)
+                {
+                    case RecurrenceType.Yearly:
+                        sb.Append(Start.ToLongDateString());
+                        sb.Append(" every ");
+                        if (Every == 1)
+                        {
+                            sb.Append("year");
+                        }
+                        else
+                        {
+                            sb.Append(Every);
+                            sb.Append(" years");
+                        }
+                        break;
+                    case RecurrenceType.YearlyByDayOfWeek:
+                    case RecurrenceType.MonthlyByDayOfWeek:
+                        // TODO: test
+                        sb.Append("The ");
+                        int week = (Start.Day - 1) / 7 + 1;
+                        sb.Append(week);
+                        sb.Append(GetSuffix(week));
+                        sb.AppendFormat(" {0:dddd} of", Start);
+                        if (Type == RecurrenceType.YearlyByDayOfWeek)
+                            sb.AppendFormat(" {0:MMMM}", Start);
+                        sb.Append(" every ");
+                        if (Every == 1)
+                        {
+                            sb.Append(Type == RecurrenceType.YearlyByDayOfWeek ? "year" : "month");
+                        }
+                        else
+                        {
+                            sb.Append(Every);
+                            sb.Append(Type == RecurrenceType.YearlyByDayOfWeek ? " years" : " months");
+                        }
+                        break;
+                    case RecurrenceType.Monthly:
+                        sb.Append("The ");
+                        sb.Append(Start.Day);
+                        sb.Append(GetSuffix(Start.Day));
+                        sb.Append(" of every ");
+                        if (Every == 1)
+                        {
+                            sb.Append("month");
+                        }
+                        else
+                        {
+                            sb.Append(Every);
+                            sb.Append(" months");
+                        }
+                        break;
+                    case RecurrenceType.Weekly:
+                        sb.Append("Every ");
+                        if (Every > 1)
+                        {
+                            sb.Append(Every);
+                            sb.Append(GetSuffix(Every));
+                            sb.Append(" ");
+                        }
+                        sb.Append(Start.ToString("dddd"));
+                        break;
+                    case RecurrenceType.Daily:
+                        sb.Append("Every day ");
+                        break;
+                }
+                sb.AppendFormat(" at {0:h:mm:ss tt}", Start);
+                return sb.ToString();
+            }
+        }
+
         public override string ToString()
         {
-            var sb = new StringBuilder();
-            switch (Type)
-            {
-                case RecurrenceType.Yearly:
-                    sb.Append(Start.ToLongDateString());
-                    sb.Append(" every ");
-                    if (Every == 1)
-                    {
-                        sb.Append("year");
-                    }
-                    else
-                    {
-                        sb.Append(Every);
-                        sb.Append(" years");
-                    }
-                    break;
-                case RecurrenceType.YearlyByDayOfWeek:
-                case RecurrenceType.MonthlyByDayOfWeek:
-                    // TODO: test
-                    sb.Append("The ");
-                    int week = (Start.Day - 1) / 7 + 1;
-                    sb.Append(week);
-                    sb.Append(GetSuffix(week));
-                    sb.AppendFormat(" {0:dddd} of", Start);
-                    if (Type == RecurrenceType.YearlyByDayOfWeek)
-                        sb.AppendFormat(" {0:MMMM}", Start);
-                    sb.Append(" every ");
-                    if (Every == 1)
-                    {
-                        sb.Append(Type == RecurrenceType.YearlyByDayOfWeek ? "year" : "month");
-                    }
-                    else
-                    {
-                        sb.Append(Every);
-                        sb.Append(Type == RecurrenceType.YearlyByDayOfWeek ? " years" : " months");
-                    }
-                    break;
-                case RecurrenceType.Monthly:
-                    sb.Append("The ");
-                    sb.Append(Start.Day);
-                    sb.Append(GetSuffix(Start.Day));
-                    sb.Append(" of every ");
-                    if (Every == 1)
-                    {
-                        sb.Append("month");
-                    }
-                    else
-                    {
-                        sb.Append(Every);
-                        sb.Append(" months");
-                    }
-                    break;
-                case RecurrenceType.Weekly:
-                    sb.Append("Every ");
-                    if (Every > 1)
-                    {
-                        sb.Append(Every);
-                        sb.Append(GetSuffix(Every));
-                        sb.Append(" ");
-                    }
-                    sb.Append(Start.ToString("dddd"));
-                    break;
-                case RecurrenceType.Daily:
-                    sb.Append("Every day ");
-                    break;
-            }
-            sb.AppendFormat(" at {0:h:mm:ss tt}", Start);
-            return sb.ToString();
+            return DisplayValue;
         }
 
         private string GetSuffix(int num)

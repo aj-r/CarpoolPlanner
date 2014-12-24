@@ -70,6 +70,15 @@ namespace CarpoolPlanner {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Available Carpools.
+        /// </summary>
+        public static string AvailableCarpools {
+            get {
+                return ResourceManager.GetString("AvailableCarpools", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to I am willing to drive on days we need more drivers.
         /// </summary>
         public static string CanDriveIfNeeded {
@@ -174,6 +183,15 @@ namespace CarpoolPlanner {
         public static string Seats {
             get {
                 return ResourceManager.GetString("Seats", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Upcoming Carpools.
+        /// </summary>
+        public static string UpcomingCarpools {
+            get {
+                return ResourceManager.GetString("UpcomingCarpools", resourceCulture);
             }
         }
         

@@ -1,0 +1,43 @@
+﻿@{
+  ViewBag.Title = "Notifications";
+  Layout = "~/Views/Shared/Layout.cshtml";
+}
+
+<h1>How Notifications Work</h1>
+<p>
+  If you opt in for notifications, you will receive 2 notifications before each carpool you said you would attend: one to verify that you are coming, and
+  one to give you information about the carpool, such as who is coming, whether or not you are driving, etc.
+</p>
+<p>
+  <b>IMPORTANT:</b> If you opt out of notifications, you must manually log in to this website for each carpool to confirm that you are coming.
+  Otherwise you will not get a seat. As such, it is strongly recommended to opt in to notifications.
+</p>
+<h2>1<sup>st</sup> Notification</h2>
+<p>
+  This notification is sent 4 hours before the meeting time. Its purpose is to confirm that you are coming.
+</p>
+<h3>Response</h3>
+<p>
+  If you are using SMS notifications, reply with "Yes" or "No". If you are normally a driver, and you are coming but
+  you cannot drive on that particular day, add "not driving" to your reply. For example, your reply could be "yes but not driving".
+</p>
+<p>
+  If you change your mind after sending a reply, you can just send another reply that will overrule your previous reply.
+  For example, if you reply "No", but later you change your mind, reply again with "Yes".
+</p>
+<p>
+  Try to respond to this notification as soon as possible. If you respond after the 2<sup>nd</sup> notification is sent, people may be unhappy at you.
+  Also, if there are not enough seats, passengers will be selected based on who responded first.
+</p>
+<h2>2<sup>nd</sup> Notification</h2>
+<p>
+  This notification is sent 30 minutes before the meeting time. Immediately before this notification is sent, the system will automatically choose
+  who is driving based on the number of seats required and who has been driving the least lately. If there are not enough seats, it will also decide
+  who isn't coming.
+</p>
+<p>
+  The purpose of this notification is to inform everyone of who is coming, who is driving, and how many seats are available.
+</p>
+<p>
+  If anyone changes their status (coming / not coming / driving / not driving / etc.) AFTER this notification is sent, then it will be re-sent with updated information.
+</p>

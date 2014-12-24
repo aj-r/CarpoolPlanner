@@ -6,11 +6,11 @@ using CarpoolPlanner.Model;
 
 namespace CarpoolPlanner.ViewModel
 {
-    public class IndexViewModel : ViewModelBase
+    public class HomeViewModel : ViewModelBase
     {
-        public IndexViewModel()
+        public HomeViewModel()
         {
-            Trips = new List<Trip> { new Trip { Id = 1, Name = "testTrip" } };
+            Trips = new List<Trip>();
         }
 
         public List<Trip> Trips { get; set; }

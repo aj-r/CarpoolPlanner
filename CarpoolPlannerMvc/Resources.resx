@@ -120,6 +120,9 @@
   <data name="AccountDisabled" xml:space="preserve">
     <value>Your account has been disabled.</value>
   </data>
+  <data name="AvailableCarpools" xml:space="preserve">
+    <value>Available Carpools</value>
+  </data>
   <data name="CanDriveIfNeeded" xml:space="preserve">
     <value>I am willing to drive on days we need more drivers</value>
   </data>
@@ -155,6 +158,9 @@
   </data>
   <data name="Seats" xml:space="preserve">
     <value>Seats</value>
+  </data>
+  <data name="UpcomingCarpools" xml:space="preserve">
+    <value>Upcoming Carpools</value>
   </data>
   <data name="UserId" xml:space="preserve">
     <value>User ID</value>

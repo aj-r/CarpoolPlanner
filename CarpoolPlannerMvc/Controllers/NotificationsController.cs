@@ -8,18 +8,11 @@ using CarpoolPlanner.ViewModel;
 namespace CarpoolPlanner.Controllers
 {
     [Authorize]
-    public class HomeController : CarpoolControllerBase
+    public class NotificationsController : CarpoolControllerBase
     {
         public ActionResult Index()
         {
-            return View(new HomeViewModel());
-        }
-
-        [HttpPost]
-        public ActionResult Index(HomeViewModel model)
-        {
-            // TODO: save stuff
-            return Json(model);
+            return View();
         }
     }
 }

@@ -130,6 +130,8 @@
   <ItemGroup>
     <Compile Include="AppUtils.cs" />
     <Compile Include="Controllers\CarpoolControllerBase.cs" />
+    <Compile Include="Controllers\TripsController.cs" />
+    <Compile Include="Controllers\NotificationsController.cs" />
     <Compile Include="Controllers\NgController.cs" />
     <Compile Include="Controllers\UserController.cs" />
     <Compile Include="Controllers\HomeController.cs" />
@@ -143,7 +145,8 @@
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
     </Compile>
-    <Compile Include="ViewModel\IndexViewModel.cs" />
+    <Compile Include="ViewModel\TripsViewModel.cs" />
+    <Compile Include="ViewModel\HomeViewModel.cs" />
     <Compile Include="ViewModel\LoginViewModel.cs" />
     <Compile Include="ViewModel\ViewModelBase.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -152,7 +155,9 @@
     <Compile Include="App_Start\FilterConfig.cs" />
     <Compile Include="App_Start\RouteConfig.cs" />
     <Compile Include="App_Start\WebApiConfig.cs" />
+    <Content Include="Content\datetimepicker.css" />
     <Content Include="Content\Site.css" />
+    <Content Include="Content\datetimepicker.js" />
     <Content Include="Global.asax" />
     <None Include="Properties\PublishProfiles\Local.pubxml" />
     <Content Include="Web.config" />
@@ -167,6 +172,8 @@
     <Content Include="Views\User\Login.cshtml" />
     <Content Include="Views\Shared\Message.cshtml" />
     <Content Include="Views\Shared\ValidationSummary.cshtml" />
+    <Content Include="Views\Notifications\Index.cshtml" />
+    <Content Include="Views\Trips\Index.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />

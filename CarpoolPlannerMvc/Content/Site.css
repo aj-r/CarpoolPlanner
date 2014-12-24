@@ -24,6 +24,10 @@ input {
     max-width: 280px;
 }
 
+.input-group input {
+    max-width: inherit;
+}
+
 input[type=radio], input[type=checkbox] {
     width: 18px;
     height: 18px;
@@ -33,6 +37,15 @@ input[type=radio], input[type=checkbox] {
 
 .checkbox label input[type=checkbox] {
   margin-top: 1px;
+}
+
+h3 .checkbox input[type=checkbox] {
+  margin-left: 0px;
+  position: static;
+}
+
+h3 .checkbox {
+  font-weight: inherit;
 }
 
 hr {
@@ -48,7 +61,7 @@ hr {
 }
 
 .panel {
-    background-color: #EEE;
+    background-color: #E3E3E3;
     border-radius: 10px;
     max-width: 700px;
     padding: 25px;

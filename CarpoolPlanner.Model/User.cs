@@ -7,6 +7,7 @@ using System.Net;
 using System.Security.Cryptography;
 using System.Text;
 using System.Web;
+using System.Web.Script.Serialization;
 using log4net;
 
 namespace CarpoolPlanner.Model
@@ -115,16 +116,19 @@ namespace CarpoolPlanner.Model
         /// <summary>
         /// Gets or sets the hashed password.
         /// </summary>
+        [ScriptIgnore]
         public byte[] Password { get; set; }
 
         /// <summary>
         /// Gets or sets the salt that was used to hash the password.
         /// </summary>
+        [ScriptIgnore]
         public byte[] Salt { get; set; }
 
         /// <summary>
         /// Gets or sets the number of PBKDF2 iterations used to hash the password.
         /// </summary>
+        [ScriptIgnore]
         public int Iterations { get; set; }
 
         /// <summary>
@@ -156,10 +160,12 @@ namespace CarpoolPlanner.Model
         /// </summary>
         public bool PhoneVisible { get; set; }
 
+        [ScriptIgnore]
         public UserStatus Status { get; set; }
 
         public CommuteMethod CommuteMethod { get; set; }
 
+        [ScriptIgnore]
         public long? LastTextMessageId { get; set; }
 
         /// <summary>
@@ -170,6 +176,7 @@ namespace CarpoolPlanner.Model
 
         public int Seats { get; set; }
 
+        [ScriptIgnore]
         public bool IsAdmin { get; set; }
 
         public ICollection<UserTrip> UserTrips { get; private set; }
