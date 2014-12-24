@@ -20,12 +20,14 @@ body {
 }
 
 /* Set widths on the form inputs since otherwise they're 100% wide */
-input {
+@media (min-width: 768px) {
+  input {
     max-width: 280px;
-}
+  }
 
-.input-group input {
+  .input-group input {
     max-width: inherit;
+  }
 }
 
 input[type=radio], input[type=checkbox] {
@@ -63,7 +65,6 @@ hr {
 .panel {
     background-color: #E3E3E3;
     border-radius: 10px;
-    max-width: 700px;
     padding: 25px;
 }
 

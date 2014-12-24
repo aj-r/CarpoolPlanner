@@ -1,2 +1,2 @@
-﻿<div class="text-danger" ng-repeat="error in validationErrors">{{ error }}</div>
+﻿<div class="text-danger" ng-repeat="error in validationErrors track by $index">{{ error }}</div>
 <div ng-show="validationErrors.length > 0">&nbsp;</div>

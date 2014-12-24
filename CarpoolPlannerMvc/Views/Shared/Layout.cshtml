@@ -47,23 +47,28 @@
     }]);
 
     ngNetApp.controller('validationCtrl', ['$scope', function($scope) {
+      var validationMessages = {
+        required: '$1 is required.',
+        datetime: '$1 must be a valid date/time.',
+        email: '$1 must be a valid e-mail address.',
+        phone: '$1 must be a valid phone number.'
+      };
       $scope.validateForm = function(form) {
-        this.validationErrors = [];
+        $scope.validationErrors = [];
         if (form.$valid) {
           return true;
         } else {
           // Display validation summary
-          var msg = '';
-          var jqForm = $('[name=' + form.$name + ']');
-          jqForm.find('.ng-invalid').each(function (i, elem) {
-            // TODO: allow different types of error messages.
-            var currentMsg = $(elem).attr('error-message');
-            if (currentMsg)
-              $scope.validationErrors.push(currentMsg);
-            // Move focus to the first invalid control
-            if (i == 0)
-              elem.focus();
-          });
+          for (var validator in form.$error) {
+            for (var i in form.$error[validator]) {
+              var field = form.$error[validator][i];
+              var name = field.friendlyName || field.$name || 'Unnamed field';
+              var message = validationMessages[validator].replace(/\$1(?![0-9])/g, name);
+              $scope.validationErrors.push(message);
+            }
+          }
+          // Move focus to the first invalid control
+          $("[name=" + form.$name + "] .ng-invalid")[0].focus();
           return false;
         }
       };
@@ -94,13 +99,45 @@
           ctrl.$parsers.unshift(function (viewValue) {
             if (viewValue instanceof Date)
               return viewValue;
-            var date = moment(viewValue, format);
-            return (date && date.isValid() && date.year() > 1950 ) ? date.toDate() : "";
+            if (ctrl.$isEmpty(viewValue)) {
+              return '';
+            }
+            var moDate = moment(viewValue);
+            var date = moDate.toDate();
+            return date;
           });
+
+          ctrl.$validators.datetime = function(modelValue, viewValue) {
+            // consider empty values to be valid
+            if (ctrl.$isEmpty(viewValue)) {
+              return true;
+            }
+            if (viewValue instanceof Date) {
+              return true;
+            }
+            
+            var date = moment(viewValue);
+            if (date && date.isValid() && date.year() > 1950 ) {
+              return true;
+            }
+            return false;
+          };
         }
       };
 
     }]);
+    
+    ngNetApp.directive('friendlyName', function () {
+      return {
+        restrict: 'A',
+        link: function (scope, elm, attrs, ctrl) {
+          ctrl.friendlyName = attrs.friendlyName;
+          attrs.$observe('friendlyName', function (newValue) {
+            ctrl.friendlyName = newValue;
+          });
+        }
+      };
+    });
   </script>
   @RenderSection("headScripts", required: false)
 </head>
