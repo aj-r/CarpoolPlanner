@@ -20,8 +20,8 @@ namespace CarpoolPlanner.Controllers
                 model.Trips = context.Trips.Include(t => t.Recurrences).ToList();
                 context.GetUserTrips(AppUtils.CurrentUser).Include(ut => ut.Recurrences).ToList();
             }
-            model.NewTrip = new Trip();
-            model.NewTrip.Recurrences.Add(new TripRecurrence());
+            model.Create.Trip = new Trip();
+            model.Create.Trip.Recurrences.Add(new TripRecurrence());
             return View(model);
         }
 
@@ -33,19 +33,19 @@ namespace CarpoolPlanner.Controllers
         }
 
         [HttpPost]
-        public ActionResult CreateTrip(TripsViewModel model)
+        public ActionResult CreateTrip(CreateTripViewModel createModel)
         {
-            // TODO: validate NewTrip
+            // TODO: validate trip
             using (var context = ApplicationDbContext.Create())
             {
-                context.Trips.Add(model.NewTrip);
+                context.Trips.Add(createModel.Trip);
                 context.SaveChanges();
+                createModel.CreatedTrip = createModel.Trip;
             }
-            model.Trips.Add(model.NewTrip);
-            model.NewTrip = new Trip();
-            model.NewTrip.Recurrences.Add(new TripRecurrence());
-            model.CreateMessage = "";
-            return Ng(model);
+            createModel.Trip = new Trip();
+            createModel.Trip.Recurrences.Add(new TripRecurrence());
+            createModel.Message = "";
+            return Ng(createModel);
         }
     }
 }

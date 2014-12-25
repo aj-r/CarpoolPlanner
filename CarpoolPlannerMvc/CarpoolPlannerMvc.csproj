@@ -146,6 +146,8 @@
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
     </Compile>
+    <Compile Include="HttpRequestExtensions.cs" />
+    <Compile Include="ViewModel\CreateTripViewModel.cs" />
     <Compile Include="ViewModel\TripsViewModel.cs" />
     <Compile Include="ViewModel\HomeViewModel.cs" />
     <Compile Include="ViewModel\LoginViewModel.cs" />
@@ -157,8 +159,10 @@
     <Compile Include="App_Start\RouteConfig.cs" />
     <Compile Include="App_Start\WebApiConfig.cs" />
     <Content Include="Content\datetimepicker.css" />
+    <Content Include="Content\angular.net.js" />
     <Content Include="Content\Site.css" />
     <Content Include="Content\datetimepicker.js" />
+    <Content Include="Content\validation-summary.js" />
     <Content Include="Global.asax" />
     <None Include="Properties\PublishProfiles\Local.pubxml" />
     <Content Include="Web.config" />
@@ -172,7 +176,6 @@
     <Content Include="Views\Home\Index.cshtml" />
     <Content Include="Views\User\Login.cshtml" />
     <Content Include="Views\Shared\Message.cshtml" />
-    <Content Include="Views\Shared\ValidationSummary.cshtml" />
     <Content Include="Views\Notifications\Index.cshtml" />
     <Content Include="Views\Trips\Index.cshtml" />
   </ItemGroup>

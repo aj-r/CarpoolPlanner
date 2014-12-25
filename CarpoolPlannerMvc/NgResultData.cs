@@ -8,7 +8,6 @@ namespace CarpoolPlanner
     internal class NgResultData
     {
         public object model;
-        public object userId;
         public string redirectUrl;
     }
 }

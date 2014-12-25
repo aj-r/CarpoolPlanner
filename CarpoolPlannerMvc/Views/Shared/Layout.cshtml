@@ -2,7 +2,7 @@
 @using CarpoolPlanner.Model;
 
 <!DOCTYPE html>
-<html lang="en" ng-app="ngNetApp">
+<html lang="en" ng-app="carpoolApp">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -10,75 +10,63 @@
   <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css" rel="stylesheet" />
   <link href="/Content/datetimepicker.css" rel="stylesheet" />
   <link href="~/Content/Site.css" rel="stylesheet" />
-  <!-- Load angular in the head to make sure the user never sees {{ xxx }} flash at the beginning -->
+  <!-- Load angular in the head to make sure the user doesn't see {{ xxx }} for a moment at the beginning -->
   <script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
   <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.3.5/angular.min.js"></script>
   <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap.min.js"></script>
   <script src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.8.4/moment.min.js"></script>
   <script src="/Content/datetimepicker.js"></script>
+  <script src="/Content/angular.net.js"></script>
+  <script src="/Content/validation-summary.js"></script>
   <script type="text/javascript">
-    var ngNetApp = angular.module('ngNetApp', ['ui.bootstrap.datetimepicker']);
+    // TODO: only include ui.bootstrap.datetimepicker if on trips page and admin
+    var app = angular.module('carpoolApp', ['angular.net', 'validation-summary', 'ui.bootstrap.datetimepicker']);
 
-    ngNetApp.controller('ngNetCtrl', ['$scope', '$http', function($scope, $http) {
-      $scope.userId = '@AppUtils.CurrentUserId';
+    app.controller('baseCtrl', ['$scope', '$q', 'AngularNet', function($scope, $q, AngularNet) {
       $scope.model = @Html.JSModel();
+      $scope.trySubmit = function(form, url, modelContainer, modelName, beforesubmit) {
+        if (!this.validateForm(form)) {
+          return $q(function(resolve, reject) {
+            reject('Form validation failed.');
+          });
+        }
+        if (modelContainer == null) {
+          modelContainer = $scope;
+        }
+        if (modelName == null) {
+          modelName = "model";
+        }
+        var state = {
+          form: form,
+          modelContainer: modelContainer,
+          modelName: modelName
+        };
+        var model = modelContainer[modelName];
 
-      // Posts the current model to the specified URL
-      $scope.submitModel = function(url) {
-        return $http.post(url, this.model)
+        if (beforesubmit)
+          beforesubmit();
+
+        return AngularNet.submitModel(model, url, state)
           .success(function(result) {
-            if (result.redirectUrl) {
-              location.href = result.redirectUrl;
-            } else {
-              if (result.model != null)
-                $scope.model = result.model;
-              if (result.userId != null)
-                $scope.userId = result.userId;
+            if (result.model) {
+              modelContainer[modelName] = result.model;
             }
           })
           .error(function(result) {
             var msg = "An unexpected error occurred. Please report this error to the website administrator.";
-            if (result && result != '' && result.indexOf('<!DOCTYPE') === -1)
-              msg += "\nThe error is: " + result;
-            $scope.model.Message = msg;
-            $scope.model.MessageType = 2;
+            var serverMessage = result;
+            if (serverMessage && serverMessage.indexOf('<!DOCTYPE') === -1)
+              msg += "\nThe error is: " + serverMessage;
+            model = modelContainer[modelName];
+            if (model) {
+              model.Message = msg;
+              model.MessageType = 2;
+            }
           });
       };
     }]);
 
-    ngNetApp.controller('validationCtrl', ['$scope', function($scope) {
-      var validationMessages = {
-        required: '$1 is required.',
-        $default: '$1 is invalid.'
-      };
-      $scope.validateForm = function(form) {
-        $scope.validationErrors = [];
-        if (form.$valid) {
-          return true;
-        } else {
-          // Display validation summary
-          for (var validator in form.$error) {
-            for (var i in form.$error[validator]) {
-              var field = form.$error[validator][i];
-              var name = field.friendlyName || field.$name || 'Unnamed field';
-              var message = validationMessages[validator] || validationMessages.$default;
-              message = message.replace(/\$1(?![0-9])/g, name);
-              $scope.validationErrors.push(message);
-            }
-          }
-          // Move focus to the first invalid control (NOTE: only works if form has a name)
-          if (form.$name) {
-            var elems = $("[name=" + form.$name + "] .ng-invalid");
-            if (elems.length > 0)
-              elems[0].focus();
-          }
-          return false;
-        }
-      };
-
-    }]);
-    
-    ngNetApp.directive('datetimeFormat', ['$window', function ($window) {
+    app.directive('datetimeFormat', ['$window', function ($window) {
       return {
         require: 'ngModel',
         restrict: 'A',
@@ -134,23 +122,10 @@
       };
 
     }]);
-    
-    ngNetApp.directive('friendlyName', function () {
-      return {
-        require: 'ngModel',
-        restrict: 'A',
-        link: function (scope, elm, attrs, ctrl) {
-          ctrl.friendlyName = attrs.friendlyName;
-          attrs.$observe('friendlyName', function (newValue) {
-            ctrl.friendlyName = newValue;
-          });
-        }
-      };
-    });
   </script>
   @RenderSection("headScripts", required: false)
 </head>
-<body ng-controller="ngNetCtrl as ngNet">
+<body ng-controller="baseCtrl">
   <div class="navbar navbar-inverse navbar-fixed-top">
     <div class="container">
       <div class="navbar-header">
@@ -176,7 +151,7 @@
         <ul class="nav navbar-nav navbar-right">
           @if (AppUtils.IsUserAuthenticated())
           {
-            <li>@Html.ActionLink("{{ userId }}", "Manage", "User")</li>
+            <li>@Html.ActionLink("{{ model.UserId }}", "Manage", "User")</li>
             <li>@Html.ActionLink("Logout", "Logout", "User")</li>
           }
           else

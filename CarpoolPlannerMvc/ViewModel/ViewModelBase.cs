@@ -26,6 +26,11 @@ namespace CarpoolPlanner.ViewModel
         public string Message { get; set; }
         public MessageType MessageType { get; set; }
 
+        public string UserId
+        {
+            get { return AppUtils.CurrentUserId; }
+        }
+
         public void SetMessage(string message, MessageType type)
         {
             Message = message;

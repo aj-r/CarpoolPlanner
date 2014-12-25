@@ -11,12 +11,10 @@ namespace CarpoolPlanner.ViewModel
         public TripsViewModel()
         {
             Trips = new List<Trip>();
+            Create = new CreateTripViewModel();
         }
 
         public List<Trip> Trips { get; set; }
-        public Trip NewTrip { get; set; }
-
-        public string CreateMessage { get; set; }
-        public MessageType CreateMessageType { get; set; }
+        public CreateTripViewModel Create { get; set; }
     }
 }

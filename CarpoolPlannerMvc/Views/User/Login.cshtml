@@ -10,28 +10,28 @@
 
 @section headScripts{
 <script type="text/javascript">
-  var loginCtrl = ngNetApp.controller('loginCtrl', ['$scope', function($scope) {
-    $scope.encodeURIComponent = encodeURIComponent;
-    $scope.submitLogin = function() {
-      if (!this.validateForm(this.loginForm))
-        return;
+  var loginCtrl = app.controller('loginCtrl', ['$scope', '$window', function($scope, $window) {
+    $scope.encodeURIComponent = $window.encodeURIComponent;
+    $scope.$on('angular.net.beforesubmit', function() {
       $scope.model.Message = "Logging in...";
       $scope.model.MessageType = 0;
-      this.submitModel('@Url.Action("Login", "User", new RouteValueDictionary(Request.QueryString.Cast<string>().ToDictionary(k => k, k => (object)Request.QueryString[k])))')
-        .success(function(result) {
-          if (result.model && result.model.MessageType === 2) {
-            // Set focus to password field if login failed.
-            $("#password").focus();
-          }
-        });
-    };
+    });
+    $scope.$on('angular.net.success', function(e, args) {
+      if (args && args.result && args.result.model && args.result.model.MessageType === 2) {
+        // Set focus to password field if login failed.
+        $("#password").focus();
+      }
+    });
   }]);
 </script>
 }
 
 <h2>@Resources.Login</h2>
 <div class="form-horizontal" ng-controller="loginCtrl">
-  <form method="post" name="loginForm" ng-controller="validationCtrl" ng-submit="submitLogin()" novalidate>
+  <form method="post" name="loginForm"
+        ng-submit="trySubmit(loginForm, '@Url.Action("Login", "User", Request.QueryStringRouteValues())')"
+        ng-controller="validationSummaryCtrl"
+        novalidate>
     <div class="form-group">
       <label class="col-sm-2 control-label">@Resources.UserId</label>
       <div class="col-sm-10">
@@ -64,8 +64,8 @@
     <div class="form-group">
       <div class="col-sm-offset-2 col-sm-10">
         <div>@Html.Partial("Message")</div>
-        <div>@Html.Partial("ValidationSummary")</div>
-        <div><a ng-href="@Url.Action("Register", "User")?UserId={{ encodeURIComponent(model.UserId) }}">Register as a new user</a></div>
+        <validation-summary></validation-summary>
+        <div><a ng-href="@Url.Action("Register", "User")?UserId={{ $window.encodeURIComponent(model.UserId) }}">Register as a new user</a></div>
       </div>
     </div>
   </form>

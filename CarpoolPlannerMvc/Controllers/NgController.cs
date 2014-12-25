@@ -13,18 +13,7 @@ namespace CarpoolPlanner.Controllers
         /// <returns></returns>
         protected JsonNetResult Ng(object model)
         {
-            return Ng(model, null);
-        }
-
-        /// <summary>
-        /// Creates a JsonNetResult that tells angular to update the model and user id.
-        /// </summary>
-        /// <param name="model">The updated model.</param>
-        /// <param name="userId">The new user ID.</param>
-        /// <returns></returns>
-        protected JsonNetResult Ng(object model, object userId)
-        {
-            return JsonNet(new NgResultData { model = model, userId = userId });
+            return JsonNet(new NgResultData { model = model });
         }
 
         /// <summary>

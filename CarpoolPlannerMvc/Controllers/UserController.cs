@@ -38,7 +38,7 @@ namespace CarpoolPlanner.Controllers
                             // Log the user in, redirect to the proper page.
                             FormsAuthentication.SetAuthCookie(model.UserId, model.RememberMe);
                             var returnUrl = Request.QueryString["ReturnUrl"];
-                            return NgRedirect(returnUrl ?? Url.Action("Trips", "Home"));
+                            return NgRedirect(returnUrl ?? FormsAuthentication.DefaultUrl);
                     }
                 }
                 else
