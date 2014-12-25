@@ -10,6 +10,8 @@ using System.Web;
 using System.Web.Helpers;
 using System.Web.Mvc;
 using System.Web.Mvc.Html;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 
 namespace CarpoolPlanner
 {
@@ -51,7 +53,7 @@ namespace CarpoolPlanner
             var model = htmlHelper.ViewData.Model;
             if (model == null)
                 return new MvcHtmlString("");
-            return new MvcHtmlString("JSON.parse('" + Json.Encode(htmlHelper.ViewData.Model) + "')");
+            return new MvcHtmlString("JSON.parse('" + JsonConvert.SerializeObject(model, new IsoDateTimeConverter()) + "')");
         }
     }
 }

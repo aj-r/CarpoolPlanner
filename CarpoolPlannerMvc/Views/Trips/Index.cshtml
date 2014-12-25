@@ -27,7 +27,8 @@
           if (!result.model.CreateMessage) {
             // If the trip was created successfully, treat the create trip like a new form
             // (so pretend it was never submitted, otherwise errors will appear)
-            ctrl.createTripForm.$submitted = false;
+            ctrl.createTripForm.$setPristine();
+            ctrl.createTripForm.$setUntouched();
           }
         });
     };

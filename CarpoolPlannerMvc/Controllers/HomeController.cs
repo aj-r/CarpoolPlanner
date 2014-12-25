@@ -19,7 +19,7 @@ namespace CarpoolPlanner.Controllers
         public ActionResult Index(HomeViewModel model)
         {
             // TODO: save stuff
-            return Json(model);
+            return Ng(model);
         }
     }
 }

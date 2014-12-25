@@ -66,8 +66,12 @@
               $scope.validationErrors.push(message);
             }
           }
-          // Move focus to the first invalid control
-          $("[name=" + form.$name + "] .ng-invalid")[0].focus();
+          // Move focus to the first invalid control (NOTE: only works if form has a name)
+          if (form.$name) {
+            var elems = $("[name=" + form.$name + "] .ng-invalid");
+            if (elems.length > 0)
+              elems[0].focus();
+          }
           return false;
         }
       };
