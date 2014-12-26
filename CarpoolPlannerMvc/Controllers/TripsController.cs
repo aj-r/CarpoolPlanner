@@ -44,7 +44,7 @@ namespace CarpoolPlanner.Controllers
             }
             createModel.Trip = new Trip();
             createModel.Trip.Recurrences.Add(new TripRecurrence());
-            createModel.Message = "";
+            createModel.SetMessage("Created successfully.", MessageType.Success);
             return Ng(createModel);
         }
     }

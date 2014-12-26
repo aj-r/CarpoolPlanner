@@ -47,13 +47,41 @@ namespace CarpoolPlanner
         /// Renders the properties of the current MVC model into a javascript object.
         /// </summary>
         /// <param name="htmlHelper">The HTML helper instance that this method extends.</param>
+        /// <param name="withSemicolon">True to include a semicolon at the end of the output, otherwise false.</param>
         /// <returns>A javascript object that represents the current MVC model.</returns>
-        public static MvcHtmlString JSModel(this HtmlHelper htmlHelper)
+        public static MvcHtmlString JSModel(this HtmlHelper htmlHelper, bool withSemicolon = true)
         {
             var model = htmlHelper.ViewData.Model;
             if (model == null)
                 return new MvcHtmlString("");
-            return new MvcHtmlString("JSON.parse('" + JsonConvert.SerializeObject(model, new IsoDateTimeConverter()) + "')");
+            return new MvcHtmlString("JSON.parse('" + JsonConvert.SerializeObject(model, new IsoDateTimeConverter()) + "')" + (withSemicolon ? ";" : ""));
+        }
+
+        /// <summary>
+        /// Renders an enum type as a javascript object.
+        /// </summary>
+        /// <param name="htmlHelper">The HTML helper instance that this method extends.</param>
+        /// <returns>A javascript object that represents the current MVC model.</returns>
+        public static MvcHtmlString JSEnum(this HtmlHelper htmlHelper, Type enumType, bool withSemicolon = true)
+        {
+            if (!enumType.IsEnum)
+                throw new ArgumentException("enumType must be an enum type.", "enumType");
+            var sb = new StringBuilder();
+            sb.Append('{');
+            bool separator = false;
+            foreach (var value in enumType.GetEnumValues())
+            {
+                if (separator)
+                    sb.Append(',');
+                sb.Append(value);
+                sb.Append(':');
+                sb.Append((int)value);
+                separator = true;
+            }
+            sb.Append('}');
+            if (withSemicolon)
+                sb.Append(';');
+            return new MvcHtmlString(sb.ToString());
         }
     }
 }

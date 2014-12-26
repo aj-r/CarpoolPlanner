@@ -27,20 +27,6 @@ namespace CarpoolPlanner.Model
 
         public bool DriversPicked { get; set; }
 
-        public string DisplayValue
-        {
-            get
-            {
-                var datePart = Date.Date;
-                if (datePart == DateTime.Today)
-                    return Date.ToString("dddd, MMM d '(today) at' h:mm tt");
-                else if (datePart == DateTime.Today.AddDays(1))
-                    return Date.ToString("dddd, MMM d '(tomorrow) at' h:mm tt");
-                else
-                    return Date.ToString("dddd, MMM d 'at' h:mm tt");
-            }
-        }
-
         public int RequiredSeats
         {
             get
@@ -137,11 +123,6 @@ namespace CarpoolPlanner.Model
                 }
             }
             return sb.ToString().Trim('\n');
-        }
-
-        public override string ToString()
-        {
-            return DisplayValue;
         }
     }
 }

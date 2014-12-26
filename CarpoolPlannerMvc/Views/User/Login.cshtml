@@ -14,10 +14,10 @@
     $scope.encodeURIComponent = $window.encodeURIComponent;
     $scope.$on('angular.net.beforesubmit', function() {
       $scope.model.Message = "Logging in...";
-      $scope.model.MessageType = 0;
+      $scope.model.MessageType = $scope.MessageType.Info;
     });
     $scope.$on('angular.net.success', function(e, args) {
-      if (args && args.result && args.result.model && args.result.model.MessageType === 2) {
+      if (args && args.result && args.result.model && args.result.model.MessageType === $scope.MessageType.Error) {
         // Set focus to password field if login failed.
         $("#password").focus();
       }

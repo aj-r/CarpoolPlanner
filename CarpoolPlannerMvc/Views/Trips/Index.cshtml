@@ -14,16 +14,16 @@
     $scope.saveTrips = function() {
       this.trySubmit(this.tripRecurrenceForm, '@Url.Action("Index", "Trips")', $scope, 'model', function() {
         $scope.model.Message = "Saving...";
-        $scope.model.MessageType = 0;
+        $scope.model.MessageType = $scope.MessageType.Info;
       });
     };
     $scope.createTrip = function(e, args) {
       var form = this.createTripForm;
       this.trySubmit(form, '@Url.Action("CreateTrip", "Trips")', $scope.model, 'Create', function() {
         $scope.model.Create.Message = "Creating...";
-        $scope.model.Create.MessageType = 0;
+        $scope.model.Create.MessageType = $scope.MessageType.Info;
       }).success(function(result) {
-        if (!result.model.Message) {
+        if (result.model.MessageType === MessageType.Success) {
           // Add the created trip to the list
           $scope.model.Trips.push(result.model.CreatedTrip);
           // If the trip was created successfully, treat the create trip like a new form
@@ -72,7 +72,7 @@
           <div ng-repeat="tripRecurrence in trip.Recurrences" class="checkbox">
             <label>
               <input type="checkbox" />
-              {{ tripRecurrence.DisplayValue }}
+              {{ tripRecurrenceToString(tripRecurrence) }}
             </label>
           </div>
         </div>
@@ -164,7 +164,6 @@
       <input type="submit" value="Create Trip" class="btn btn-default" />
     </div>
     <div class="form-group">
-      <!-- TODO: make a message directive instead? -->
       @Html.Partial("Message", new ViewDataDictionary { { "Prefix", "Create." } })
       <validation-summary></validation-summary>
     </div>

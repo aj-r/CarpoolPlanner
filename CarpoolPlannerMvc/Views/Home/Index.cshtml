@@ -12,7 +12,7 @@
   var tripCtrl = app.controller('tripCtrl', ['$scope', function($scope) {
     $scope.$on('angular.net.beforesubmit', function(e, args) {
       $scope.model.Message = "Updating...";
-      $scope.model.MessageType = 0;
+      $scope.model.MessageType = $scope.MessageType.Info;
     });
   }]);
 </script>
@@ -31,7 +31,7 @@
             <div style="padding: 5px 0px;" ng-repeat="tripInstance in trip.Instances">
               <label style="margin-right:10px;">
                 <input type="checkbox" ng-model="tripInstance.UserTripInstances[model.UserId].Attending" class="checkbox" /><!-- todo: use indeterminate state -->
-                {{ tripInstance.DisplayValue }}
+                {{ tripInstanceToString(tripInstance) }}
               </label>
               <!-- TODO: accordion-ize this. Also set the first item to be expanded by default. -->
               <!-- TODO: radio button list -->
