@@ -47,5 +47,26 @@ namespace CarpoolPlanner.Controllers
             createModel.SetMessage("Created successfully.", MessageType.Success);
             return Ng(createModel);
         }
+
+        [HttpDelete]
+        public ActionResult DeleteTrip(int id)
+        {
+            var model = new TripsViewModel();
+            using (var context = ApplicationDbContext.Create())
+            {
+                var trip = context.Trips.Find(id);
+                if (trip != null)
+                {
+                    context.Trips.Remove(trip);
+                    context.SaveChanges();
+                    model.SetMessage("Deleted successfully.", MessageType.Success);
+                }
+                else
+                {
+                    model.SetMessage("Trip does not exist. It may have been deleted by another user..", MessageType.Error);
+                }
+            }
+            return Ng(model);
+        }
     }
 }

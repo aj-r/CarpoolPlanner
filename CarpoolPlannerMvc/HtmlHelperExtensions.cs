@@ -49,12 +49,12 @@ namespace CarpoolPlanner
         /// <param name="htmlHelper">The HTML helper instance that this method extends.</param>
         /// <param name="withSemicolon">True to include a semicolon at the end of the output, otherwise false.</param>
         /// <returns>A javascript object that represents the current MVC model.</returns>
-        public static MvcHtmlString JSModel(this HtmlHelper htmlHelper, bool withSemicolon = true)
+        public static MvcHtmlString JSModel(this HtmlHelper htmlHelper)
         {
             var model = htmlHelper.ViewData.Model;
             if (model == null)
                 return new MvcHtmlString("");
-            return new MvcHtmlString("JSON.parse('" + JsonConvert.SerializeObject(model, new IsoDateTimeConverter()) + "')" + (withSemicolon ? ";" : ""));
+            return new MvcHtmlString("JSON.parse('" + JsonConvert.SerializeObject(model, new IsoDateTimeConverter()) + "')");
         }
 
         /// <summary>
@@ -62,7 +62,7 @@ namespace CarpoolPlanner
         /// </summary>
         /// <param name="htmlHelper">The HTML helper instance that this method extends.</param>
         /// <returns>A javascript object that represents the current MVC model.</returns>
-        public static MvcHtmlString JSEnum(this HtmlHelper htmlHelper, Type enumType, bool withSemicolon = true)
+        public static MvcHtmlString JSEnum(this HtmlHelper htmlHelper, Type enumType)
         {
             if (!enumType.IsEnum)
                 throw new ArgumentException("enumType must be an enum type.", "enumType");
@@ -79,8 +79,6 @@ namespace CarpoolPlanner
                 separator = true;
             }
             sb.Append('}');
-            if (withSemicolon)
-                sb.Append(';');
             return new MvcHtmlString(sb.ToString());
         }
     }

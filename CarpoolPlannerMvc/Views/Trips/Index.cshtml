@@ -10,14 +10,14 @@
 
 @section headScripts{
 <script type="text/javascript">
-  var tripCtrl = app.controller('tripCtrl', ['$scope', function($scope) {
+  var tripCtrl = app.controller('tripCtrl', ['$scope', '$http', function($scope, $http) {
     $scope.saveTrips = function() {
       this.trySubmit(this.tripRecurrenceForm, '@Url.Action("Index", "Trips")', $scope, 'model', function() {
         $scope.model.Message = "Saving...";
         $scope.model.MessageType = $scope.MessageType.Info;
       });
     };
-    $scope.createTrip = function(e, args) {
+    $scope.createTrip = function() {
       var form = this.createTripForm;
       this.trySubmit(form, '@Url.Action("CreateTrip", "Trips")', $scope.model, 'Create', function() {
         $scope.model.Create.Message = "Creating...";
@@ -33,8 +33,26 @@
         }
       })
     };
+    $scope.deleteTrip = function(index) {
+      var scope = this;
+      var trip = scope.model.Trips[index];
+      if (!confirm('Are you sure you want to delete "' + trip.Name + '"?\nThis will remove ALL existing instances of that trip.'))
+        return;
+
+      scope.model.Message = 'Deleting...';
+      scope.model.MessageType = MessageType.Info;
+      $http.delete('@Url.Action("DeleteTrip", "Trips")/' + trip.Id).success(function(result) {
+        if (result && result.model) {
+          scope.model.Message = result.model.Message;
+          scope.model.MessageType = result.model.MessageType;
+          if (result.model.MessageType === MessageType.Success) {
+            scope.model.Trips.splice(index, 1);
+          }
+        }
+      })
+    };
     $scope.addTripRecurrence = function(trip) {
-      trip.Recurrences.push({ Every: 1, Type: 4 });
+      trip.Recurrences.push({ Every: 1, Type: RecurrenceType.Weekly });
     };
     $scope.removeTripRecurrence = function(trip, index) {
       trip.Recurrences.splice(index, 1);
@@ -65,7 +83,7 @@
           <div class="edit-buttons">
             <a href="javascript:;">Edit</a>
             &nbsp;&nbsp;
-            <a href="javascript:;" ng-click="">Delete</a>
+            <a href="javascript:;" ng-click="deleteTrip($index)">Delete</a>
           </div>
         }
         <div class="indent">
@@ -112,7 +130,7 @@
             <input type="number" ng-model="tripRecurrence.Every" min="1" class="form-control" friendly-name="Every" required />
           </div>
           <div class="col-sm-8">
-            <select class="form-control" ng-model="tripRecurrence.Type">
+            <select class="form-control" ng-model="tripRecurrence.Type" numeric-binding>
               <option value="5">day{{ tripRecurrence.Every == 1 ? '' : 's' }}</option>
               <option value="4">week{{ tripRecurrence.Every == 1 ? '' : 's' }}</option>
               <option value="2">month{{ tripRecurrence.Every == 1 ? '' : 's' }}</option>
@@ -156,6 +174,7 @@
             </div>
           </div>
         </div>
+        <div><b>Preview:</b> {{ tripRecurrenceToString(tripRecurrence) }}</div>
         <hr />
       </div>
       <a ng-click="addTripRecurrence(model.Create.Trip)" href="javascript:;">Add Recurrence</a>

@@ -2,7 +2,7 @@
   var app = angular.module('angular.net', []);
 
   app.factory('AngularNet', ['$rootScope', '$http', function($rootScope, $http) {
-    // Posts the current model to the specified URL
+    // Posts the model to the specified URL
     return {
       submitModel: function(model, url, state) {
         $rootScope.$broadcast('angular.net.beforesubmit', { url: url, state: state });
