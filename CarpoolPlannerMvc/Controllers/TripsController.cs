@@ -35,10 +35,10 @@ namespace CarpoolPlanner.Controllers
             using (var context = ApplicationDbContext.Create())
             {
                 model = GetTripsViewModel(context);
-                foreach (var userTrip in model.Trips.Select(t => t.UserTrips[AppUtils.CurrentUserId]))
+                foreach (var userTrip in model.Trips.Select(t => t.UserTrips[AppUtils.CurrentUser.Id]))
                 {
-                    var clientUserTrip = clientModel.Trips.Where(t => t.Id == userTrip.TripId)
-                        .Select(t => t.UserTrips[AppUtils.CurrentUserId])
+                    var clientUserTrip = clientModel.Trips.Where(t => t.Id == userTrip.TripId && t.UserTrips.Contains(AppUtils.CurrentUser.Id))
+                        .Select(t => t.UserTrips[AppUtils.CurrentUser.Id])
                         .FirstOrDefault();
                     if (clientUserTrip == null)
                         continue;
@@ -118,14 +118,14 @@ namespace CarpoolPlanner.Controllers
         {
             var model = new TripsViewModel();
             model.Trips = context.Trips.Include(t => t.Recurrences).ToList();
-            context.GetUserTrips(AppUtils.CurrentUser).Include(ut => ut.Recurrences).ToList();
+            context.GetUserTrips(AppUtils.CurrentUser.Id).Include(ut => ut.Recurrences).ToList();
 
             // Create UserTrips and UserTripRecurrences if they don't exist for this user.
             foreach (var trip in model.Trips)
             {
-                if (!trip.UserTrips.Contains(AppUtils.CurrentUserId))
+                if (!trip.UserTrips.Contains(AppUtils.CurrentUser.Id))
                 {
-                    var userTrip = new UserTrip { Attending = false, UserId = AppUtils.CurrentUserId, TripId = trip.Id };
+                    var userTrip = new UserTrip { Attending = false, UserId = AppUtils.CurrentUser.Id, TripId = trip.Id };
                     foreach (var tripRecurrence in trip.Recurrences)
                     {
                         var userTripRecurrence = new UserTripRecurrence
@@ -133,7 +133,7 @@ namespace CarpoolPlanner.Controllers
                             Attending = false,
                             TripId = trip.Id,
                             TripRecurrenceId = tripRecurrence.Id,
-                            UserId = AppUtils.CurrentUserId
+                            UserId = AppUtils.CurrentUser.Id
                         };
                         userTrip.Recurrences.Add(userTripRecurrence);
                     }

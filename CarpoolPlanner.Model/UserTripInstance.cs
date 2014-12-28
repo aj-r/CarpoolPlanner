@@ -28,20 +28,19 @@ namespace CarpoolPlanner.Model
         }
 
         [Key, Column(Order = 0)]
-        public string UserId { get; set; }
+        public long UserId { get; set; }
 
         [Key, Column(Order = 1)]
         public long TripInstanceId { get; set; }
 
         public long TripId { get; set; }
 
-        [Association("fk_usertripinstance_user", "user_id", "id")] // TODO: replace with ForeignKey
+        [ForeignKey("UserId")]
         public User User { get; set; }
 
-        [Association("fk_usertripinstance_tripinstance", "trip_instance_id", "id")]
+        [ForeignKey("TripInstanceId")]
         public TripInstance TripInstance { get; set; }
 
-        [Association("fk_usertripinstance_usertrip", "user_id,trip_id", "user_id,trip_id")]
         public UserTrip UserTrip { get; set; }
 
         public bool? Attending { get; set; }

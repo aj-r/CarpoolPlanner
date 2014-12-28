@@ -4,6 +4,7 @@ app.controller('baseCtrl', ['$scope', '$q', 'AngularNet', function($scope, $q, A
   $scope.MessageType = MessageType;
   $scope.model = originalModel;
   $scope.trySubmit = function(form, url, modelContainer, modelName, beforesubmit) {
+    var scope = this;
     if (this.validateForm && !this.validateForm(form)) {
       var deferred = $q.defer();
       var promise = deferred.promise;
@@ -35,7 +36,10 @@ app.controller('baseCtrl', ['$scope', '$q', 'AngularNet', function($scope, $q, A
           modelContainer[modelName] = result.model;
         }
       })
-      .error(this.errorHandler);
+      .error(function(result) {
+        console.error('Error from server: ' + result);
+        scope.errorHandler(model, result);
+      });
   };
 
   $scope.getSuffix = function(num) {
@@ -115,8 +119,7 @@ app.controller('baseCtrl', ['$scope', '$q', 'AngularNet', function($scope, $q, A
     return date.format('dddd, MMM d [' + specifier + 'at] h:mm a');
   };
 
-  $scope.errorHandler = function(message) {
-    model = modelContainer[modelName];
+  $scope.errorHandler = function(model, message) {
     if (model) {
       var displayMessage = "An unexpected error occurred. Please report this error to the website administrator.";
       if (message && message.indexOf('<!DOCTYPE') === -1)

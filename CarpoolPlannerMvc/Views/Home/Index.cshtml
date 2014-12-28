@@ -10,10 +10,11 @@
 
 <script type="text/javascript">
   var tripCtrl = app.controller('tripCtrl', ['$scope', function($scope) {
-    $scope.$on('angular.net.beforesubmit', function(e, args) {
+    $scope.saveUserTrips = function() {
       $scope.model.Message = "Updating...";
       $scope.model.MessageType = $scope.MessageType.Info;
-    });
+      this.trySubmit(this.tripInstanceForm, '@Url.Action("Index", "Home")');
+    };
   }]);
 </script>
 <div class="row" ng-controller="tripCtrl">
@@ -21,51 +22,52 @@
     <h2>@Resources.UpcomingCarpools</h2>
     @if (AppUtils.IsUserStatus(CarpoolPlanner.Model.UserStatus.Active))
     {
-      <div ng-show="model.Trips.length > 0">
+      <div ng-show="model.userTrips.length > 0">
         <div>Select the days that you can come this week.</div><!-- TODO: generalize to not use the word "week" -->
-        <form method="post" name="tripInstanceForm"
-              ng-submit="trySubmit(tripInstanceForm, '@Url.Action("Index", "SaveTripInstances")')"
-              novalidate>
-          <div class="repeater-item" ng-repeat="trip in model.Trips">
-            <h3>{{ trip.Name }}</h3>
-            <div style="padding: 5px 0px;" ng-repeat="tripInstance in trip.Instances">
+        <form method="post" name="tripInstanceForm" ng-submit="saveUserTrips()" novalidate>
+          <div class="repeater-item" ng-repeat="userTrip in model.userTrips">
+            <h3>{{ userTrip.Trip.Name }}</h3>
+            <div style="padding: 5px 0px;" ng-repeat="userTripInstance in userTrip.Instances">
               <label style="margin-right:10px;">
-                <input type="checkbox" ng-model="tripInstance.UserTripInstances[model.UserId].Attending" class="checkbox" /><!-- todo: use indeterminate state -->
-                {{ tripInstanceToString(tripInstance) }}
+                <input type="checkbox" ng-model="userTripInstance.Attending" class="checkbox" /><!-- todo: use indeterminate state -->
+                {{ tripInstanceToString(userTrip.Trip.Instances[$index]) }}
               </label>
               <!-- TODO: accordion-ize this. Also set the first item to be expanded by default. -->
               <!-- TODO: radio button list -->
               <div style="margin-top:8px;" class="checkbox">
                 <label>
-                  <input type="checkbox" ng-model="tripInstance.UserTripInstances[model.UserId].CanDriveIfNeeded" />
+                  <input type="checkbox" ng-model="userTripInstance.CanDriveIfNeeded" />
                   @Resources.CanDriveIfNeededInstance
                 </label>
               </div>
               <div style="display: inline-block; margin-left: 20px;">
                 <label>
                   @Resources.Seats
-                  <input type="number" ng-model="tripInstance.UserTripInstances[model.UserId].Seats" min="1" class="form-control form-control-inline" style="width: 70px;" />
+                  <input type="number" ng-model="userTripInstance.Seats" min="1" class="form-control form-control-inline" style="width: 70px;" />
                 </label>
               </div>
               <hr style="margin:7px 0px;" />
-              <div ng-class="{ textDanger: tripInstance.AvailableSeats < tripInstance.RequiredSeats }"><b>Total seats:</b> {{ tripInstance.AvailableSeats }}</div>
-              <div><b>Total coming:</b> {{ tripInstance.RequiredSeats }}</div>
-              <div>{{ tripInstance.StatusReport }}</div>
+              <div ng-class="{ textDanger: userTrip.Trip.Instances[$index].AvailableSeats < userTrip.Trip.Instances[$index].RequiredSeats }">
+                <b>Total seats:</b>
+                {{ userTrip.Trip.Instances[$index].AvailableSeats }}
+              </div>
+              <div><b>Total coming:</b> {{ userTrip.Trip.Instances[$index].RequiredSeats }}</div><!-- TODO: calculate this on the client to enable live update -->
+              <div>{{ userTrip.Trip.Instances[$index].StatusReport }}</div><!-- TODO: calculate this on the client to enable live update -->
             </div>
           </div>
           <input type="submit" value="@Resources.Save" class="btn btn-default" />
         </form>
       </div>
-      <div ng-show="model.Trips.length === 0">
+      <div ng-show="model.userTrips.length === 0">
         <p>
-          You have not selected any trips. Please select which trips to want to attend on the
+          You have not selected any carpools. Please select some on the
           @Html.ActionLink(Resources.AvailableCarpools, "Index", "Trips") page.
         </p>
       </div>
     }
     else
     {
-      <div class="text-danger">You cannot see upcoming trips because your account has not yet been approved by an administrator.</div>
+      <div class="text-danger">You cannot see upcoming carpools because your account has not yet been approved by an administrator.</div>
     }
     <cp-message></cp-message>
   </div>

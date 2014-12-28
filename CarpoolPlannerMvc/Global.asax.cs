@@ -24,9 +24,8 @@ namespace CarpoolPlanner
 
             // Replace the default JSON provider with our own that uses JSON.NET and can handle dictionaries.
             ValueProviderFactories.Factories.Remove(ValueProviderFactories.Factories.OfType<JsonValueProviderFactory>().FirstOrDefault());
-            ValueProviderFactories.Factories.Add(new JsonNetValueProviderFactory());
-
-            //ModelBinders.Binders.Add(typeof(TripRecurrence), new KeyedCollectionModelBinder());
+            //ValueProviderFactories.Factories.Add(new JsonNetValueProviderFactory());
+            ModelBinders.Binders.DefaultBinder = new JsonNetModelBinder();
         }
     }
 }

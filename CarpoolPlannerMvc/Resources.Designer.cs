@@ -142,6 +142,15 @@ namespace CarpoolPlanner {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to User ID.
+        /// </summary>
+        public static string LoginName {
+            get {
+                return ResourceManager.GetString("LoginName", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to I will need a ride.
         /// </summary>
         public static string NeedRide {
@@ -192,15 +201,6 @@ namespace CarpoolPlanner {
         public static string UpcomingCarpools {
             get {
                 return ResourceManager.GetString("UpcomingCarpools", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to User ID.
-        /// </summary>
-        public static string UserId {
-            get {
-                return ResourceManager.GetString("UserId", resourceCulture);
             }
         }
     }

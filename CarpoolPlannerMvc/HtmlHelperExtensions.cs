@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -54,12 +55,15 @@ namespace CarpoolPlanner
             var model = htmlHelper.ViewData.Model;
             if (model == null)
                 return new MvcHtmlString("");
-            var settings = new JsonSerializerSettings
+
+            var serializer = JsonSerializerFactory.Current.GetSerializer();
+            string json;
+            using (var writer = new StringWriter())
             {
-                Converters = new List<JsonConverter> { new IsoDateTimeConverter(), new KeyedCollectionConverter() },
-                ReferenceLoopHandling = ReferenceLoopHandling.Ignore
-            };
-            return new MvcHtmlString("JSON.parse('" + JsonConvert.SerializeObject(model, settings) + "')");
+                serializer.Serialize(writer, model);
+                json = writer.ToString();
+            }
+            return new MvcHtmlString("JSON.parse('" + json + "')");
         }
 
         /// <summary>

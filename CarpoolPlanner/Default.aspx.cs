@@ -24,7 +24,7 @@ namespace CarpoolPlanner
             var user = App.CurrentUser;
             using (var context = ApplicationDbContext.Create())
             {
-                userTrips = context.GetUserTrips(App.CurrentUser).Include(ut => ut.Instances).Include(ut => ut.Trip.Recurrences).ToList();
+                userTrips = context.GetUserTrips(App.CurrentUser.Id).Include(ut => ut.Instances).Include(ut => ut.Trip.Recurrences).ToList();
                 foreach (var tripRecurrence in userTrips.SelectMany(ut => ut.Trip.Recurrences))
                 {
                     // With EF magic, this method automatically adds the next TripInstance for each recurrence to the Trip

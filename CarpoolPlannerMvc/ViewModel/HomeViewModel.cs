@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Web;
 using CarpoolPlanner.Model;
+using Newtonsoft.Json;
 
 namespace CarpoolPlanner.ViewModel
 {
@@ -10,9 +11,10 @@ namespace CarpoolPlanner.ViewModel
     {
         public HomeViewModel()
         {
-            Trips = new List<Trip>();
+            UserTrips = new List<UserTrip>();
         }
 
-        public List<Trip> Trips { get; set; }
+        [JsonProperty(PropertyName = "userTrips")]
+        public List<UserTrip> UserTrips { get; set; }
     }
 }

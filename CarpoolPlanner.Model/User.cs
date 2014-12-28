@@ -57,10 +57,12 @@ namespace CarpoolPlanner.Model
             PhoneVisible = true;
         }
 
-        [Key, MaxLength(500), Required]
-        public string Id { get; set; }
+        [Key, Required]
+        public long Id { get; set; }
 
-        [Required]
+        [MaxLength(500), Required]
+        public string LoginName { get; set; }
+
         public string Name { get; set; }
 
         /// <summary>
@@ -74,7 +76,7 @@ namespace CarpoolPlanner.Model
                 Salt = null;
                 Password = null;
                 Iterations = 0;
-                log.Info(string.Concat("User '", Id, "' removed his/her password"));
+                log.Info(string.Concat("User ", Id, " removed his/her password"));
             }
             else
             {
@@ -83,7 +85,7 @@ namespace CarpoolPlanner.Model
                 rng.GetBytes(Salt);
                 Iterations = defaultIterationCount;
                 Password = Crypto.PBKDF2(password, Salt, Iterations, hashSize);
-                log.Info(string.Concat("User '", Id, "' changed his/her password"));
+                log.Info(string.Concat("User ", Id, " changed his/her password"));
             }
         }
 
@@ -181,7 +183,7 @@ namespace CarpoolPlanner.Model
 
         public override string ToString()
         {
-            return Id;
+            return LoginName;
         }
     }
 }

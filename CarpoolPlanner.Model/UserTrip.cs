@@ -16,7 +16,7 @@ namespace CarpoolPlanner.Model
         }
 
         [Key, Column("user_id", Order = 0)]
-        public string UserId { get; set; }
+        public long UserId { get; set; }
 
         [Key, Column("trip_id", Order = 1)]
         public long TripId { get; set; }

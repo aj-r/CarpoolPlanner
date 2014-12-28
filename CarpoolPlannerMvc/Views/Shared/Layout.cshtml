@@ -54,7 +54,7 @@
         <ul class="nav navbar-nav navbar-right">
           @if (AppUtils.IsUserAuthenticated())
           {
-            <li><a href="@Url.Action("Manage", "User")" cp-nav>{{ model.UserId }}</a></li>
+            <li><a href="@Url.Action("Manage", "User")" cp-nav>{{ model.loginName }}</a></li>
             <li><a href="@Url.Action("Logout", "User")" cp-nav>Logout</a></li>
           }
           else

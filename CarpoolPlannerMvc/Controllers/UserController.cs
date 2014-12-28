@@ -24,7 +24,7 @@ namespace CarpoolPlanner.Controllers
         {
             using (var context = ApplicationDbContext.Create())
             {
-                var user = context.FindUser(model.UserId, model.Password);
+                var user = context.FindUser(model.LoginNameInput, model.Password);
                 if (user != null)
                 {
                     AppUtils.UpdateCachedUser(user);
@@ -36,7 +36,7 @@ namespace CarpoolPlanner.Controllers
                         default:
                             // Note: allow unapproved accounts to log in, but give them limited access.
                             // Log the user in, redirect to the proper page.
-                            FormsAuthentication.SetAuthCookie(model.UserId, model.RememberMe);
+                            FormsAuthentication.SetAuthCookie(model.LoginNameInput, model.RememberMe);
                             var returnUrl = Request.QueryString["ReturnUrl"];
                             return NgRedirect(returnUrl ?? FormsAuthentication.DefaultUrl);
                     }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Web;
 using System.Web.Mvc;
@@ -27,13 +28,11 @@ namespace CarpoolPlanner
             if (ContentEncoding != null)
                 response.ContentEncoding = ContentEncoding;
 
-            var settings = new JsonSerializerSettings
+            var serializer = JsonSerializerFactory.Current.GetSerializer();
+            using (var writer = new StreamWriter(response.OutputStream))
             {
-                Converters = new List<JsonConverter> { new IsoDateTimeConverter(), new KeyedCollectionConverter() },
-                ReferenceLoopHandling = ReferenceLoopHandling.Ignore
-            };
-            var serializedObject = JsonConvert.SerializeObject(Data, settings);
-            response.Write(serializedObject);
+                 serializer.Serialize(writer, Data);
+            }
         }
     }
 }

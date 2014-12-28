@@ -6,9 +6,9 @@ using System.Text;
 
 namespace CarpoolPlanner.Model
 {
-    public class UserTripCollection : KeyedCollection<string, UserTrip>
+    public class UserTripCollection : KeyedCollection<long, UserTrip>
     {
-        protected override string GetKeyForItem(UserTrip item)
+        protected override long GetKeyForItem(UserTrip item)
         {
             return item.UserId;
         }

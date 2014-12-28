@@ -29,7 +29,7 @@ namespace CarpoolPlanner.NotificationService
         private static readonly object instanceLock = new object();
         private static NotificationManager instance;
 
-        private static ConcurrentDictionary<string, long?> lastMessageIds = new ConcurrentDictionary<string, long?>();
+        private static ConcurrentDictionary<long, long?> lastMessageIds = new ConcurrentDictionary<long, long?>();
 
         public static NotificationManager GetInstance()
         {

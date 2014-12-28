@@ -91,7 +91,6 @@
             <label>
               <input type="checkbox"
                      ng-model="trip.UserTrips[model.UserId].Recurrences[$index].Attending"
-                     ch-parent-selector="#attending-{{ trip.Id }}"
                      ch-hierarchy="attending-{{ trip.Id + '.' + tripRecurrence.Id }}" />
               {{ tripRecurrenceToString(tripRecurrence) }}
             </label>

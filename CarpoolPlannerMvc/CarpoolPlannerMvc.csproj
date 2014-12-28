@@ -139,6 +139,8 @@
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
     <Compile Include="HtmlHelperExtensions.cs" />
+    <Compile Include="JsonSerializerFactory.cs" />
+    <Compile Include="JsonNetModelBinder.cs" />
     <Compile Include="JsonNetResult.cs" />
     <Compile Include="JsonNetValueProviderFactory.cs" />
     <Compile Include="KeyedCollectionConverter.cs" />

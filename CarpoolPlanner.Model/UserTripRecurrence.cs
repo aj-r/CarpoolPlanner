@@ -10,7 +10,7 @@ namespace CarpoolPlanner.Model
     public class UserTripRecurrence
     {
         [Key, Column(Order = 0)]
-        public string UserId { get; set; }
+        public long UserId { get; set; }
 
         [Key, Column(Order = 1)]
         public long TripRecurrenceId { get; set; }
@@ -19,10 +19,10 @@ namespace CarpoolPlanner.Model
 
         public bool Attending { get; set; }
 
-        [Association("fk_usertriprecurrence_user", "user_id", "id")]
+        [ForeignKey("UserId")]
         public User User { get; set; }
 
-        [Association("fk_usertriprecurrence_triprecurrence", "trip_recurrence_id", "id")]
+        [ForeignKey("TripRecurrenceId")]
         public TripRecurrence TripRecurrence { get; set; }
 
     }

@@ -24,7 +24,7 @@ namespace CarpoolPlanner
             using (var context = ApplicationDbContext.Create())
             {
                 trips = context.Trips.Include(t => t.Recurrences).ToList();
-                userTrips = context.GetUserTrips(App.CurrentUser).Include(ut => ut.Recurrences).ToList();
+                userTrips = context.GetUserTrips(App.CurrentUser.Id).Include(ut => ut.Recurrences).ToList();
                 if (!IsPostBack)
                 {
                     newTrip = new Trip();

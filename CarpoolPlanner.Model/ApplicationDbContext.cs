@@ -41,9 +41,9 @@ namespace CarpoolPlanner.Model
 
         public IDbSet<Log> Logs { get; set; }
 
-        public User FindUser(string userName, string password)
+        public User FindUser(string loginName, string password)
         {
-            var user = Users.Find(userName);
+            var user = Users.FirstOrDefault(u => u.LoginName == loginName);
             if (user != null)
             {
                 bool correct = user.IsPasswordCorrect(password);
@@ -61,9 +61,9 @@ namespace CarpoolPlanner.Model
         /// Gets all UserTrips for the specified user.
         /// </summary>
         /// <returns>An IEnumerable&lt;UserTrip&gt;.</returns>
-        public IQueryable<UserTrip> GetUserTrips(User user)
+        public IQueryable<UserTrip> GetUserTrips(long userId)
         {
-            return UserTrips.Where(ut => ut.UserId == user.Id);
+            return UserTrips.Where(ut => ut.UserId == userId);
         }
 
         /// <summary>
@@ -124,29 +124,11 @@ namespace CarpoolPlanner.Model
             foreach (var userTripRecurrence in UserTripRecurrences.Include(utr => utr.User).Where(utr => utr.TripRecurrenceId == recurrence.Id))
             {
                 var userTripInstance = UserTripInstance.Create(userTripRecurrence.User, tripInstance);
+                userTripInstance.Attending = userTripRecurrence.Attending;
                 UserTripInstances.Add(userTripInstance);
             }
             SaveChanges();
             return tripInstance;
-        }
-
-        /// <summary>
-        /// Gets UserTripInstance for the specified TripInstance and the specified user. If one does not exist then it is created.
-        /// </summary>
-        /// <param name="instance">The TripInstance.</param>
-        /// <returns>The UserTripInstance for the current user.</returns>
-        public UserTripInstance GetUserTripInstance(TripInstance instance, User user)
-        {
-            if (instance == null)
-                return null;
-            // Note: there could be a multithreading issue here if the same user logs in from 2 different clients at once.
-            // However that is extremely unlikely and I'm too lazy to fix it.
-            var userTripInstance = UserTripInstances.FirstOrDefault(uti => uti.TripInstanceId == instance.Id && uti.UserId == user.Id);
-            if (userTripInstance != null)
-                return userTripInstance;
-            userTripInstance = UserTripInstance.Create(user, instance);
-            UserTripInstances.Add(userTripInstance);
-            return userTripInstance;
         }
 
         /// <summary>
@@ -157,7 +139,18 @@ namespace CarpoolPlanner.Model
         public UserTripInstance GetNextUserTripInstance(TripRecurrence recurrence, User user)
         {
             var instance = GetNextTripInstance(recurrence, TimeSpan.Zero);
-            return GetUserTripInstance(instance, user);
+            if (instance == null)
+                return null;
+            // Note: there could be a multithreading issue here if the same user logs in from 2 different clients at once.
+            // However that is extremely unlikely and I'm too lazy to fix it.
+            var userTripInstance = UserTripInstances.FirstOrDefault(uti => uti.TripInstanceId == instance.Id && uti.UserId == user.Id);
+            if (userTripInstance != null)
+                return userTripInstance;
+            userTripInstance = UserTripInstance.Create(user, instance);
+            var userTripRecurrence = recurrence.UserTripRecurrences[user.Id];
+            userTripInstance.Attending = userTripRecurrence != null && userTripRecurrence.Attending;
+            UserTripInstances.Add(userTripInstance);
+            return userTripInstance;
         }
 
         protected override void OnModelCreating(DbModelBuilder modelBuilder)
@@ -165,8 +158,11 @@ namespace CarpoolPlanner.Model
             modelBuilder.Types().Configure(c => c.ToTable(GetDbObjectName(c.ClrType.Name)));
             modelBuilder.Properties().Configure(c => c.HasColumnName(GetDbObjectName(c.ClrPropertyInfo.Name)));
 
-            //modelBuilder.Entity<UserTripInstance>().HasOptional<UserTrip>(uti => uti.UserTrip).WithMany().WillCascadeOnDelete(false);
-            //modelBuilder.Entity<UserTrip>().HasRequired<Trip>(uti => uti.Trip).WithMany().WillCascadeOnDelete(false);
+            modelBuilder.Entity<UserTripInstance>()
+                .HasRequired(uti => uti.UserTrip)
+                .WithMany(ut => ut.Instances)
+                .HasForeignKey(uti => new { uti.UserId, uti.TripId })
+                .WillCascadeOnDelete();
 
             base.OnModelCreating(modelBuilder);
         }

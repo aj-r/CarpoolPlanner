@@ -15,23 +15,20 @@ namespace CarpoolPlanner
 
         private static readonly ConcurrentDictionary<string, User> Users = new ConcurrentDictionary<string, User>();
 
-        public static string CurrentUserId
-        {
-            get { return HttpContext.Current.User != null ? HttpContext.Current.User.Identity.Name : null; }
-        }
-
         public static User CurrentUser
         {
             get
             {
-                var userId = CurrentUserId;
-                if (string.IsNullOrEmpty(userId))
+                if (HttpContext.Current.User == null)
                     return null;
-                var user = Users.GetOrAdd(userId.ToLowerInvariant(), id =>
+                var loginName = HttpContext.Current.User.Identity.Name;
+                if (string.IsNullOrEmpty(loginName))
+                    return null;
+                var user = Users.GetOrAdd(loginName.ToLowerInvariant(), key =>
                 {
                     using (var context = ApplicationDbContext.Create())
                     {
-                        return context.Users.Find(id);
+                        return context.Users.FirstOrDefault(u => u.LoginName == key);
                     }
                 });
                 return user;
@@ -40,13 +37,13 @@ namespace CarpoolPlanner
 
         public static bool IsUserAuthenticated()
         {
-            return !string.IsNullOrEmpty(CurrentUserId);
+            return CurrentUser != null;
         }
 
         public static bool IsUserStatus(UserStatus status)
         {
             var user = CurrentUser;
-            return user != null && user.Status == status;
+            return user != null ? user.Status == status : status == UserStatus.Disabled;
         }
 
         public static bool IsUserAdmin()
@@ -57,7 +54,7 @@ namespace CarpoolPlanner
 
         public static void UpdateCachedUser(User user)
         {
-            Users.AddOrUpdate(user.Id.ToLowerInvariant(), user, (id, u) => user);
+            Users.AddOrUpdate(user.LoginName.ToLowerInvariant(), user, (id, u) => user);
         }
 
         /// <summary>

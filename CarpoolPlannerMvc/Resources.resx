@@ -144,6 +144,9 @@
   <data name="Login" xml:space="preserve">
     <value>Login</value>
   </data>
+  <data name="LoginName" xml:space="preserve">
+    <value>User ID</value>
+  </data>
   <data name="NeedRide" xml:space="preserve">
     <value>I will need a ride</value>
   </data>
@@ -161,8 +164,5 @@
   </data>
   <data name="UpcomingCarpools" xml:space="preserve">
     <value>Upcoming Carpools</value>
-  </data>
-  <data name="UserId" xml:space="preserve">
-    <value>User ID</value>
   </data>
 </root>

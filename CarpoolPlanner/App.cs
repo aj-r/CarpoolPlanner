@@ -40,7 +40,7 @@ namespace CarpoolPlanner
 
         public static void UpdateCachedUser(User user)
         {
-            Users.AddOrUpdate(user.Id.ToLowerInvariant(), user, (id, u) => user);
+            Users.AddOrUpdate(user.LoginName.ToLowerInvariant(), user, (id, u) => user);
         }
 
         /// <summary>

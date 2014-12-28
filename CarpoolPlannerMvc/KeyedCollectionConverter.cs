@@ -20,13 +20,12 @@ namespace CarpoolPlanner
         public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
         {
             var obj = JObject.Load(reader);
-            var collection = Activator.CreateInstance(objectType) as IList;
-            var name = typeof(List<int>).Name;
+            var collection = existingValue as IList;
             var listType = objectType.GetInterface("System.Collections.Generic.IList`1");
             var itemType = listType.GetGenericArguments().First();
             foreach (var property in obj.Properties())
             {
-                var item = property.ToObject(itemType);
+                var item = property.Value.ToObject(itemType);
                 collection.Add(item);
             }
             return collection;

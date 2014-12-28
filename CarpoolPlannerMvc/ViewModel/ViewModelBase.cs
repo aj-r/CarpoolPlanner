@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Web;
 using System.Web.Mvc;
+using Newtonsoft.Json;
 
 namespace CarpoolPlanner.ViewModel
 {
@@ -26,9 +27,23 @@ namespace CarpoolPlanner.ViewModel
         public string Message { get; set; }
         public MessageType MessageType { get; set; }
 
-        public string UserId
+        public long? UserId
         {
-            get { return AppUtils.CurrentUserId; }
+            get
+            {
+                var user = AppUtils.CurrentUser;
+                return user != null ? (int?)user.Id : null;
+            }
+        }
+
+        [JsonProperty(PropertyName = "loginName")]
+        public string LoginName
+        {
+            get
+            {
+                var user = AppUtils.CurrentUser;
+                return user != null ? user.LoginName : null;
+            }
         }
 
         public void SetMessage(string message, MessageType type)
