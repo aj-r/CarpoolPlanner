@@ -27,7 +27,12 @@ namespace CarpoolPlanner
             if (ContentEncoding != null)
                 response.ContentEncoding = ContentEncoding;
 
-            var serializedObject = JsonConvert.SerializeObject(Data, new IsoDateTimeConverter());
+            var settings = new JsonSerializerSettings
+            {
+                Converters = new List<JsonConverter> { new IsoDateTimeConverter(), new KeyedCollectionConverter() },
+                ReferenceLoopHandling = ReferenceLoopHandling.Ignore
+            };
+            var serializedObject = JsonConvert.SerializeObject(Data, settings);
             response.Write(serializedObject);
         }
     }

@@ -5,6 +5,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
 using System.Web;
+using Newtonsoft.Json;
 
 namespace CarpoolPlanner.Model
 {
@@ -24,6 +25,7 @@ namespace CarpoolPlanner.Model
         {
             Type = RecurrenceType.Weekly;
             Every = 1;
+            UserTripRecurrences = new UserTripRecurrenceCollection();
         }
 
         [Key]
@@ -38,6 +40,9 @@ namespace CarpoolPlanner.Model
         public DateTime? End { get; set; }
 
         public RecurrenceType Type { get; set; }
+
+        [JsonIgnore]
+        public UserTripRecurrenceCollection UserTripRecurrences { get; set; }
         
         /// <summary>
         /// Gets the date of the next trip instance that occurs after the current date.

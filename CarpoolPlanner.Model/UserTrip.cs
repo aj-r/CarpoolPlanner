@@ -21,6 +21,8 @@ namespace CarpoolPlanner.Model
         [Key, Column("trip_id", Order = 1)]
         public long TripId { get; set; }
 
+        public bool Attending { get; set; }
+
         [ForeignKey("TripId")]
         public Trip Trip { get; set; }
 

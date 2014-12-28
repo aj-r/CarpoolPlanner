@@ -9,6 +9,7 @@ using System.Text;
 using System.Web;
 using System.Web.Script.Serialization;
 using log4net;
+using Newtonsoft.Json;
 
 namespace CarpoolPlanner.Model
 {
@@ -116,19 +117,19 @@ namespace CarpoolPlanner.Model
         /// <summary>
         /// Gets or sets the hashed password.
         /// </summary>
-        [ScriptIgnore]
+        [JsonIgnore]
         public byte[] Password { get; set; }
 
         /// <summary>
         /// Gets or sets the salt that was used to hash the password.
         /// </summary>
-        [ScriptIgnore]
+        [JsonIgnore]
         public byte[] Salt { get; set; }
 
         /// <summary>
         /// Gets or sets the number of PBKDF2 iterations used to hash the password.
         /// </summary>
-        [ScriptIgnore]
+        [JsonIgnore]
         public int Iterations { get; set; }
 
         /// <summary>
@@ -160,23 +161,20 @@ namespace CarpoolPlanner.Model
         /// </summary>
         public bool PhoneVisible { get; set; }
 
-        [ScriptIgnore]
         public UserStatus Status { get; set; }
 
         public CommuteMethod CommuteMethod { get; set; }
 
-        [ScriptIgnore]
+        [JsonIgnore]
         public long? LastTextMessageId { get; set; }
 
         /// <summary>
         /// Indicates that the user can drive other people if necessary, but would prefer not to. Does not apply if CommuteMethod is Driver.
         /// </summary>
-        [Display(Name = "")]
         public bool CanDriveIfNeeded { get; set; }
 
         public int Seats { get; set; }
 
-        [ScriptIgnore]
         public bool IsAdmin { get; set; }
 
         public ICollection<UserTrip> UserTrips { get; private set; }

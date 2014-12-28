@@ -6,6 +6,7 @@ using System.Web.Hosting;
 using System.Web.Http;
 using System.Web.Mvc;
 using System.Web.Routing;
+using CarpoolPlanner.Model;
 
 namespace CarpoolPlanner
 {
@@ -20,6 +21,12 @@ namespace CarpoolPlanner
             WebApiConfig.Register(GlobalConfiguration.Configuration);
             FilterConfig.RegisterGlobalFilters(GlobalFilters.Filters);
             RouteConfig.RegisterRoutes(RouteTable.Routes);
+
+            // Replace the default JSON provider with our own that uses JSON.NET and can handle dictionaries.
+            ValueProviderFactories.Factories.Remove(ValueProviderFactories.Factories.OfType<JsonValueProviderFactory>().FirstOrDefault());
+            ValueProviderFactories.Factories.Add(new JsonNetValueProviderFactory());
+
+            //ModelBinders.Binders.Add(typeof(TripRecurrence), new KeyedCollectionModelBinder());
         }
     }
 }

@@ -1,7 +1,7 @@
 ﻿(function() {
-  var app = angular.module('validation-summary', []);
+  var app = angular.module('val-summary', []);
 
-  app.controller('validationSummaryCtrl', ['$scope', function($scope) {
+  app.controller('valSummaryCtrl', ['$scope', function($scope) {
     var validationMessages = {
       required: '$1 is required.',
       $default: '$1 is invalid.'
@@ -15,7 +15,7 @@
         for (var validator in form.$error) {
           for (var i in form.$error[validator]) {
             var field = form.$error[validator][i];
-            var name = field.friendlyName || field.$name || 'Unnamed field';
+            var name = field.valFriendlyName || field.$name || 'Unnamed field';
             var message = validationMessages[validator] || validationMessages.$default;
             message = message.replace(/\$1(?![0-9])/g, name);
             $scope.validationErrors.push(message);
@@ -33,7 +33,7 @@
     };
   }]);
 
-  app.directive('validationSummary', function() {
+  app.directive('valSummary', function() {
     return {
       restrict: 'E',
       template: '<div class="text-danger" ng-repeat="error in validationErrors track by $index">{{ error }}</div>'
@@ -41,14 +41,14 @@
     };
   });
 
-  app.directive('friendlyName', function() {
+  app.directive('valFriendlyName', function() {
     return {
       require: 'ngModel',
       restrict: 'A',
       link: function(scope, elm, attrs, ctrl) {
-        ctrl.friendlyName = attrs.friendlyName;
-        attrs.$observe('friendlyName', function(newValue) {
-          ctrl.friendlyName = newValue;
+        ctrl.valFriendlyName = attrs.valFriendlyName;
+        attrs.$observe('valFriendlyName', function(newValue) {
+          ctrl.valFriendlyName = newValue;
         });
       }
     };

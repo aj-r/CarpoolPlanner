@@ -19,8 +19,10 @@ namespace CarpoolPlanner.Model
         {
             Recurrences = new List<TripRecurrence>();
             Instances = new List<TripInstance>();
+            UserTrips = new UserTripCollection();
         }
 
+        // TODO: use JsonPropertyAttribute to make name lowercase in javascript
         [Key]
         public long Id { get; set; }
 
@@ -35,5 +37,7 @@ namespace CarpoolPlanner.Model
         public IList<TripRecurrence> Recurrences { get; private set; }
 
         public IList<TripInstance> Instances { get; private set; }
+
+        public UserTripCollection UserTrips { get; private set; }
     }
 }

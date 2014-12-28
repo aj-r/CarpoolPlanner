@@ -11,6 +11,11 @@ body {
     padding-right: 15px;
 }
 
+.current-page {
+  color: #FFF !important;
+  cursor: default;
+}
+
 .small {
     font-size: 0.85em;
 }
@@ -48,6 +53,7 @@ h3 .checkbox input[type=checkbox] {
 
 h3 .checkbox {
   font-weight: inherit;
+  cursor: pointer;
 }
 
 hr {

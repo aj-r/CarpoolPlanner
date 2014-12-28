@@ -1,13 +1,17 @@
-﻿var app = angular.module('carpoolApp', ['angular.net', 'validation-summary', 'ui.bootstrap.datetimepicker']);
+﻿var app = angular.module('carpoolApp', ['angular.net', 'val-summary', 'binding-type', 'ui.bootstrap.datetimepicker']);
 app.controller('baseCtrl', ['$scope', '$q', 'AngularNet', function($scope, $q, AngularNet) {
   $scope.RecurrenceType = RecurrenceType;
   $scope.MessageType = MessageType;
   $scope.model = originalModel;
   $scope.trySubmit = function(form, url, modelContainer, modelName, beforesubmit) {
-    if (!this.validateForm(form)) {
-      return $q(function(resolve, reject) {
-        reject('Form validation failed.');
-      });
+    if (this.validateForm && !this.validateForm(form)) {
+      var deferred = $q.defer();
+      var promise = deferred.promise;
+      var msg = 'Form validation failed.'
+      deferred.reject(msg);
+      promise.success = function(a) { };
+      promise.error = function(a) { if (a) a(msg); };
+      return promise;
     }
     if (modelContainer == null) {
       modelContainer = $scope;
@@ -123,78 +127,100 @@ app.controller('baseCtrl', ['$scope', '$q', 'AngularNet', function($scope, $q, A
   };
 }]);
 
-app.directive('numericBinding', function() {
+app.directive('cpNav', ['$window', function($window) {
+  function processHref(elem, href) {
+    // Determine the normalized path by:
+    // - stripping out the query string and hash
+    // - removing parts of the path that are equal to the default route values (i.e. 'Home', 'Index')
+    var parts = $window.location.pathname.split('/');
+    if (parts.length == 3 && parts[2] == 'Index')
+      parts.splice(2, 1);
+    if (parts.length == 2 && parts[1] == 'Home')
+      parts.splice(1, 1);
+    var path = parts.join('/') || '/';
+    if (path === href) {
+      elem.addClass('current-page');
+    } else {
+      elem.removeClass('current-page');
+    }
+  }
   return {
     restrict: 'A',
-    require: 'ngModel',
-    scope: {
-      model: '=ngModel',
-    },
-    link: function(scope, element, attrs, ngModelCtrl) {
-      if (scope.model && typeof scope.model == 'string') {
-        scope.model = parseInt(scope.model);
-      }
-      scope.$watch('model', function(val, old) {
-        if (typeof val == 'string') {
-          scope.model = parseInt(val);
-        }
-      });
+    link: function(scope, elem, attr) {
+      processHref(elem, attr.href);
+      attr.$observe('href', function(newValue, oldValue) {
+        if (newValue === oldValue)
+          return;
+        processHref(elem, attr.href);
+      })
+    }
+  };
+}]);
+
+app.directive('cpMessage', function() {
+  return {
+    restrict: 'E',
+    template: function(elem, attr) {
+      var modelName = attr.model || 'model';
+      elem.append(
+        '<p ng-class="{ \'text-success\': ' + modelName + '.MessageType === MessageType.Success, \'text-danger\': ' + modelName + '.MessageType === MessageType.Error }"'
+        + 'class="preserve-newlines">{{ ' + modelName + '.Message }}</p>');
     }
   };
 });
 
-app.directive('datetimeFormat', ['$window', function($window) {
+app.directive('chHierarchy', function($timeout) {
+  var tree = {};
+
+  function createNode() {
+    return {
+      $children: [],
+      $suppressParentChange: false
+    }
+  }
+
   return {
-    require: 'ngModel',
     restrict: 'A',
-    link: function(scope, elm, attrs, ctrl) {
-      var moment = $window.moment;
-      var format = attrs.datetimeFormat;
-      attrs.$observe('datetimeFormat', function(newValue) {
-        if (format == newValue || !ctrl.$modelValue)
+    require: 'ngModel',
+    link: function(scope, elem, attr, ctrl) {
+      var hierarchy = attr.chHierarchy.split('.');
+      var parentNode = tree;
+      for (var i = 0; i < hierarchy.length - 1; i++) {
+        var name = hierarchy[i];
+        if (!parentNode[name]) {
+          parentNode[name] = createNode();
+        }
+        parentNode = parentNode[name];
+      }
+      var name = hierarchy[hierarchy.length - 1];
+      var node = parentNode[name] = createNode();
+      node.$value = elem.prop('checked'),
+      node.$setValue = function(value) {
+        if (value == ctrl.$modelValue)
           return;
-        format = newValue;
-        ctrl.$modelValue = new Date(ctrl.$setViewValue);
-      });
-
-      ctrl.$formatters.unshift(function(modelValue) {
-        if (!format || !modelValue)
-          return "";
-        var retVal = moment(modelValue).format(format);
-        return retVal;
-      });
-
-      ctrl.$parsers.unshift(function(viewValue) {
-        if (viewValue instanceof Date)
-          return viewValue;
-        if (ctrl.$isEmpty(viewValue)) {
-          return '';
-        }
-        // Try to parse using the expected format. If that fails, use the default date parser.
-        var moDate = moment(viewValue, format);
-        if (!moDate.isValid())
-          moDate = moment(viewValue);
-        var date = moDate.toDate();
-        return date;
-      });
-
-      ctrl.$validators.datetime = function(modelValue, viewValue) {
-        // consider empty values to be valid
-        if (ctrl.$isEmpty(viewValue)) {
-          return true;
-        }
-        if (viewValue instanceof Date) {
-          return true;
-        }
-        // Try to parse using the expected format. If that fails, use the default date parser.
-        var moDate = moment(viewValue, format);
-        if (!moDate.isValid())
-          moDate = moment(viewValue);
-        if (moDate && moDate.isValid() && moDate.year() > 1950) {
-          return true;
-        }
-        return false;
+        ctrl.$setViewValue(value);
+        ctrl.$render();
       };
+      elem.change(function() {
+        var newValue = elem.prop('checked');
+        if (newValue == node.$value)
+          return;
+        node.$value = newValue;
+        if (newValue && parentNode.$setValue) {
+          parentNode.$suppressParentChange = true;
+          parentNode.$setValue(newValue);
+          parentNode.$suppressParentChange = false;
+        }
+        if (!node.$suppressParentChange) {
+          for (var i in node.$children) {
+            var childNode = node.$children[i];
+            if (childNode && childNode.$setValue)
+              childNode.$setValue(newValue);
+          }
+        }
+      });
+      if (parentNode.$children)
+        parentNode.$children.push(node);
     }
   };
-}]);
+});

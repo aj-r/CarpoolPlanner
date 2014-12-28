@@ -19,8 +19,8 @@
   <script src="@Url.Content("~/Content/datetimepicker.js")"></script>
   <script src="@Url.Content("~/Content/angular.net.js")"></script>
   <script src="@Url.Content("~/Content/validation-summary.js")"></script>
+  <script src="@Url.Content("~/Content/binding-type.js")"></script>
   <script type="text/javascript">
-    // TODO: only include ui.bootstrap.datetimepicker if on trips page and admin
     var RecurrenceType = @Html.JSEnum(typeof(RecurrenceType));
     var MessageType = @Html.JSEnum(typeof(MessageType));
     var originalModel = @Html.JSModel();
@@ -43,24 +43,24 @@
         <ul class="nav navbar-nav">
           @if (AppUtils.IsUserAuthenticated())
           {
-            <li>@Html.ActionLink("Home", "Index", "Home")</li>
-            <li>@Html.ActionLink(Resources.AvailableCarpools, "Index", "Trips")</li>
+            <li><a href="@Url.Action("Index", "Home")" cp-nav>Home</a></li>
+            <li><a href="@Url.Action("Index", "Trips")" cp-nav>@Resources.AvailableCarpools</a></li>
             if (AppUtils.IsUserStatus(UserStatus.Active))
             {
-              <li>@Html.ActionLink("Users", "List", "User")</li>
+              <li><a href="@Url.Action("List", "User")" cp-nav>Users</a></li>
             }
           }
         </ul>
         <ul class="nav navbar-nav navbar-right">
           @if (AppUtils.IsUserAuthenticated())
           {
-            <li>@Html.ActionLink("{{ model.UserId }}", "Manage", "User")</li>
-            <li>@Html.ActionLink("Logout", "Logout", "User")</li>
+            <li><a href="@Url.Action("Manage", "User")" cp-nav>{{ model.UserId }}</a></li>
+            <li><a href="@Url.Action("Logout", "User")" cp-nav>Logout</a></li>
           }
           else
           {
-            <li>@Html.ActionLink("Register", "Register", "User")</li>
-            <li>@Html.ActionLink(Resources.Login, "Login", "User")</li>
+            <li><a href="@Url.Action("Register", "User")" cp-nav>Register</a></li>
+            <li><a href="@Url.Action("Login", "User")" cp-nav>@Resources.Login</a></li>
           }
         </ul>
       </div>

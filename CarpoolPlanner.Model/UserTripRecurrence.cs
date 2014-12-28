@@ -17,6 +17,8 @@ namespace CarpoolPlanner.Model
 
         public long TripId { get; set; }
 
+        public bool Attending { get; set; }
+
         [Association("fk_usertriprecurrence_user", "user_id", "id")]
         public User User { get; set; }
 

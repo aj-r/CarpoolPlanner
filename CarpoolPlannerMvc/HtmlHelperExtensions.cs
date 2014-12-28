@@ -54,7 +54,12 @@ namespace CarpoolPlanner
             var model = htmlHelper.ViewData.Model;
             if (model == null)
                 return new MvcHtmlString("");
-            return new MvcHtmlString("JSON.parse('" + JsonConvert.SerializeObject(model, new IsoDateTimeConverter()) + "')");
+            var settings = new JsonSerializerSettings
+            {
+                Converters = new List<JsonConverter> { new IsoDateTimeConverter(), new KeyedCollectionConverter() },
+                ReferenceLoopHandling = ReferenceLoopHandling.Ignore
+            };
+            return new MvcHtmlString("JSON.parse('" + JsonConvert.SerializeObject(model, settings) + "')");
         }
 
         /// <summary>
