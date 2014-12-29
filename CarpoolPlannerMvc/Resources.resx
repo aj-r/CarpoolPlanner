@@ -153,6 +153,9 @@
   <data name="Password" xml:space="preserve">
     <value>Password</value>
   </data>
+  <data name="Register" xml:space="preserve">
+    <value>Register</value>
+  </data>
   <data name="RememberMe" xml:space="preserve">
     <value>Remeber me</value>
   </data>

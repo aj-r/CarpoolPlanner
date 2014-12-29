@@ -7,16 +7,13 @@
   ViewBag.Title = "Login";
   Layout = "~/Views/Shared/Layout.cshtml";
 }
-
 @section headScripts{
 <script type="text/javascript">
-  var loginCtrl = app.controller('loginCtrl', ['$scope', '$window', function($scope, $window) {
-    //$scope.encodeURIComponent = $window.encodeURIComponent;
-
+  app.controller('loginCtrl', ['$scope', '$window', function($scope, $window) {
     $scope.submitLogin = function() {
       this.trySubmit(this.loginForm, '@Url.Action("Login", "User", Request.QueryStringRouteValues())', $scope, 'model', function() {
         $scope.model.message = "Logging in...";
-        $scope.model.messageType = $scope.MessageType.Info;
+        $scope.model.messageType = MessageType.Info;
       }).success(function(result) {
         if (result && result.model && result.model.messageType === MessageType.Error) {
           // Set focus to password field if login failed.

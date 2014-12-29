@@ -1,14 +1,14 @@
 ﻿var app = angular.module('carpoolApp', ['angular.net', 'val-summary', 'binding-type', 'ui.bootstrap.datetimepicker']);
-app.controller('baseCtrl', ['$scope', '$q', 'AngularNet', function($scope, $q, AngularNet) {
-  $scope.RecurrenceType = RecurrenceType;
-  $scope.MessageType = MessageType;
-  $scope.model = originalModel;
+app.controller('baseCtrl', ['$scope', '$q', '$window', 'AngularNet', function($scope, $q, $window, AngularNet) {
+  $scope.RecurrenceType = $window.RecurrenceType;
+  $scope.MessageType = $window.MessageType;
+  $scope.model = $window.originalModel;
   $scope.trySubmit = function(form, url, modelContainer, modelName, beforesubmit) {
     var scope = this;
     if (this.validateForm && !this.validateForm(form)) {
       var deferred = $q.defer();
       var promise = deferred.promise;
-      var msg = 'Form validation failed.'
+      var msg = 'Form validation failed.';
       deferred.reject(msg);
       promise.success = function(a) { };
       promise.error = function(a) { if (a) a(msg); };

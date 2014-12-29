@@ -56,5 +56,105 @@ namespace CarpoolPlanner.Controllers
             FormsAuthentication.SignOut();
             return Redirect(FormsAuthentication.LoginUrl);
         }
+
+        public ActionResult List()
+        {
+            var model = new UserListViewModel();
+            if (AppUtils.CurrentUser.Status == UserStatus.Active)
+            {
+                using(var context = ApplicationDbContext.Create())
+                {
+                    IQueryable<User> query = context.Users;
+                    if (!AppUtils.IsUserAdmin())
+                        query = query.Where(u => u.Status == UserStatus.Active);
+                    model.Users = query.ToList().Select(u => new UserViewModel(u)).ToList();
+                }
+            }
+            return View(model);
+        }
+
+        [AllowAnonymous]
+        public ActionResult Register()
+        {
+            return View(new UserViewModel());
+        }
+
+        public ActionResult Manage()
+        {
+            return View(new UserViewModel(AppUtils.CurrentUser));
+        }
+
+        [HttpPost]
+        public ActionResult Manage(UserViewModel user)
+        {
+            if (user.User == null)
+                return Ng(user);
+            if (user.User != AppUtils.CurrentUser && !AppUtils.IsUserAdmin())
+            {
+                Response.StatusCode = 403;
+                user.SetMessage("You are not authorized to update the specified user.", MessageType.Error);
+                return Ng(user);
+            }
+            var model = new UserListViewModel();
+            using (var context = ApplicationDbContext.Create())
+            {
+                // TODO: save user
+            }
+            return Ng(model);
+        }
+
+        [HttpPost]
+        public ActionResult SetPassword(string password, UserViewModel user)
+        {
+            if (user.User == null)
+                return Ng(user);
+            if (user.User != AppUtils.CurrentUser && !AppUtils.IsUserAdmin())
+            {
+                Response.StatusCode = 403;
+                user.SetMessage("You are not authorized to update the specified user.", MessageType.Error);
+                return Ng(user);
+            }
+            if (string.IsNullOrEmpty(password))
+            {
+                user.SetMessage("The specified password does not meet the requirements.", MessageType.Error);
+                return Ng(user);
+            }
+            var model = new UserListViewModel();
+            using (var context = ApplicationDbContext.Create())
+            {
+                // TODO: set password
+            }
+            return Ng(model);
+        }
+
+        [AllowAnonymous]
+        [HttpPost]
+        public ActionResult UpdateStatus(UserViewModel user)
+        {
+            if (user.User == null)
+                return Ng(user);
+            if (!AppUtils.IsUserAdmin())
+            {
+                Response.StatusCode = 403;
+                user.SetMessage("You are not authorized to update the specified user's status.", MessageType.Error);
+                return Ng(user);
+            }
+            using (var context = ApplicationDbContext.Create())
+            {
+                var serverUser = context.Users.Find(user.User.Id);
+                if (serverUser == null)
+                {
+                    Response.StatusCode = 400;
+                    user.SetMessage("Specified user does not exist.", MessageType.Error);
+                    return Ng(user);
+                }
+                serverUser.Status = user.User.Status;
+                serverUser.IsAdmin = user.User.IsAdmin;
+                context.SaveChanges();
+                user.User = serverUser;
+                user.SetMessage("Successful", MessageType.Success);
+                return Ng(user);
+            }
+        }
     }
 }

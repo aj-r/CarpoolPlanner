@@ -1,0 +1,70 @@
+﻿@using CarpoolPlanner;
+@using CarpoolPlanner.Model;
+@using CarpoolPlanner.ViewModel;
+
+@model UserListViewModel
+
+@{
+    ViewBag.Title = "Users";
+    Layout = "~/Views/Shared/Layout.cshtml";
+}
+@section headScripts{
+<script type="text/javascript">
+  var CommuteMethod = @Html.JSEnum(typeof(CommuteMethod));
+  var UserStatus = @Html.JSEnum(typeof(UserStatus));
+  app.controller('userCtrl', ['$scope', '$window', function($scope, $window) {
+    $scope.UserStatus = $window.UserStatus;
+    $scope.CommuteMethod = $window.CommuteMethod;
+    $scope.updateUser = function(index) {
+      this.trySubmit(this.loginForm, '@Url.Action("UpdateStatus", "User", Request.QueryStringRouteValues())', $scope.model.users, index, function() {
+        $scope.model.users[index].message = "Saving...";
+        $scope.model.users[index].messageType = MessageType.Info;
+      });
+    }
+  }]);
+</script>
+}
+
+<h2>Users</h2>
+<div class="row light-separator">
+  @if (AppUtils.IsUserAdmin())
+  {
+    <div class="col-md-1"><h4>User ID</h4></div>
+  }
+  <div class="col-md-2"><h4>Name</h4></div>
+  <div class="col-md-2"><h4>Phone</h4></div>
+  <div class="col-md-2"><h4>E-mail</h4></div>
+  <div class="col-md-2"><h4>Driver?</h4></div>
+  @if (AppUtils.IsUserAdmin())
+  {
+    <div class="col-md-2"><h4>Status</h4></div>
+    <div class="col-md-1"><h4>Admin</h4></div>
+  }
+</div>
+<div ng-controller="userCtrl" class="row light-separator" style="padding: 10px 0px;" ng-repeat="userVM in model.users" ng-init="user = userVM.user">
+  @if (AppUtils.IsUserAdmin())
+  {
+    <div class="col-md-1 control-label user-id" style="margin-top:8px;"><b>{{ user.loginName }}</b></div>
+  }
+  <div class="col-md-2" style="margin-top:8px;">{{ user.name }}</div>
+  <div class="col-md-2" style="margin-top:8px;">{{ user.phone }}</div>
+  <div class="col-md-2" style="margin-top:8px;">{{ user.email }}</div>
+  <div class="col-md-2" style="margin-top:8px;">
+    <span ng-show="user.commuteMethod == CommuteMethod.Driver">Driver ({{ user.seats }} seats)</span>
+    <span ng-show="user.commuteMethod == CommuteMethod.HaveRide">Will get my own ride. </span>
+    <span ng-show="user.canDriveIfNeeded && user.commuteMethod != CommuteMethod.Driver">Can drive if needed ({{ user.seats }} seats)</span>
+  </div>
+  @if (AppUtils.IsUserAdmin())
+  {
+    <div class="col-md-2">
+      <select class="form-control" ng-model="user.status" ng-change="updateUser($index)" ng-options="key for (key, value) in UserStatus track by value">
+      </select>
+    </div>
+    <div class="col-md-1 form-horizontal">
+      <div class="form-group checkbox" style="margin:0;">
+        <input type="checkbox" ng-model="user.isAdmin" ng-change="updateUser($index)" style="margin-left:0;" />
+      </div>
+      <cp-message model="userVM"></cp-message>
+    </div>
+  }
+</div>

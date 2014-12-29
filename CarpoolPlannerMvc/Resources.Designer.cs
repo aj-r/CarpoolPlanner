@@ -169,6 +169,15 @@ namespace CarpoolPlanner {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Register.
+        /// </summary>
+        public static string Register {
+            get {
+                return ResourceManager.GetString("Register", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Remeber me.
         /// </summary>
         public static string RememberMe {

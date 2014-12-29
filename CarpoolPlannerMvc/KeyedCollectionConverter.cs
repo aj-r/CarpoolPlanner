@@ -13,8 +13,7 @@ namespace CarpoolPlanner
     {
         public override bool CanConvert(Type objectType)
         {
-            var result = IsSubclassOfGenericType(objectType, typeof(KeyedCollection<,>));
-            return result;
+            return IsSubclassOfGenericType(objectType, typeof(KeyedCollection<,>));
         }
 
         public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)

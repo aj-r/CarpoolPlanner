@@ -65,7 +65,7 @@ namespace CarpoolPlanner
             }
             json = json.Replace("\\", "\\\\");
             var str = "JSON.parse('" + json + "')";
-            return new MvcHtmlString(str);
+            return new MvcHtmlString(json);
         }
 
         /// <summary>
