@@ -11,10 +11,9 @@ namespace CarpoolPlanner.ViewModel
     {
         public HomeViewModel()
         {
-            UserTrips = new List<UserTrip>();
+            Trips = new List<Trip>();
         }
 
-        [JsonProperty(PropertyName = "userTrips")]
-        public List<UserTrip> UserTrips { get; set; }
+        public List<Trip> Trips { get; set; }
     }
 }

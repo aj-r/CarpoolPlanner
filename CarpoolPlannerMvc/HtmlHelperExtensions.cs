@@ -54,7 +54,7 @@ namespace CarpoolPlanner
         {
             var model = htmlHelper.ViewData.Model;
             if (model == null)
-                return new MvcHtmlString("");
+                return new MvcHtmlString("{}");
 
             var serializer = JsonSerializerFactory.Current.GetSerializer();
             string json;
@@ -63,7 +63,9 @@ namespace CarpoolPlanner
                 serializer.Serialize(writer, model);
                 json = writer.ToString();
             }
-            return new MvcHtmlString("JSON.parse('" + json + "')");
+            json = json.Replace("\\", "\\\\");
+            var str = "JSON.parse('" + json + "')";
+            return new MvcHtmlString(str);
         }
 
         /// <summary>
@@ -89,6 +91,12 @@ namespace CarpoolPlanner
             }
             sb.Append('}');
             return new MvcHtmlString(sb.ToString());
+        }
+
+        private static IEnumerable<string> SplitString(string str, int maxChunkSize)
+        {
+            for (int i = 0; i < str.Length; i += maxChunkSize)
+                yield return str.Substring(i, Math.Min(maxChunkSize, str.Length - i));
         }
     }
 }

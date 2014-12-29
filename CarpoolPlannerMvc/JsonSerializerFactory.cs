@@ -1,6 +1,7 @@
 ﻿using System;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
+using Newtonsoft.Json.Serialization;
 
 namespace CarpoolPlanner
 {
@@ -25,6 +26,7 @@ namespace CarpoolPlanner
             serializer.Converters.Add(new IsoDateTimeConverter());
             serializer.Converters.Add(new KeyedCollectionConverter());
             serializer.ReferenceLoopHandling = ReferenceLoopHandling.Ignore;
+            serializer.ContractResolver = new CamelCasePropertyNamesContractResolver();
             return serializer;
         }
     }

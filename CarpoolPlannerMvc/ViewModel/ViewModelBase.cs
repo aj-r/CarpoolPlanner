@@ -36,7 +36,6 @@ namespace CarpoolPlanner.ViewModel
             }
         }
 
-        [JsonProperty(PropertyName = "loginName")]
         public string LoginName
         {
             get

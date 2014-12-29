@@ -62,15 +62,15 @@ app.controller('baseCtrl', ['$scope', '$q', 'AngularNet', function($scope, $q, A
 
   $scope.tripRecurrenceToString = function(tr) {
     var s = '';
-    if (!tr || !tr.Start)
+    if (!tr || !tr.start)
       return s;
-    var start = moment(tr.Start);
-    switch (tr.Type) {
+    var start = moment(tr.start);
+    switch (tr.type) {
       case RecurrenceType.Yearly:
         s += start.format('MMMM Do');
         s += ' every ';
-        if (tr.Every > 1) {
-          s += tr.Every + $scope.getSuffix(tr.Every) + ' ';
+        if (tr.every > 1) {
+          s += tr.every + $scope.getSuffix(tr.every) + ' ';
         }
         s += 'year';
         break;
@@ -81,22 +81,22 @@ app.controller('baseCtrl', ['$scope', '$q', 'AngularNet', function($scope, $q, A
         if (tr.Type == RecurrenceType.YearlyByDayOfWeek)
           s += ' of ' + start.format('MMMM');
         s += ' every ';
-        if (tr.Every > 1) {
-          s += tr.Every + $scope.getSuffix(tr.Every) + ' ';
+        if (tr.every > 1) {
+          s += tr.eery + $scope.getSuffix(tr.every) + ' ';
         }
-        s += tr.Type == RecurrenceType.YearlyByDayOfWeek ? 'year' : 'month';
+        s += tr.type == RecurrenceType.YearlyByDayOfWeek ? 'year' : 'month';
         break;
       case RecurrenceType.Monthly:
         s += 'The ' + start.date() + $scope.getSuffix(start.date()) + ' of every ';
-        if (tr.Every > 1) {
-          s += tr.Every + $scope.getSuffix(tr.Every) + ' ';
+        if (tr.every > 1) {
+          s += tr.every + $scope.getSuffix(tr.every) + ' ';
         }
         s += 'month';
         break;
       case RecurrenceType.Weekly:
         s += 'Every ';
-        if (tr.Every > 1) {
-          s += tr.Every + $scope.getSuffix(tr.Every) + ' ';
+        if (tr.every > 1) {
+          s += tr.every + $scope.getSuffix(tr.every) + ' ';
         }
         s += start.format('dddd');
         break;
@@ -109,7 +109,7 @@ app.controller('baseCtrl', ['$scope', '$q', 'AngularNet', function($scope, $q, A
   };
 
   $scope.tripInstanceToString = function(ti) {
-    var date = moment(ti.Date);
+    var date = moment(ti.date);
     var diff = date.diff(moment(), 'days'); // Difference between ti.Date and today
     var specifier = '';
     if (diff == 0)
@@ -124,12 +124,13 @@ app.controller('baseCtrl', ['$scope', '$q', 'AngularNet', function($scope, $q, A
       var displayMessage = "An unexpected error occurred. Please report this error to the website administrator.";
       if (message && message.indexOf('<!DOCTYPE') === -1)
         displayMessage += "\nThe error is: " + message;
-      model.Message = displayMessage;
-      model.MessageType = $scope.MessageType.Error;
+      model.message = displayMessage;
+      model.messageType = MessageType.Error;
     }
   };
 }]);
 
+// Directive for nav links. Adds a 'current-page' class if the link points to the current location.
 app.directive('cpNav', ['$window', function($window) {
   function processHref(elem, href) {
     // Determine the normalized path by:
@@ -160,18 +161,24 @@ app.directive('cpNav', ['$window', function($window) {
   };
 }]);
 
+// Directive for diplaying the message for a certain ViewModel.
 app.directive('cpMessage', function() {
   return {
     restrict: 'E',
     template: function(elem, attr) {
       var modelName = attr.model || 'model';
       elem.append(
-        '<p ng-class="{ \'text-success\': ' + modelName + '.MessageType === MessageType.Success, \'text-danger\': ' + modelName + '.MessageType === MessageType.Error }"'
-        + 'class="preserve-newlines">{{ ' + modelName + '.Message }}</p>');
+        '<p ng-class="{ \'text-success\': ' + modelName + '.messageType === MessageType.Success, \'text-danger\': ' + modelName + '.messageType === MessageType.Error }"'
+        + 'class="preserve-newlines">{{ ' + modelName + '.message }}</p>');
     }
   };
 });
 
+// Directive for building checkbox hierarchies.
+// Attribute value should be in the format "parent.level1Child.level2Child"
+// When a parent checkbox is checked, all of its children are automatically checked.
+// When a parent checkbox is unchecked, all of its children are automatically unchecked.
+// When a child checkbox is checked, its parent is automatically checked (but not its siblings).
 app.directive('chHierarchy', function($timeout) {
   var tree = {};
 

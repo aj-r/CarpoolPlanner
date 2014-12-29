@@ -4,6 +4,7 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Web;
+using Newtonsoft.Json;
 
 namespace CarpoolPlanner.Model
 {
@@ -36,11 +37,14 @@ namespace CarpoolPlanner.Model
         public long TripId { get; set; }
 
         [ForeignKey("UserId")]
+        [JsonIgnore]
         public User User { get; set; }
 
         [ForeignKey("TripInstanceId")]
+        [JsonIgnore]
         public TripInstance TripInstance { get; set; }
 
+        [JsonIgnore]
         public UserTrip UserTrip { get; set; }
 
         public bool? Attending { get; set; }

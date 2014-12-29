@@ -12,7 +12,7 @@ namespace CarpoolPlanner.Controllers
     {
         public ActionResult Index()
         {
-            return View();
+            return View(new ViewModelBase());
         }
     }
 }

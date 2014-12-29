@@ -9,7 +9,6 @@ namespace CarpoolPlanner.ViewModel
 {
     public class LoginViewModel : ViewModelBase
     {
-        [JsonProperty(PropertyName = "loginNameInput")]
         public string LoginNameInput { get; set; }
 
         public string Password { get; set; }
