@@ -76,7 +76,9 @@ namespace CarpoolPlanner.Controllers
         [AllowAnonymous]
         public ActionResult Register()
         {
-            return View(new UserViewModel());
+            var model = new UserViewModel();
+            model.User.LoginName = Request.QueryString["LoginName"];
+            return View(model);
         }
 
         public ActionResult Manage()

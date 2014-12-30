@@ -11,9 +11,10 @@
 <script type="text/javascript">
   var tripCtrl = app.controller('tripCtrl', ['$scope', function($scope) {
     $scope.saveUserTrips = function() {
-      $scope.model.Message = "Updating...";
-      $scope.model.MessageType = $scope.MessageType.Info;
-      this.trySubmit(this.tripInstanceForm, '@Url.Action("Index", "Home")');
+      this.trySubmit(this.tripInstanceForm, '@Url.Action("Index", "Home")', $scope, 'model', function() {
+        $scope.model.Message = "Updating...";
+        $scope.model.MessageType = $scope.MessageType.Info;
+      });
     };
   }]);
 </script>

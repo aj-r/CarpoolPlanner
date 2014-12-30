@@ -188,6 +188,7 @@
     <Content Include="Views\Notifications\Index.cshtml" />
     <Content Include="Views\Trips\Index.cshtml" />
     <Content Include="Views\User\List.cshtml" />
+    <Content Include="Views\User\Register.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />

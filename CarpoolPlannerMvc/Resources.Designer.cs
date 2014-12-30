@@ -212,5 +212,14 @@ namespace CarpoolPlanner {
                 return ResourceManager.GetString("UpcomingCarpools", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Visible to other users.
+        /// </summary>
+        public static string VisibleToOtherUsers {
+            get {
+                return ResourceManager.GetString("VisibleToOtherUsers", resourceCulture);
+            }
+        }
     }
 }

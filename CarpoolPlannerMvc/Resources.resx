@@ -168,4 +168,7 @@
   <data name="UpcomingCarpools" xml:space="preserve">
     <value>Upcoming Carpools</value>
   </data>
+  <data name="VisibleToOtherUsers" xml:space="preserve">
+    <value>Visible to other users</value>
+  </data>
 </root>

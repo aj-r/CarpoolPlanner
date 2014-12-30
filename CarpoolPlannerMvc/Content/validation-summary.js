@@ -15,8 +15,8 @@
         for (var validator in form.$error) {
           for (var i in form.$error[validator]) {
             var field = form.$error[validator][i];
+            var message = field.valMessage || validationMessages[validator] || validationMessages.$default;
             var name = field.valFriendlyName || field.$name || 'Unnamed field';
-            var message = validationMessages[validator] || validationMessages.$default;
             message = message.replace(/\$1(?![0-9])/g, name);
             $scope.validationErrors.push(message);
           }
@@ -53,4 +53,46 @@
       }
     };
   });
+
+  app.directive('valMessage', function() {
+    return {
+      require: 'ngModel',
+      restrict: 'A',
+      link: function(scope, elm, attrs, ctrl) {
+        ctrl.valMessage = attrs.valMessage;
+        attrs.$observe('valMessage', function(newValue) {
+          ctrl.valMessage = newValue;
+        });
+      }
+    };
+  });
+
+  app.directive('valEquals', function() {
+    return {
+      require: 'ngModel',
+      restrict: 'A',
+      link: function(scope, elm, attrs, ctrl) {
+        var targetPath = attrs.valEquals;
+        var modelPath = attrs.ngModel;
+        attrs.$observe('valEquals', function(newValue) {
+          targetPath = newValue;
+        });
+        attrs.$observe('ngModel', function(newValue) {
+          modelPath = newValue;
+        });
+        scope.$watch(function() {
+          return scope.$eval(targetPath);
+        }, validator);
+        scope.$watch(function() {
+          return scope.$eval(modelPath);
+        }, validator);
+
+        function validator() {
+          var valid = scope.$eval(modelPath) == scope.$eval(targetPath);
+          ctrl.$setValidity('equals', valid);
+        }
+      }
+    };
+  });
+
 })();

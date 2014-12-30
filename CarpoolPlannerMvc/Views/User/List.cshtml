@@ -10,11 +10,9 @@
 }
 @section headScripts{
 <script type="text/javascript">
-  var CommuteMethod = @Html.JSEnum(typeof(CommuteMethod));
   var UserStatus = @Html.JSEnum(typeof(UserStatus));
   app.controller('userCtrl', ['$scope', '$window', function($scope, $window) {
     $scope.UserStatus = $window.UserStatus;
-    $scope.CommuteMethod = $window.CommuteMethod;
     $scope.updateUser = function(index) {
       this.trySubmit(this.loginForm, '@Url.Action("UpdateStatus", "User", Request.QueryStringRouteValues())', $scope.model.users, index, function() {
         $scope.model.users[index].message = "Saving...";

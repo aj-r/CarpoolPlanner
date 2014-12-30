@@ -1,14 +1,14 @@
 ﻿/* Move down content because we have a fixed navbar that is 50px tall */
 body {
-    padding-top: 50px;
-    padding-bottom: 20px;
+  padding-top: 50px;
+  padding-bottom: 20px;
 }
 
 /* Wrapping element */
 /* Set some basic padding to keep content from hitting the edges */
 .body-content {
-    padding-left: 15px;
-    padding-right: 15px;
+  padding-left: 15px;
+  padding-right: 15px;
 }
 
 .current-page {
@@ -17,11 +17,15 @@ body {
 }
 
 .small {
-    font-size: 0.85em;
+  font-size: 0.85em;
 }
 
 .preserve-newlines {
-    white-space: pre-wrap;
+  white-space: pre-wrap;
+}
+
+.form-control-small {
+  width: 70px;
 }
 
 /* Set widths on the form inputs since otherwise they're 100% wide */
@@ -43,6 +47,10 @@ input[type=radio], input[type=checkbox] {
 }
 
 .checkbox label input[type=checkbox] {
+  margin-top: 1px;
+}
+
+.radio label input[type=radio] {
   margin-top: 1px;
 }
 

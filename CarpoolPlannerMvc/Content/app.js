@@ -2,6 +2,7 @@
 app.controller('baseCtrl', ['$scope', '$q', '$window', 'AngularNet', function($scope, $q, $window, AngularNet) {
   $scope.RecurrenceType = $window.RecurrenceType;
   $scope.MessageType = $window.MessageType;
+  $scope.CommuteMethod = $window.CommuteMethod;
   $scope.model = $window.originalModel;
   $scope.trySubmit = function(form, url, modelContainer, modelName, beforesubmit) {
     var scope = this;
@@ -234,3 +235,26 @@ app.directive('chHierarchy', function($timeout) {
     }
   };
 });
+
+app.directive('form', function() {
+  return {
+    require: 'form',
+    restrict: 'E',
+    link: function(scope, elem, attrs, form) {
+      form.$submit = function() {
+        form.$setSubmitted();
+        scope.$eval(attrs.ngSubmit);
+      };
+    }
+  };
+});
+
+// On load, focus the first empty input.
+$(document).ready(function() {
+  $('input:not([type=image],[type=button],[type=submit],[type=hidden]), textarea, select').each(function() {
+    if (this.value == '') {
+      this.focus();
+      return false;
+    }
+  });
+})

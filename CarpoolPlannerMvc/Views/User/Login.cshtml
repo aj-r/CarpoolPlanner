@@ -10,6 +10,7 @@
 @section headScripts{
 <script type="text/javascript">
   app.controller('loginCtrl', ['$scope', '$window', function($scope, $window) {
+    $scope.encodeURIComponent = $window.encodeURIComponent;
     $scope.submitLogin = function() {
       this.trySubmit(this.loginForm, '@Url.Action("Login", "User", Request.QueryStringRouteValues())', $scope, 'model', function() {
         $scope.model.message = "Logging in...";
@@ -61,7 +62,7 @@
       <div class="col-sm-offset-2 col-sm-10">
         <cp-message></cp-message>
         <val-summary></val-summary>
-        <div><a ng-href="@Url.Action("Register", "User")?UserId={{ $window.encodeURIComponent(model.loginNameInput) }}">Register as a new user</a></div>
+        <div><a ng-href="@Url.Action("Register", "User")?LoginName={{ encodeURIComponent(model.loginNameInput || '') }}">Register as a new user</a></div>
       </div>
     </div>
   </form>
