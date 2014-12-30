@@ -150,8 +150,17 @@
   <data name="NeedRide" xml:space="preserve">
     <value>I will need a ride</value>
   </data>
+  <data name="NumberOfSeats" xml:space="preserve">
+    <value>Number of seats</value>
+  </data>
   <data name="Password" xml:space="preserve">
     <value>Password</value>
+  </data>
+  <data name="Phone" xml:space="preserve">
+    <value>Phone</value>
+  </data>
+  <data name="PhoneNumber" xml:space="preserve">
+    <value>Phone number</value>
   </data>
   <data name="Register" xml:space="preserve">
     <value>Register</value>

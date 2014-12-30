@@ -32,131 +32,37 @@
 }
 
 <h2>@Resources.Register</h2>
-<div ng-controller="userCtrl">
-  <form name="registerForm" ng-controller="valSummaryCtrl" ng-submit="register()" novalidate>
-    <div class="form-horizontal">
-      <div class="form-group">
-        <label class="col-md-2 control-label">@Resources.LoginName</label>
-        <div class="col-md-10">
-          <input type="text" ng-model="model.user.loginName" class="form-control" val-friendly-name="@Resources.LoginName" required />
-        </div>
+<form name="registerForm" ng-controller="userCtrl" ng-submit="register()" novalidate>
+  <div class="form-horizontal">
+    <div class="form-group">
+      <label class="col-md-2 control-label">@Resources.LoginName</label>
+      <div class="col-md-10">
+        <input type="text" ng-model="model.user.loginName" class="form-control" val-friendly-name="@Resources.LoginName" required />
       </div>
-      <div class="form-group">
-        <label class="col-md-2 control-label">@Resources.Password</label>
-        <div class="col-md-10">
-          <input type="password" ng-model="model.user.password" class="form-control" val-friendly-name="@Resources.Password" required />
-        </div>
-      </div>
-      <div class="form-group">
-        <label class="col-md-2 control-label">Confirm password</label>
-        <div class="col-md-10">
-          <input type="password" ng-model="model.user.confirmPassword" val-equals="model.user.password" val-message="Passwords must match." class="form-control" />
-        </div>
-      </div>
-      <div class="form-group">
-        <label class="col-md-2 control-label">Name</label>
-        <div class="col-md-10">
-          <input type="text" ng-model="model.user.name" class="form-control" />
-        </div>
-      </div>
-      <div class="form-group">
-        <label class="col-md-2 control-label">Commuting</label>
-        <div class="col-md-10">
-          <div class="radio">
-            <label>
-              <input type="radio" ng-model="model.user.commuteMethod" ng-value="CommuteMethod.NeedRide" />
-              @Resources.NeedRide
-            </label>
-            <br />
-            <label>
-              <input type="radio" ng-model="model.user.commuteMethod" ng-value="CommuteMethod.Driver" />
-              @Resources.Driver
-              <br />
-            </label>
-            <br />
-            <label>
-              <input type="radio" ng-model="model.user.commuteMethod" ng-value="CommuteMethod.HaveRide" />
-              @Resources.HaveRide
-              <br />
-            </label>
-          </div>
-          <div style="margin-top:8px;" class="checkbox">
-            <label>
-              <input type="checkbox" ng-model="model.user.canDriveIfNeeded" />
-              @Resources.CanDriveIfNeeded
-            </label>
-          </div>
-        </div>
-      </div>
-      <div class="form-group">
-        <label class="col-md-2 control-label">
-          Number of seats<br />
-          <span class="small">(inluding your own seat)</span>
-        </label>
-        <div class="col-md-10">
-          <input type="number" ng-model="model.user.seats" min="1" bt-number
-                 ng-disabled="model.user.commuteMethod != CommuteMethod.Driver && !model.user.canDriveIfNeeded"
-                 class="form-control form-control-small" />
-        </div>
-      </div>
-      <div class="form-group">
-        <label class="col-md-2 control-label">@Resources.Email</label>
-        <div class="col-md-10">
-          <input type="email" ng-model="model.user.email" class="form-control" />
-          <div class="checkbox">
-            <label>
-              <input type="checkbox" ng-model="model.user.emailNotify" ng-disabled="!model.user.email" />
-              Send notifications via e-mail (not yet implemented)
-            </label>
-          </div>
-          <div class="checkbox" style="margin-bottom: 10px;">
-            <label>
-              <input type="checkbox" ng-model="model.user.emailVisible" ng-disabled="!model.user.email" />
-              @Resources.VisibleToOtherUsers
-            </label>
-          </div>
-        </div>
-      </div>
-      <div class="form-group">
-        <label class="col-md-2 control-label">Phone</label>
-        <div class="col-md-10">
-          <input type="tel" ng-model="model.user.phone" class="form-control" />
-          <div class="checkbox">
-            <label>
-              <input type="checkbox" ng-model="model.user.phoneNotify" ng-disabled="!model.user.phone" />
-              Send notifications via SMS
-            </label>
-          </div>
-          <div class="checkbox" style="margin-bottom: 10px;">
-            <label>
-              <input type="checkbox" ng-model="model.user.phoneVisible" ng-disabled="!model.user.phone" />
-              @Resources.VisibleToOtherUsers
-            </label>
-          </div>
-        </div>
-      </div>
-      <div class="form-group">
-        <div class="col-md-offset-2 col-md-10">
-          <input type="button" ng-click="registerWithChecks()" value="@Resources.Register" class="btn btn-default" />
-        </div>
-      </div>
-      <val-summary></val-summary>
-      <cp-message></cp-message>
     </div>
-  </form>
-</div>
-<script>
-       /* $(document).ready(function() {
-            $('#<%: ConfirmPassword.ClientID %>').attr('equalto', '#<%: Password.ClientID %>');
-            $('form').validate();
-            $('form').submit(function(e) {
-                var phoneNotifications = $("#<%: chkPhoneNotify.ClientID %>").prop('checked') && $("#<%: txtPhone.ClientID %>").val() != '';
-                var emailNotifications = $("#<%: chkEmailNotify.ClientID %>").prop('checked') && $("#<%: txtEmail.ClientID %>").val() != '';
-                if (!phoneNotifications && !emailNotifications) {
-                    if (!confirm("You have opted out of all notifications. This means that you must manually log in to the website for every single carpool to confirm that you are coming. Are you sure you want to do this?")) {
-                        e.preventDefault();
-                    }
-                }
-            });
-        });*/
-</script>
+    <div class="form-group">
+      <label class="col-md-2 control-label">@Resources.Password</label>
+      <div class="col-md-10">
+        <input type="password" ng-model="model.user.password" class="form-control" val-friendly-name="@Resources.Password" required />
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="col-md-2 control-label">Confirm password</label>
+      <div class="col-md-10">
+        <input type="password" ng-model="model.user.confirmPassword" val-equals="model.user.password" val-message="'Passwords must match.'" class="form-control" />
+      </div>
+    </div>
+    @Html.Partial("UserData")
+    <div class="form-group">
+      <div class="col-md-offset-2 col-md-10">
+        <input type="button" ng-click="registerWithChecks()" value="@Resources.Register" class="btn btn-default" />
+      </div>
+    </div>
+    <div class="form-group">
+      <div class="col-md-offset-2 col-md-10">
+        <val-summary></val-summary>
+        <cp-message></cp-message>
+      </div>
+    </div>
+  </div>
+</form>

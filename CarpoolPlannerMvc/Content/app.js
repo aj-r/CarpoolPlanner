@@ -1,12 +1,24 @@
-﻿var app = angular.module('carpoolApp', ['angular.net', 'val-summary', 'binding-type', 'ui.bootstrap.datetimepicker']);
-app.controller('baseCtrl', ['$scope', '$q', '$window', 'AngularNet', function($scope, $q, $window, AngularNet) {
+﻿var app = angular.module('carpoolApp', ['angular.net', 'validation-ext', 'ui.bootstrap.datetimepicker']);
+app.controller('baseCtrl', ['$scope', '$q', '$window', 'AngularNet', 'ValidationSummary', function($scope, $q, $window, AngularNet, ValidationSummary) {
   $scope.RecurrenceType = $window.RecurrenceType;
   $scope.MessageType = $window.MessageType;
   $scope.CommuteMethod = $window.CommuteMethod;
   $scope.model = $window.originalModel;
   $scope.trySubmit = function(form, url, modelContainer, modelName, beforesubmit) {
     var scope = this;
-    if (this.validateForm && !this.validateForm(form)) {
+    if (modelContainer == null)
+      modelContainer = $scope;
+    if (modelName == null)
+      modelName = "model";
+    var model = modelContainer[modelName];
+    if (model)
+      model.message = '';
+
+    if (!ValidationSummary.validate(form)) {
+      // Move focus to the first invalid control (NOTE: only works if form has a name). TODO: move to a directive?
+      if (form.$name) {
+        $("[name=" + form.$name + "] .ng-invalid").first().focus();
+      }
       var deferred = $q.defer();
       var promise = deferred.promise;
       var msg = 'Form validation failed.';
@@ -15,18 +27,11 @@ app.controller('baseCtrl', ['$scope', '$q', '$window', 'AngularNet', function($s
       promise.error = function(a) { if (a) a(msg); };
       return promise;
     }
-    if (modelContainer == null) {
-      modelContainer = $scope;
-    }
-    if (modelName == null) {
-      modelName = "model";
-    }
     var state = {
       form: form,
       modelContainer: modelContainer,
       modelName: modelName
     };
-    var model = modelContainer[modelName];
 
     if (beforesubmit)
       beforesubmit();
@@ -170,7 +175,8 @@ app.directive('cpMessage', function() {
       var modelName = attr.model || 'model';
       elem.append(
         '<p ng-class="{ \'text-success\': ' + modelName + '.messageType === MessageType.Success, \'text-danger\': ' + modelName + '.messageType === MessageType.Error }"'
-        + 'class="preserve-newlines">{{ ' + modelName + '.message }}</p>');
+        + ' ng-show="' + modelName + '.message"'
+        + ' class="preserve-newlines">{{ ' + modelName + '.message }}</p>');
     }
   };
 });

@@ -167,12 +167,11 @@
     <Compile Include="App_Start\RouteConfig.cs" />
     <Compile Include="App_Start\WebApiConfig.cs" />
     <Content Include="Content\app.js" />
-    <Content Include="Content\binding-type.js" />
     <Content Include="Content\datetimepicker.css" />
     <Content Include="Content\angular.net.js" />
     <Content Include="Content\Site.css" />
     <Content Include="Content\datetimepicker.js" />
-    <Content Include="Content\validation-summary.js" />
+    <Content Include="Content\validation-ext.js" />
     <Content Include="Global.asax" />
     <None Include="Properties\PublishProfiles\Local.pubxml" />
     <Content Include="Web.config" />
@@ -189,6 +188,7 @@
     <Content Include="Views\Trips\Index.cshtml" />
     <Content Include="Views\User\List.cshtml" />
     <Content Include="Views\User\Register.cshtml" />
+    <Content Include="Views\Shared\UserData.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />

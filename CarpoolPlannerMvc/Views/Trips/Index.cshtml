@@ -107,7 +107,7 @@
     {
       <hr />
       <h2>Create New Carpool</h2>
-      <form method="post" name="createTripForm" ng-controller="valSummaryCtrl" ng-submit="createTrip()" style="max-width: 700px;" novalidate>
+      <form method="post" name="createTripForm" ng-submit="createTrip()" style="max-width: 700px;" novalidate>
         <div class="form-horizontal">
           <div class="form-group">
             <span class="control-label col-sm-3">Name</span>
@@ -132,7 +132,7 @@
                 <input type="number" ng-model="tripRecurrence.every" min="1" class="form-control" val-friendly-name="Every" required />
               </div>
               <div class="col-sm-8">
-                <select class="form-control" ng-model="tripRecurrence.type" bt-number>
+                <select class="form-control" ng-model="tripRecurrence.type" val-number>
                   <option value="5">day{{ tripRecurrence.every == 1 ? '' : 's' }}</option>
                   <option value="4">week{{ tripRecurrence.every == 1 ? '' : 's' }}</option>
                   <option value="2">month{{ tripRecurrence.every == 1 ? '' : 's' }}</option>
@@ -149,7 +149,7 @@
                   <a class="dropdown-toggle" id="dropdown1" role="button" data-toggle="dropdown" data-target="#" href="#">
                     <div class="input-group">
                       <input type="text" class="form-control" ng-model="tripRecurrence.start" val-friendly-name="Start Date"
-                             bt-datetime="ddd MMM Do YYYY, h:mm a" required />
+                             val-datetime="{ format: 'ddd MMM Do YYYY, h:mm a' }" required />
                       <span class="input-group-addon"><i class="glyphicon glyphicon-calendar"></i></span>
                     </div>
                   </a>
@@ -166,7 +166,7 @@
                   <a class="dropdown-toggle" id="dropdown2" role="button" data-toggle="dropdown" data-target="#" href="#">
                     <div class="input-group">
                       <input type="text" class="form-control" ng-model="tripRecurrence.end" val-friendly-name="End Date"
-                             bt-datetime="ddd MMM Do YYYY, h:mm a" />
+                             val-datetime="{ format: 'ddd MMM Do YYYY, h:mm a' }" />
                       <span class="input-group-addon"><i class="glyphicon glyphicon-calendar"></i></span>
                     </div>
                   </a>
