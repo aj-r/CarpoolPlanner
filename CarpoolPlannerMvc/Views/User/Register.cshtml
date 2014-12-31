@@ -2,8 +2,6 @@
 @using CarpoolPlanner.Model
 @using CarpoolPlanner.ViewModel
 
-@model CreateUserViewModel
-
 @{
     ViewBag.Title = "Register";
     Layout = "~/Views/Shared/Layout.cshtml";
@@ -26,7 +24,7 @@
       $scope.register = function() {
         this.trySubmit(this.registerForm, '@Url.Action("Register", "User")', $scope, 'model', function() {
           $scope.model.message = "Submitting...";
-          $scope.model.messageType = MessageType.Info;
+          $scope.model.messageType = $scope.MessageType.Info;
         });
       };
     });

@@ -1,8 +1,6 @@
 ﻿@using CarpoolPlanner
 @using CarpoolPlanner.ViewModel
 
-@model UserViewModel
-
 @{
   ViewBag.Title = "Manage";
   Layout = "~/Views/Shared/Layout.cshtml";
@@ -23,7 +21,7 @@
       $scope.updateUser = function() {
         this.trySubmit(this.manageForm, '@Url.Action("Manage", "User")', $scope, 'model', function() {
           $scope.model.message = "Saving...";
-          $scope.model.messageType = MessageType.Info;
+          $scope.model.messageType = $scope.MessageType.Info;
         });
       };
     });
@@ -31,9 +29,9 @@
       $scope.setPassword = function() {
         this.trySubmit(this.passwordForm, '@Url.Action("SetPassword", "User")', $scope, 'passwordModel', function() {
           $scope.passwordModel.message = "Submitting...";
-          $scope.passwordModel.messageType = MessageType.Info;
+          $scope.passwordModel.messageType = $scope.MessageType.Info;
         }).success(function(result) {
-          if (result && result.model && result.model.messageType === MessageType.Error) {
+          if (result && result.model && result.model.messageType === $scope.MessageType.Error) {
             $("#oldPassword").focus();
           } else {
             // Set password successful - mark the form as untouched.

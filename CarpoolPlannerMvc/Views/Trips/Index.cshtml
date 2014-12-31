@@ -1,31 +1,31 @@
 ﻿@using CarpoolPlanner;
+@using CarpoolPlanner.Model;
 @using CarpoolPlanner.ViewModel;
-
-@model TripsViewModel
 
 @{
   ViewBag.Title = Resources.AvailableCarpools;
   Layout = "~/Views/Shared/Layout.cshtml";
 }
-
 @section headScripts{
 <script type="text/javascript">
+
   var tripCtrl = app.controller('tripCtrl', ['$scope', '$http', function($scope, $http) {
+    @(Html.JSClass<TripRecurrence>())
     $scope.saveTrips = function() {
-      this.trySubmit(this.tripRecurrenceForm, '@Url.Action("Index", "Trips")', $scope, 'model', function() {
-        $scope.model.message = "Saving...";
-        $scope.model.messageType = $scope.MessageType.Info;
+      this.trySubmit(this.tripRecurrenceForm, '@Url.Action("Index", "Trips")', $scope.model, 'tripsModel', function() {
+        $scope.model.tripsModel.message = "Saving...";
+        $scope.model.tripsModel.messageType = $scope.MessageType.Info;
       });
     };
     $scope.createTrip = function() {
       var form = this.createTripForm;
-      this.trySubmit(form, '@Url.Action("CreateTrip", "Trips")', $scope.model, 'create', function() {
-        $scope.model.create.message = "Creating...";
-        $scope.model.create.messageType = MessageType.Info;
+      this.trySubmit(form, '@Url.Action("CreateTrip", "Trips")', $scope.model, 'createModel', function() {
+        $scope.model.createModel.message = "Creating...";
+        $scope.model.createModel.messageType = $scope.MessageType.Info;
       }).success(function(result) {
-        if (result.model.messageType === MessageType.Success) {
+        if (result.model.messageType === $scope.MessageType.Success) {
           // Add the created trip to the list
-          $scope.model.trips.push(result.model.createdTrip);
+          $scope.model.tripsModel.trips.push(result.model.createdTrip);
           // If the trip was created successfully, treat the create trip like a new form
           // (so pretend it was never submitted, otherwise errors will appear)
           form.$setPristine();
@@ -35,27 +35,34 @@
     };
     $scope.deleteTrip = function(index) {
       var scope = this;
-      var trip = scope.model.trips[index];
-      if (!confirm('Are you sure you want to delete "' + trip.Name + '"?\nThis will remove ALL existing instances of that trip.'))
+      var trip = scope.model.tripsModel.trips[index];
+      if (!confirm('Are you sure you want to delete "' + trip.name + '"?\nThis will remove ALL existing instances of that trip.'))
         return;
 
-      scope.model.message = 'Deleting...';
-      scope.model.messageType = MessageType.Info;
-      $http.delete('@Url.Action("DeleteTrip", "Trips")/' + trip.Id).success(function(result) {
+      scope.model.tripsModel.message = 'Deleting...';
+      scope.model.tripsModel.messageType = $scope.MessageType.Info;
+      $http.delete('@Url.Action("DeleteTrip", "Trips")/' + trip.id).success(function(result) {
         if (result && result.model) {
-          scope.model.message = result.model.message;
-          scope.model.messageType = result.model.messageType;
-          if (result.model.messageType === MessageType.Success) {
-            scope.model.trips.splice(index, 1);
+          scope.model.tripsModel.message = result.model.message;
+          scope.model.tripsModel.messageType = result.model.messageType;
+          if (result.model.messageType === $scope.MessageType.Success) {
+            scope.model.tripsModel.trips.splice(index, 1);
           }
         }
-      })
+      }).error(function(result) {
+        var message = '';
+        if (typeof (result) == 'string') {
+          message = result;
+          scope.errorHandler(scope.model.tripsModel, message);
+        }
+        console.error('Error from server: ' + message);
+      });
     };
     $scope.addTripRecurrence = function(trip) {
-      trip.Recurrences.push({ Every: 1, Type: RecurrenceType.Weekly });
+      trip.recurrences.push(new TripRecurrence());
     };
     $scope.removeTripRecurrence = function(trip, index) {
-      trip.Recurrences.splice(index, 1);
+      trip.recurrences.splice(index, 1);
     };
   }]);
 </script>
@@ -71,7 +78,7 @@
     </div>
 
     <form method="post" name="tripRecurrenceForm" ng-submit="saveTrips()" novalidate>
-      <div class="repeater-item" ng-repeat="trip in model.trips">
+      <div class="repeater-item" ng-repeat="trip in model.tripsModel.trips">
         <h3 class="editable-region-header">
           <label class="checkbox">
             <input type="checkbox" id="attending-{{ trip.id }}" ng-model="trip.userTrips[model.userId].attending" ch-hierarchy="attending-{{ trip.id }}" />
@@ -97,10 +104,12 @@
           </div>
         </div>
       </div>
-      <div ng-show="model.trips.length === 0">There are currently no trips. An administrator can create new trips.</div>
-      <input type="submit" value="@Resources.Save" ng-show="model.trips.length > 0" class="btn btn-default" />
       <div class="form-group">
-        <cp-message></cp-message>
+        <input type="submit" value="@Resources.Save" ng-show="model.tripsModel.trips.length > 0" class="btn btn-default" />
+      </div>
+      <div ng-show="model.tripsModel.trips.length === 0">There are currently no trips. An administrator can create new trips.</div>
+      <div class="form-group">
+        <cp-message model="model.tripsModel"></cp-message>
       </div>
     </form>
     @if (AppUtils.CurrentUser.IsAdmin)
@@ -112,20 +121,20 @@
           <div class="form-group">
             <span class="control-label col-sm-3">Name</span>
             <div class="col-sm-9">
-              <input type="text" ng-model="model.create.trip.name" class="form-control" val-friendly-name="Name" required />
+              <input type="text" ng-model="model.createModel.trip.name" class="form-control" val-friendly-name="Name" required />
             </div>
           </div>
           <div class="form-group">
             <span class="control-label col-sm-3">Meeting Location</span>
             <div class="col-sm-9">
-              <input type="text" ng-model="model.create.trip.location" class="form-control" />
+              <input type="text" ng-model="model.createModel.trip.location" class="form-control" />
             </div>
           </div>
         </div>
         <div class="panel">
           <h3 style="margin-top:0px;">Recurrence:</h3>
-          <div class="form-horizontal" ng-repeat="tripRecurrence in model.create.trip.recurrences">
-            <div><a ng-click="removeTripRecurrence(model.create.trip, $index)" href="javascript:;">Delete Recurrence</a></div>
+          <div class="form-horizontal" ng-repeat="tripRecurrence in model.createModel.trip.recurrences">
+            <div><a ng-click="removeTripRecurrence(model.createModel.trip, $index)" href="javascript:;">Delete Recurrence</a></div>
             <div class="form-group">
               <span class="control-label col-sm-2">Every</span>
               <div class="col-sm-2">
@@ -179,13 +188,13 @@
             <div><b>Preview:</b> {{ tripRecurrenceToString(tripRecurrence) }}</div>
             <hr />
           </div>
-          <a ng-click="addTripRecurrence(model.create.trip)" href="javascript:;">Add Recurrence</a>
+          <a ng-click="addTripRecurrence(model.createModel.trip)" href="javascript:;">Add Recurrence</a>
         </div>
         <div class="form-group">
           <input type="submit" value="Create" class="btn btn-default" />
         </div>
         <div class="form-group">
-          <cp-message model="model.create"></cp-message>
+          <cp-message model="model.createModel"></cp-message>
           <val-summary></val-summary>
         </div>
       </form>

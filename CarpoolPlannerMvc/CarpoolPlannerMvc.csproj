@@ -158,6 +158,7 @@
     <Compile Include="ViewModel\CreateTripViewModel.cs" />
     <Compile Include="ViewModel\CreateUserViewModel.cs" />
     <Compile Include="ViewModel\SetPasswordViewModel.cs" />
+    <Compile Include="ViewModel\TripsCombinedViewModel.cs" />
     <Compile Include="ViewModel\TripsViewModel.cs" />
     <Compile Include="ViewModel\HomeViewModel.cs" />
     <Compile Include="ViewModel\LoginViewModel.cs" />

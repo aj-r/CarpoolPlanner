@@ -17,13 +17,11 @@ namespace CarpoolPlanner.Controllers
 
         public ActionResult Index()
         {
-            TripsViewModel model;
+            var model = new TripsCombinedViewModel();
             using (var context = ApplicationDbContext.Create())
             {
-                model = GetTripsViewModel(context);
+                model.TripsModel = GetTripsViewModel(context);
             }
-            model.Create.Trip = new Trip();
-            model.Create.Trip.Recurrences.Add(new TripRecurrence());
             return View(model);
         }
 

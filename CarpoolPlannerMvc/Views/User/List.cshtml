@@ -2,21 +2,18 @@
 @using CarpoolPlanner.Model;
 @using CarpoolPlanner.ViewModel;
 
-@model UserListViewModel
-
 @{
     ViewBag.Title = "Users";
     Layout = "~/Views/Shared/Layout.cshtml";
 }
 @section headScripts{
 <script type="text/javascript">
-  var UserStatus = @Html.JSEnum(typeof(UserStatus));
   app.controller('userCtrl', ['$scope', '$window', function($scope, $window) {
-    $scope.UserStatus = $window.UserStatus;
+    $scope.UserStatus = @Html.JSEnum(typeof(UserStatus));
     $scope.updateUser = function(index) {
       this.trySubmit(this.loginForm, '@Url.Action("UpdateStatus", "User", Request.QueryStringRouteValues())', $scope.model.users, index, function() {
         $scope.model.users[index].message = "Saving...";
-        $scope.model.users[index].messageType = MessageType.Info;
+        $scope.model.users[index].messageType = $scope.MessageType.Info;
       });
     }
   }]);
@@ -27,11 +24,11 @@
 <div class="row light-separator">
   @if (AppUtils.IsUserAdmin())
   {
-    <div class="col-md-1"><h4>User ID</h4></div>
+    <div class="col-md-1"><h4>@Resources.LoginName</h4></div>
   }
   <div class="col-md-2"><h4>Name</h4></div>
-  <div class="col-md-2"><h4>Phone</h4></div>
-  <div class="col-md-2"><h4>E-mail</h4></div>
+  <div class="col-md-2"><h4>@Resources.Phone</h4></div>
+  <div class="col-md-2"><h4>@Resources.Email</h4></div>
   <div class="col-md-2"><h4>Driver?</h4></div>
   @if (AppUtils.IsUserAdmin())
   {

@@ -120,7 +120,13 @@ textarea.ng-dirty.ng-invalid:focus,
             box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075), 0 0 8px rgba(255, 0, 0, 0.5);
 }
 
+cp-message {
+  font-size: 0.9em;
+  color: #707070;
+}
+
 val-summary {
+  font-size: 0.9em;
   color: #a94442;
 }
 

@@ -1,8 +1,6 @@
 ﻿@using CarpoolPlanner;
 @using CarpoolPlanner.ViewModel;
 
-@model LoginViewModel
-
 @{
   ViewBag.Title = "Login";
   Layout = "~/Views/Shared/Layout.cshtml";
@@ -14,9 +12,9 @@
     $scope.submitLogin = function() {
       this.trySubmit(this.loginForm, '@Url.Action("Login", "User", Request.QueryStringRouteValues())', $scope, 'model', function() {
         $scope.model.message = "Logging in...";
-        $scope.model.messageType = MessageType.Info;
+        $scope.model.messageType = $scope.MessageType.Info;
       }).success(function(result) {
-        if (result && result.model && result.model.messageType === MessageType.Error) {
+        if (result && result.model && result.model.messageType === $scope.MessageType.Error) {
           // Set focus to password field if login failed.
           $("#password").focus();
         }

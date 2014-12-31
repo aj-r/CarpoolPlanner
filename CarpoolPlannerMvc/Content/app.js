@@ -145,7 +145,7 @@ app.controller('baseCtrl', ['$scope', '$q', '$window', 'AngularNet', 'Validation
       if (message && message.indexOf('<!DOCTYPE') === -1)
         displayMessage += "\nThe error is: " + message;
       model.message = displayMessage;
-      model.messageType = MessageType.Error;
+      model.messageType = $scope.MessageType.Error;
     }
   };
 }]);
