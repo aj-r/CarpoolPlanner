@@ -29,7 +29,8 @@
     </div>
     <div style="margin-top:8px;" class="checkbox">
       <label>
-        <input type="checkbox" ng-model="model.user.canDriveIfNeeded" ng-disabled="model.user.commuteMethod == CommuteMethod.Driver" />
+        <input type="checkbox" ng-model="model.user.canDriveIfNeeded" ng-disabled="model.user.commuteMethod == CommuteMethod.Driver"
+               cp-disabled-value="true" />
         @Resources.CanDriveIfNeeded
       </label>
     </div>
@@ -43,6 +44,7 @@
   <div class="col-md-10">
     <input type="number" ng-model="model.user.seats" min="1" val-number val-friendly-name="@Resources.NumberOfSeats"
            ng-disabled="model.user.commuteMethod != CommuteMethod.Driver && !model.user.canDriveIfNeeded"
+           cp-disabled-value=""
            class="form-control form-control-small" />
   </div>
 </div>
@@ -52,13 +54,13 @@
     <input type="email" ng-model="model.user.email" class="form-control" val-friendly-name="@Resources.Email" />
     <div class="checkbox">
       <label>
-        <input type="checkbox" ng-model="model.user.emailNotify" ng-disabled="!model.user.email" />
+        <input type="checkbox" ng-model="model.user.emailNotify" ng-disabled="!model.user.email" cp-disabled-value="false" />
         Send notifications via e-mail (not yet implemented)
       </label>
     </div>
     <div class="checkbox" style="margin-bottom: 10px;">
       <label>
-        <input type="checkbox" ng-model="model.user.emailVisible" ng-disabled="!model.user.email" />
+        <input type="checkbox" ng-model="model.user.emailVisible" ng-disabled="!model.user.email" cp-disabled-value="false" />
         @Resources.VisibleToOtherUsers
       </label>
     </div>
@@ -70,13 +72,13 @@
     <input type="tel" ng-model="model.user.phone" class="form-control" val-phone="{ countryCodeRequired: false }" val-friendly-name="@Resources.Phone" />
     <div class="checkbox">
       <label>
-        <input type="checkbox" ng-model="model.user.phoneNotify" ng-disabled="!model.user.phone" />
+        <input type="checkbox" ng-model="model.user.phoneNotify" ng-disabled="!model.user.phone" cp-disabled-value="false" />
         Send notifications via SMS
       </label>
     </div>
     <div class="checkbox" style="margin-bottom: 10px;">
       <label>
-        <input type="checkbox" ng-model="model.user.phoneVisible" ng-disabled="!model.user.phone" />
+        <input type="checkbox" ng-model="model.user.phoneVisible" ng-disabled="!model.user.phone" cp-disabled-value="false" />
         @Resources.VisibleToOtherUsers
       </label>
     </div>

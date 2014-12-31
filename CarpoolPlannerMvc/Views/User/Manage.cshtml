@@ -1,0 +1,103 @@
+﻿@using CarpoolPlanner
+@using CarpoolPlanner.ViewModel
+
+@model UserViewModel
+
+@{
+  ViewBag.Title = "Manage";
+  Layout = "~/Views/Shared/Layout.cshtml";
+}
+@section headScripts{
+  <script type="text/javascript">
+    app.controller('userCtrl', function($scope) {
+      $scope.updateUserWithChecks = function() {
+        var emailNotifications = this.model.user.email && this.model.user.emailNotify;
+        var phoneNotifications = this.model.user.phone && this.model.user.phoneNotify;
+        if (!phoneNotifications && !emailNotifications) {
+          if (!confirm("You have opted out of all notifications. This means that you must manually log in to the website for every single carpool to confirm that you are coming. Are you sure you want to do this?")) {
+            return;
+          }
+        }
+        this.manageForm.$submit();
+      };
+      $scope.updateUser = function() {
+        this.trySubmit(this.manageForm, '@Url.Action("Manage", "User")', $scope, 'model', function() {
+          $scope.model.message = "Saving...";
+          $scope.model.messageType = MessageType.Info;
+        });
+      };
+    });
+    app.controller('passwordCtrl', function($scope) {
+      $scope.setPassword = function() {
+        this.trySubmit(this.passwordForm, '@Url.Action("SetPassword", "User")', $scope, 'passwordModel', function() {
+          $scope.passwordModel.message = "Submitting...";
+          $scope.passwordModel.messageType = MessageType.Info;
+        }).success(function(result) {
+          if (result && result.model && result.model.messageType === MessageType.Error) {
+            $("#oldPassword").focus();
+          } else {
+            // Set password successful - mark the form as untouched.
+            $scope.passwordForm.$setPristine();
+            $scope.passwordForm.$setUntouched();
+          }
+        });
+      };
+    });
+  </script>
+}
+
+<h2>Manage Account - {{ model.loginName }}</h2>
+
+<form name="manageForm" ng-controller="userCtrl" ng-submit="updateUser()" novalidate style="margin-top: 20px;">
+  <div class="form-horizontal">
+    @Html.Partial("UserData")
+    <div class="form-group">
+      <div class="col-md-offset-2 col-md-10">
+        <input type="button" ng-click="updateUserWithChecks()" value="@Resources.Save" class="btn btn-default" />
+      </div>
+    </div>
+    <div class="form-group">
+      <div class="col-md-offset-2 col-md-10">
+        <cp-message></cp-message>
+        <val-summary></val-summary>
+      </div>
+    </div>
+  </div>
+</form>
+
+<hr />
+
+<form name="passwordForm" ng-controller="passwordCtrl" ng-submit="setPassword()" ng-init="passwordModel.userId = model.user.id" novalidate>
+  <div class="form-horizontal">
+    <h4>Change Password</h4>
+    <div class="form-group">
+      <label class="col-md-2 control-label">Current password</label>
+      <div class="col-md-10">
+        <input type="password" ng-model="passwordModel.oldPassword" required val-friendly-name="Current Password" id="oldPassword" class="form-control" />
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="col-md-2 control-label">New password</label>
+      <div class="col-md-10">
+        <input type="password" ng-model="passwordModel.newPassword" required val-friendly-name="New Password" class="form-control" />
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="col-md-2 control-label">Confirm new password</label>
+      <div class="col-md-10">
+        <input type="password" ng-model="passwordModel.confirmPassword" val-equals="passwordModel.newPassword" val-message="Passwords must match." class="form-control" />
+      </div>
+    </div>
+    <div class="form-group">
+      <div class="col-md-offset-2 col-md-10">
+        <input type="submit" value="Change Password" class="btn btn-default" />
+      </div>
+    </div>
+    <div class="form-group">
+      <div class="col-md-offset-2 col-md-10">
+        <cp-message model="passwordModel"></cp-message>
+        <val-summary></val-summary>
+      </div>
+    </div>
+  </div>
+</form>

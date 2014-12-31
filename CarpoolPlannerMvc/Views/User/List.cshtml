@@ -46,7 +46,7 @@
   }
   <div class="col-md-2" style="margin-top:8px;">{{ user.name }}</div>
   <div class="col-md-2" style="margin-top:8px;">{{ user.phone }}</div>
-  <div class="col-md-2" style="margin-top:8px;">{{ user.email }}</div>
+  <div class="col-md-2" style="margin-top:8px;"><a href="mailto:{{ user.email }}" ng-show="user.email">{{ user.email }}</a></div>
   <div class="col-md-2" style="margin-top:8px;">
     <span ng-show="user.commuteMethod == CommuteMethod.Driver">Driver ({{ user.seats }} seats)</span>
     <span ng-show="user.commuteMethod == CommuteMethod.HaveRide">Will get my own ride. </span>

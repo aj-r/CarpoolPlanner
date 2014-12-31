@@ -1,17 +1,25 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Web;
 using System.Web.Mvc;
 using System.Web.Security;
 using CarpoolPlanner.Model;
 using CarpoolPlanner.ViewModel;
+using log4net;
 
 namespace CarpoolPlanner.Controllers
 {
     [Authorize]
     public class UserController : CarpoolControllerBase
     {
+        private static readonly ILog log = LogManager.GetLogger(typeof(User));
+
+        private const int saltSize = 24;
+        private const int hashSize = 24;
+        private const int defaultIterationCount = 1000;
+
         [AllowAnonymous]
         public ActionResult Login()
         {
@@ -24,8 +32,8 @@ namespace CarpoolPlanner.Controllers
         {
             using (var context = ApplicationDbContext.Create())
             {
-                var user = context.FindUser(model.LoginNameInput, model.Password);
-                if (user != null)
+                var user = context.Users.FirstOrDefault(u => u.LoginName == model.LoginNameInput);
+                if (IsPasswordCorrect(user, model.Password))
                 {
                     AppUtils.UpdateCachedUser(user);
                     switch (user.Status)
@@ -76,9 +84,62 @@ namespace CarpoolPlanner.Controllers
         [AllowAnonymous]
         public ActionResult Register()
         {
-            var model = new UserViewModel();
-            model.User.LoginName = Request.QueryString["LoginName"];
-            return View(model);
+            return View(new CreateUserViewModel());
+        }
+
+        [AllowAnonymous]
+        [HttpPost]
+        public ActionResult Register(CreateUserViewModel model)
+        {
+            if (model == null)
+            {
+                Response.StatusCode = 400;
+                model.SetMessage("No model specified.", MessageType.Error);
+                model.Password = "";
+                log.Warn(model.Message);
+                return Ng(model);
+            }
+            if (model.User == null)
+            {
+                Response.StatusCode = 400;
+                model.SetMessage("User is required.", MessageType.Error);
+                model.Password = "";
+                log.Warn(model.Message);
+                return Ng(model);
+            }
+            if (model.User.LoginName == null)
+            {
+                Response.StatusCode = 400;
+                model.SetMessage("Login name is required.", MessageType.Error);
+                model.Password = "";
+                log.Warn(model.Message);
+                return Ng(model);
+            }
+            if (string.IsNullOrEmpty(model.Password))
+            {
+                Response.StatusCode = 400;
+                model.SetMessage("Password is required.", MessageType.Error);
+                model.Password = "";
+                log.Warn(model.Message);
+                return Ng(model);
+            }
+            SetPassword(model.User, model.Password);
+            model.User.Status = UserStatus.Unapproved;
+            using (var context = ApplicationDbContext.Create())
+            {
+                if (context.Users.Any(u => u.LoginName == model.User.LoginName))
+                {
+                    model.SetMessage(string.Concat("User ID '", model.User.LoginName, "' already exists."), MessageType.Error);
+                    model.Password = "";
+                    log.Warn(model.Message);
+                    return Ng(model);
+                }
+                context.Users.Add(model.User);
+                context.SaveChanges();
+            }
+            // Take the user to the trips page because unapproved users won't have access to the default page anyways.
+            // This allows users to enrol in trips while they wait to be approved.
+            return NgRedirect(Url.Action("Index", "Trips"));
         }
 
         public ActionResult Manage()
@@ -87,76 +148,152 @@ namespace CarpoolPlanner.Controllers
         }
 
         [HttpPost]
-        public ActionResult Manage(UserViewModel user)
+        public ActionResult Manage(UserViewModel model)
         {
-            if (user.User == null)
-                return Ng(user);
-            if (user.User != AppUtils.CurrentUser && !AppUtils.IsUserAdmin())
+            if (model.User == null)
+                return Ng(model);
+            if (AppUtils.CurrentUser == null || (model.User.Id != AppUtils.CurrentUser.Id && !AppUtils.IsUserAdmin()))
             {
                 Response.StatusCode = 403;
-                user.SetMessage("You are not authorized to update the specified user.", MessageType.Error);
-                return Ng(user);
+                model.SetMessage("You are not authorized to update the specified user.", MessageType.Error);
+                return Ng(model);
             }
-            var model = new UserListViewModel();
             using (var context = ApplicationDbContext.Create())
             {
-                // TODO: save user
+                var serverUser = context.Users.Find(model.User.Id);
+                if (serverUser == null)
+                {
+                    Response.StatusCode = 400;
+                    model.SetMessage("User not found.", MessageType.Error);
+                    return Ng(model);
+                }
+                serverUser.Name = model.User.Name;
+                serverUser.CommuteMethod = model.User.CommuteMethod;
+                serverUser.CanDriveIfNeeded = model.User.CanDriveIfNeeded;
+                serverUser.Seats = model.User.Seats;
+                serverUser.Email = model.User.Email;
+                serverUser.EmailNotify = model.User.EmailNotify;
+                serverUser.EmailVisible = model.User.EmailVisible;
+                serverUser.Phone = model.User.Phone;
+                serverUser.PhoneNotify = model.User.PhoneNotify;
+                serverUser.PhoneVisible = model.User.PhoneVisible;
+                context.SaveChanges();
+                model.User = serverUser;
+                AppUtils.UpdateCachedUser(serverUser);
             }
+            model.SetMessage("Saved successfully.", MessageType.Success);
             return Ng(model);
         }
 
         [HttpPost]
-        public ActionResult SetPassword(string password, UserViewModel user)
+        public ActionResult SetPassword(SetPasswordViewModel model)
         {
-            if (user.User == null)
-                return Ng(user);
-            if (user.User != AppUtils.CurrentUser && !AppUtils.IsUserAdmin())
+            if (AppUtils.CurrentUser == null || (model.UserId != AppUtils.CurrentUser.Id && !AppUtils.IsUserAdmin()))
             {
                 Response.StatusCode = 403;
-                user.SetMessage("You are not authorized to update the specified user.", MessageType.Error);
-                return Ng(user);
+                model.SetMessage("You are not authorized to set the password for the specified user.", MessageType.Error);
+                model.OldPassword = "";
+                model.NewPassword = "";
+                return Ng(model);
             }
-            if (string.IsNullOrEmpty(password))
+            if (string.IsNullOrEmpty(model.NewPassword))
             {
-                user.SetMessage("The specified password does not meet the requirements.", MessageType.Error);
-                return Ng(user);
+                model.SetMessage("The specified password does not meet the requirements.", MessageType.Error);
+                model.OldPassword = "";
+                model.NewPassword = "";
+                return Ng(model);
             }
-            var model = new UserListViewModel();
             using (var context = ApplicationDbContext.Create())
             {
-                // TODO: set password
+                var user = context.Users.Find(model.UserId);
+                if (!IsPasswordCorrect(user, model.OldPassword))
+                {
+                    model.SetMessage("Current password is incorrect.", MessageType.Error);
+                    model.OldPassword = "";
+                    model.NewPassword = "";
+                    return Ng(model);
+                }
+                SetPassword(user, model.NewPassword);
+                context.SaveChanges();
+                AppUtils.UpdateCachedUser(user);
             }
+            model.OldPassword = "";
+            model.NewPassword = "";
+            model.SetMessage("Changed password successfully.", MessageType.Success);
             return Ng(model);
         }
 
         [AllowAnonymous]
         [HttpPost]
-        public ActionResult UpdateStatus(UserViewModel user)
+        public ActionResult UpdateStatus(UserViewModel model)
         {
-            if (user.User == null)
-                return Ng(user);
+            if (model.User == null)
+                return Ng(model);
             if (!AppUtils.IsUserAdmin())
             {
                 Response.StatusCode = 403;
-                user.SetMessage("You are not authorized to update the specified user's status.", MessageType.Error);
-                return Ng(user);
+                model.SetMessage("You are not authorized to update the specified user's status.", MessageType.Error);
+                return Ng(model);
             }
             using (var context = ApplicationDbContext.Create())
             {
-                var serverUser = context.Users.Find(user.User.Id);
+                var serverUser = context.Users.Find(model.User.Id);
                 if (serverUser == null)
                 {
                     Response.StatusCode = 400;
-                    user.SetMessage("Specified user does not exist.", MessageType.Error);
-                    return Ng(user);
+                    model.SetMessage("Specified user does not exist.", MessageType.Error);
+                    return Ng(model);
                 }
-                serverUser.Status = user.User.Status;
-                serverUser.IsAdmin = user.User.IsAdmin;
+                serverUser.Status = model.User.Status;
+                serverUser.IsAdmin = model.User.IsAdmin;
                 context.SaveChanges();
-                user.User = serverUser;
-                user.SetMessage("Successful", MessageType.Success);
-                return Ng(user);
+                model.User = serverUser;
+                AppUtils.UpdateCachedUser(serverUser);
             }
+            model.SetMessage("Successful", MessageType.Success);
+            return Ng(model);
+        }
+
+        /// <summary>
+        /// Checks whether the specified plain-text password is the correct password for the current user.
+        /// </summary>
+        /// <param name="password">The plain-text password to check.</param>
+        private static bool IsPasswordCorrect(User user, string password)
+        {
+            if (password == null)
+                password = "";
+            if (user != null && user.Password != null && user.Salt != null)
+            {
+                var hash = Crypto.PBKDF2(password, user.Salt, user.Iterations, hashSize);
+                return Crypto.SlowEquals(hash, user.Password);
+            }
+            else
+            {
+                // If user does not exist, perform operations that should take the same amount of time as verifying the password.
+                // This prevents attacks that use response timing to determine whether a user exists.
+                var buffer = new byte[saltSize];
+                var hash = Crypto.PBKDF2(password, buffer, defaultIterationCount, hashSize);
+                Crypto.SlowEquals(hash, buffer);
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Sets the current user's password.
+        /// </summary>
+        /// <param name="password">The plain-text password.</param>
+        private static void SetPassword(User user, string password)
+        {
+            if (user == null)
+                throw new ArgumentNullException("user");
+            if (password == null)
+                throw new ArgumentNullException("password");
+            var rng = new RNGCryptoServiceProvider();
+            user.Salt = new byte[saltSize];
+            rng.GetBytes(user.Salt);
+            user.Iterations = defaultIterationCount;
+            user.Password = Crypto.PBKDF2(password, user.Salt, user.Iterations, hashSize);
+            log.Info(string.Concat("User ", user.Id, " changed his/her password"));
         }
     }
 }

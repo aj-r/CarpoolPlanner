@@ -2,7 +2,7 @@
 @using CarpoolPlanner.Model
 @using CarpoolPlanner.ViewModel
 
-@model UserViewModel
+@model CreateUserViewModel
 
 @{
     ViewBag.Title = "Register";
@@ -10,7 +10,9 @@
 }
 @section headScripts{
   <script type="text/javascript">
-    app.controller('userCtrl', ['$scope', '$window', function($scope, $window) {
+    app.controller('userCtrl', function($scope, $location) {
+      var s = $location.search();
+      $scope.model.user.loginName = s.loginName;
       $scope.registerWithChecks = function() {
         var emailNotifications = this.model.user.email && this.model.user.emailNotify;
         var phoneNotifications = this.model.user.phone && this.model.user.phoneNotify;
@@ -27,7 +29,7 @@
           $scope.model.messageType = MessageType.Info;
         });
       };
-    }]);
+    });
 </script>
 }
 
@@ -38,18 +40,19 @@
       <label class="col-md-2 control-label">@Resources.LoginName</label>
       <div class="col-md-10">
         <input type="text" ng-model="model.user.loginName" class="form-control" val-friendly-name="@Resources.LoginName" required />
+        <!-- TODO: add an async validator to make sure the loginName does not already exist -->
       </div>
     </div>
     <div class="form-group">
       <label class="col-md-2 control-label">@Resources.Password</label>
       <div class="col-md-10">
-        <input type="password" ng-model="model.user.password" class="form-control" val-friendly-name="@Resources.Password" required />
+        <input type="password" ng-model="model.password" class="form-control" val-friendly-name="@Resources.Password" required />
       </div>
     </div>
     <div class="form-group">
       <label class="col-md-2 control-label">Confirm password</label>
       <div class="col-md-10">
-        <input type="password" ng-model="model.user.confirmPassword" val-equals="model.user.password" val-message="'Passwords must match.'" class="form-control" />
+        <input type="password" ng-model="model.confirmPassword" val-equals="model.password" val-message="'Passwords must match.'" class="form-control" />
       </div>
     </div>
     @Html.Partial("UserData")

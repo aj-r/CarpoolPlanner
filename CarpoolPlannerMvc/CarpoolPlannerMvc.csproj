@@ -129,7 +129,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AppUtils.cs" />
+    <Compile Include="CarpoolSerializerFactory.cs" />
     <Compile Include="Controllers\CarpoolControllerBase.cs" />
+    <Compile Include="Controllers\Crypto.cs" />
     <Compile Include="Controllers\TripsController.cs" />
     <Compile Include="Controllers\NotificationsController.cs" />
     <Compile Include="Controllers\NgController.cs" />
@@ -154,6 +156,8 @@
     </Compile>
     <Compile Include="HttpRequestExtensions.cs" />
     <Compile Include="ViewModel\CreateTripViewModel.cs" />
+    <Compile Include="ViewModel\CreateUserViewModel.cs" />
+    <Compile Include="ViewModel\SetPasswordViewModel.cs" />
     <Compile Include="ViewModel\TripsViewModel.cs" />
     <Compile Include="ViewModel\HomeViewModel.cs" />
     <Compile Include="ViewModel\LoginViewModel.cs" />
@@ -189,6 +193,7 @@
     <Content Include="Views\User\List.cshtml" />
     <Content Include="Views\User\Register.cshtml" />
     <Content Include="Views\Shared\UserData.cshtml" />
+    <Content Include="Views\User\Manage.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />

@@ -26,6 +26,8 @@ namespace CarpoolPlanner
             ValueProviderFactories.Factories.Remove(ValueProviderFactories.Factories.OfType<JsonValueProviderFactory>().FirstOrDefault());
             //ValueProviderFactories.Factories.Add(new JsonNetValueProviderFactory());
             ModelBinders.Binders.DefaultBinder = new JsonNetModelBinder();
+
+            JsonSerializerFactory.Current = new CarpoolSerializerFactory();
         }
     }
 }

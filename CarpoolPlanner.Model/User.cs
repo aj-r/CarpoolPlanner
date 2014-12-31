@@ -2,13 +2,6 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.IO;
-using System.Net;
-using System.Security.Cryptography;
-using System.Text;
-using System.Web;
-using System.Web.Script.Serialization;
-using log4net;
 using Newtonsoft.Json;
 
 namespace CarpoolPlanner.Model
@@ -41,12 +34,6 @@ namespace CarpoolPlanner.Model
 
     public class User
     {
-        private static readonly ILog log = LogManager.GetLogger(typeof(User));
-
-        private const int saltSize = 24;
-        private const int hashSize = 24;
-        private const int defaultIterationCount = 1000;
-
         public User()
         {
             UserTrips = new List<UserTrip>();
@@ -55,6 +42,7 @@ namespace CarpoolPlanner.Model
             EmailVisible = true;
             PhoneNotify = true;
             PhoneVisible = true;
+            Status = UserStatus.Unapproved;
         }
 
         [Key, Required]
@@ -64,57 +52,6 @@ namespace CarpoolPlanner.Model
         public string LoginName { get; set; }
 
         public string Name { get; set; }
-
-        /// <summary>
-        /// Sets the current user's password.
-        /// </summary>
-        /// <param name="password">The plain-text password.</param>
-        public void SetPassword(string password)
-        {
-            if (password == null)
-            {
-                Salt = null;
-                Password = null;
-                Iterations = 0;
-                log.Info(string.Concat("User ", Id, " removed his/her password"));
-            }
-            else
-            {
-                var rng = new RNGCryptoServiceProvider();
-                Salt = new byte[saltSize];
-                rng.GetBytes(Salt);
-                Iterations = defaultIterationCount;
-                Password = Crypto.PBKDF2(password, Salt, Iterations, hashSize);
-                log.Info(string.Concat("User ", Id, " changed his/her password"));
-            }
-        }
-
-        /// <summary>
-        /// Checks whether the specified plain-text password is the correct password for the current user.
-        /// </summary>
-        /// <param name="password">The plain-text password to check.</param>
-        public bool IsPasswordCorrect(string password)
-        {
-            if (password == null)
-                return Password == null;
-            if (Password == null || Salt == null)
-                return false;
-            var hash = Crypto.PBKDF2(password, Salt, Iterations, hashSize);
-            return Crypto.SlowEquals(hash, Password);
-        }
-
-        /// <summary>
-        /// Performs operations that should take the same amount of time as verifying the password.
-        /// </summary>
-        /// <param name="password">The plain-text password to "check".</param>
-        public static void FakeIsPasswordCorrect(string password)
-        {
-            if (password == null)
-                return;
-            var buffer = new byte[saltSize];
-            var hash = Crypto.PBKDF2(password, buffer, defaultIterationCount, hashSize);
-            Crypto.SlowEquals(hash, buffer);
-        }
 
         /// <summary>
         /// Gets or sets the hashed password.
@@ -175,7 +112,18 @@ namespace CarpoolPlanner.Model
         /// </summary>
         public bool CanDriveIfNeeded { get; set; }
 
-        public int Seats { get; set; }
+        private int seats;
+
+        public int Seats
+        {
+            get { return seats; }
+            set
+            {
+                if (value < 1)
+                    return;
+                seats = value;
+            }
+        }
 
         public bool IsAdmin { get; set; }
 

@@ -1,4 +1,11 @@
 ﻿var app = angular.module('carpoolApp', ['angular.net', 'validation-ext', 'ui.bootstrap.datetimepicker']);
+
+app.config(function($locationProvider) {
+  // Enable HTML5 mode so that $location.search() can read query strings that are not preceded by a hash (#).
+  // However, we don't actually want to use the History API, so disable <base> and link rewriting.
+  $locationProvider.html5Mode({ enabled: true, requireBase: false, rewriteLinks: false });
+});
+
 app.controller('baseCtrl', ['$scope', '$q', '$window', 'AngularNet', 'ValidationSummary', function($scope, $q, $window, AngularNet, ValidationSummary) {
   $scope.RecurrenceType = $window.RecurrenceType;
   $scope.MessageType = $window.MessageType;
@@ -43,8 +50,15 @@ app.controller('baseCtrl', ['$scope', '$q', '$window', 'AngularNet', 'Validation
         }
       })
       .error(function(result) {
-        console.error('Error from server: ' + result);
-        scope.errorHandler(model, result);
+        var message;
+        if (result && result.model) {
+          modelContainer[modelName] = result.model;
+          message = result.model.message;
+        } else if (typeof (result) == 'string') {
+          message = result;
+          scope.errorHandler(model, message);
+        }
+        console.error('Error from server: ' + message);
       });
   };
 
@@ -162,7 +176,7 @@ app.directive('cpNav', ['$window', function($window) {
         if (newValue === oldValue)
           return;
         processHref(elem, attr.href);
-      })
+      });
     }
   };
 }]);
@@ -242,6 +256,39 @@ app.directive('chHierarchy', function($timeout) {
   };
 });
 
+// Directive for clearing a control's value when it is disabled.
+app.directive('cpDisabledValue', ['$window', function($window) {
+  return {
+    restrict: 'A',
+    require: 'ngModel',
+    link: function(scope, elem, attr, model) {
+      var disabledValue = scope.$eval(attr.cpDisabledValue);
+      var storedValue = null;
+      if (!attr.ngDisabled)
+        return;
+      if (scope.$eval(attr.ngDisabled)) {
+        storedValue = scope.$eval(attr.ngModel);
+        model.$setViewValue(disabledValue || '');
+        model.$render();
+      }
+      scope.$watch(attr.ngDisabled, function(newValue, oldValue) {
+        if (newValue == oldValue)
+          return;
+        if (newValue) {
+          storedValue = model.$modelValue;
+          model.$setViewValue(disabledValue);
+          model.$render();
+        } else {
+          model.$setViewValue(storedValue);
+          storedValue = null;
+          model.$render();
+        }
+      });
+    }
+  };
+}]);
+
+// Add a $submit method to forms to allow programmatic submittion
 app.directive('form', function() {
   return {
     require: 'form',

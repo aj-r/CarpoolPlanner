@@ -41,22 +41,6 @@ namespace CarpoolPlanner.Model
 
         public IDbSet<Log> Logs { get; set; }
 
-        public User FindUser(string loginName, string password)
-        {
-            var user = Users.FirstOrDefault(u => u.LoginName == loginName);
-            if (user != null)
-            {
-                bool correct = user.IsPasswordCorrect(password);
-                return correct ? user : null;
-            }
-            else
-            {
-                // Make the request take about the same time whether the user exists or not.
-                User.FakeIsPasswordCorrect(password);
-                return null;
-            }
-        }
-
         /// <summary>
         /// Gets all UserTrips for the specified user.
         /// </summary>

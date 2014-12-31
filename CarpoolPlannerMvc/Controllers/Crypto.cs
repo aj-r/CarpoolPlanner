@@ -28,7 +28,7 @@
 using System;
 using System.Security.Cryptography;
 
-namespace CarpoolPlanner.Model
+namespace CarpoolPlanner.Controllers
 {
     public static class Crypto
     {

@@ -5,7 +5,7 @@ using System.Web;
 
 namespace CarpoolPlanner.ViewModel
 {
-    public class UserListViewModel
+    public class UserListViewModel : ViewModelBase
     {
         public UserListViewModel()
         {
