@@ -15,17 +15,20 @@ namespace CarpoolPlanner.Controllers
         public ActionResult Index()
         {
             var model = new HomeViewModel();
-            using (var context = ApplicationDbContext.Create())
+            if (AppUtils.IsUserStatus(UserStatus.Active))
             {
-                model.Trips = context.Trips
-                    .Where(t => t.UserTrips.Any(ut => ut.UserId == AppUtils.CurrentUser.Id && ut.Attending))
-                    .Include(t => t.Recurrences)
-                    .ToList();
-                foreach (var tripRecurrence in model.Trips.SelectMany(t => t.Recurrences))
+                using (var context = ApplicationDbContext.Create())
                 {
-                    // With EF magic, this method automatically adds the next TripInstance for each recurrence to the Trip
-                    var instance = context.GetNextTripInstance(tripRecurrence, ApplicationDbContext.TripInstanceRemovalDelay);
-                    context.GetTripInstanceById(instance.Id);
+                    model.Trips = context.Trips
+                        .Where(t => t.UserTrips.Any(ut => ut.UserId == AppUtils.CurrentUser.Id && ut.Attending))
+                        .Include(t => t.Recurrences)
+                        .ToList();
+                    foreach (var tripRecurrence in model.Trips.SelectMany(t => t.Recurrences))
+                    {
+                        // With EF magic, this method automatically adds the next TripInstance for each recurrence to the Trip
+                        var instance = context.GetNextTripInstance(tripRecurrence, ApplicationDbContext.TripInstanceRemovalDelay);
+                        context.GetTripInstanceById(instance.Id);
+                    }
                 }
             }
             return View(model);

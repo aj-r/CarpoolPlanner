@@ -6,12 +6,15 @@ using System.Web;
 using System.Web.Mvc;
 using CarpoolPlanner.Model;
 using CarpoolPlanner.ViewModel;
+using log4net;
 
 namespace CarpoolPlanner.Controllers
 {
     [Authorize]
     public class TripsController : CarpoolControllerBase
     {
+        private static readonly ILog log = LogManager.GetLogger(typeof(TripsController));
+
         public ActionResult Index()
         {
             TripsViewModel model;
@@ -25,19 +28,19 @@ namespace CarpoolPlanner.Controllers
         }
 
         [HttpPost]
-        public ActionResult Index(TripsViewModel clientModel)
+        public ActionResult Index(TripsViewModel model)
         {
             // We should only be saving the attendance here,
             // so load the model form the DB and update the attendance values.
             // DON'T simly save the clientModel to the DB.
-            TripsViewModel model;
+            TripsViewModel serverModel;
             bool save = false;
             using (var context = ApplicationDbContext.Create())
             {
-                model = GetTripsViewModel(context);
-                foreach (var userTrip in model.Trips.Select(t => t.UserTrips[AppUtils.CurrentUser.Id]))
+                serverModel = GetTripsViewModel(context);
+                foreach (var userTrip in serverModel.Trips.Select(t => t.UserTrips[AppUtils.CurrentUser.Id]))
                 {
-                    var clientUserTrip = clientModel.Trips.Where(t => t.Id == userTrip.TripId && t.UserTrips.Contains(AppUtils.CurrentUser.Id))
+                    var clientUserTrip = model.Trips.Where(t => t.Id == userTrip.TripId && t.UserTrips.Contains(AppUtils.CurrentUser.Id))
                         .Select(t => t.UserTrips[AppUtils.CurrentUser.Id])
                         .FirstOrDefault();
                     if (clientUserTrip == null)
@@ -73,30 +76,44 @@ namespace CarpoolPlanner.Controllers
                 if (save)
                     context.SaveChanges();
             }
-            model.SetMessage(save ? "Saved successfully." : "No changes to save.", MessageType.Success);
-            return Ng(model);
+            serverModel.SetMessage(save ? "Saved successfully." : "No changes to save.", MessageType.Success);
+            return Ng(serverModel);
         }
 
         [HttpPost]
-        public ActionResult CreateTrip(CreateTripViewModel createModel)
+        public ActionResult CreateTrip(CreateTripViewModel model)
         {
+            if (!AppUtils.IsUserAdmin())
+            {
+                Response.StatusCode = 403;
+                model.SetMessage("You are not authorized to create trips.", MessageType.Error);
+                log.Warn(model.Message);
+                return Ng(model);
+            }
             // TODO: validate trip
             using (var context = ApplicationDbContext.Create())
             {
-                context.Trips.Add(createModel.Trip);
+                context.Trips.Add(model.Trip);
                 context.SaveChanges();
-                createModel.CreatedTrip = createModel.Trip;
+                model.CreatedTrip = model.Trip;
             }
-            createModel.Trip = new Trip();
-            createModel.Trip.Recurrences.Add(new TripRecurrence());
-            createModel.SetMessage("Created successfully.", MessageType.Success);
-            return Ng(createModel);
+            model.Trip = new Trip();
+            model.Trip.Recurrences.Add(new TripRecurrence());
+            model.SetMessage("Created successfully.", MessageType.Success);
+            return Ng(model);
         }
 
         [HttpDelete]
         public ActionResult DeleteTrip(int id)
         {
             var model = new TripsViewModel();
+            if (!AppUtils.IsUserAdmin())
+            {
+                Response.StatusCode = 403;
+                model.SetMessage("You are not authorized to delete trips.", MessageType.Error);
+                log.Warn(model.Message);
+                return Ng(model);
+            }
             using (var context = ApplicationDbContext.Create())
             {
                 var trip = context.Trips.Find(id);

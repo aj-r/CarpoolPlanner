@@ -225,29 +225,37 @@ app.directive('chHierarchy', function($timeout) {
       }
       var name = hierarchy[hierarchy.length - 1];
       var node = parentNode[name] = createNode();
-      node.$value = elem.prop('checked'),
       node.$setValue = function(value) {
         if (value == ctrl.$modelValue)
           return;
         ctrl.$setViewValue(value);
         ctrl.$render();
       };
+      node.$getValue = function() {
+        return ctrl.$modelValue;
+      };
       elem.change(function() {
         var newValue = elem.prop('checked');
-        if (newValue == node.$value)
-          return;
-        node.$value = newValue;
         if (newValue && parentNode.$setValue) {
-          parentNode.$suppressParentChange = true;
           parentNode.$setValue(newValue);
-          parentNode.$suppressParentChange = false;
-        }
-        if (!node.$suppressParentChange) {
-          for (var i in node.$children) {
-            var childNode = node.$children[i];
-            if (childNode && childNode.$setValue)
-              childNode.$setValue(newValue);
+        } else if (!newValue && parentNode.$setValue) {
+          // If all children were unchecked, uncheck the parent node
+          var allUnchecked = true;
+          for (var i in parentNode.$children) {
+            var childNode = parentNode.$children[i];
+            if (childNode && childNode != node && childNode.$getValue && childNode.$getValue()) {
+              allUnchecked = false;
+              break;
+            }
           }
+          if (allUnchecked) {
+            parentNode.$setValue(false);
+          }
+        }
+        for (var i in node.$children) {
+          var childNode = node.$children[i];
+          if (childNode && childNode.$setValue)
+            childNode.$setValue(newValue);
         }
       });
       if (parentNode.$children)

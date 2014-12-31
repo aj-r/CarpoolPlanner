@@ -14,7 +14,7 @@ namespace CarpoolPlanner.Controllers
     [Authorize]
     public class UserController : CarpoolControllerBase
     {
-        private static readonly ILog log = LogManager.GetLogger(typeof(User));
+        private static readonly ILog log = LogManager.GetLogger(typeof(UserController));
 
         private const int saltSize = 24;
         private const int hashSize = 24;
