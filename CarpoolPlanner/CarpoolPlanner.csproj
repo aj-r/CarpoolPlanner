@@ -145,9 +145,7 @@
     <Compile Include="JsonSerializerFactory.cs" />
     <Compile Include="JsonNetModelBinder.cs" />
     <Compile Include="JsonNetResult.cs" />
-    <Compile Include="JsonNetValueProviderFactory.cs" />
     <Compile Include="KeyedCollectionConverter.cs" />
-    <Compile Include="KeyedCollectionModelBinder.cs" />
     <Compile Include="NgResultData.cs" />
     <Compile Include="Resources.Designer.cs">
       <DependentUpon>Resources.resx</DependentUpon>
