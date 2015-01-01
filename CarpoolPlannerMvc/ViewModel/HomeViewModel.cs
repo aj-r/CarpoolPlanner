@@ -12,8 +12,11 @@ namespace CarpoolPlanner.ViewModel
         public HomeViewModel()
         {
             Trips = new List<Trip>();
+            Users = new List<User>();
         }
 
         public List<Trip> Trips { get; set; }
+
+        public List<User> Users { get; set; }
     }
 }

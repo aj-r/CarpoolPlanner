@@ -27,40 +27,39 @@
         <br />
       </label>
     </div>
-    <div style="margin-top:8px;" class="checkbox">
+    <div style="margin-top:8px;" class="checkbox animate-show" ng-hide="model.user.commuteMethod == CommuteMethod.Driver">
       <label>
-        <input type="checkbox" ng-model="model.user.canDriveIfNeeded" ng-disabled="model.user.commuteMethod == CommuteMethod.Driver"
+        <input type="checkbox" ng-model="model.user.canDriveIfNeeded"
                cp-disabled-value="true" />
         @Resources.CanDriveIfNeeded
       </label>
     </div>
   </div>
 </div>
-<div class="form-group">
+<div class="form-group animate-show animate-seats"
+     ng-hide="model.user.commuteMethod != CommuteMethod.Driver && !model.user.canDriveIfNeeded">
   <label class="col-md-2 control-label">
     @Resources.NumberOfSeats<br />
-    <span class="small">(inluding your own seat)</span>
+    <span class="small">(inluding your own)</span>
   </label>
   <div class="col-md-10">
     <input type="number" ng-model="model.user.seats" min="1" val-number val-friendly-name="@Resources.NumberOfSeats"
-           ng-disabled="model.user.commuteMethod != CommuteMethod.Driver && !model.user.canDriveIfNeeded"
-           cp-disabled-value=""
            class="form-control form-control-small" />
   </div>
 </div>
 <div class="form-group">
   <label class="col-md-2 control-label">@Resources.Email</label>
   <div class="col-md-10">
-    <input type="email" ng-model="model.user.email" class="form-control" val-friendly-name="@Resources.Email" />
-    <div class="checkbox">
+    <input type="email" ng-model="model.user.email" ng-model-options="{ allowInvalid: true }" class="form-control" val-friendly-name="@Resources.Email" />
+    <div class="checkbox animate-show" ng-show="model.user.email">
       <label>
-        <input type="checkbox" ng-model="model.user.emailNotify" ng-disabled="!model.user.email" cp-disabled-value="false" />
+        <input type="checkbox" ng-model="model.user.emailNotify" />
         Send notifications via e-mail (not yet implemented)
       </label>
     </div>
-    <div class="checkbox" style="margin-bottom: 10px;">
+    <div class="checkbox animate-show" ng-show="model.user.email" style="margin-bottom: 10px;">
       <label>
-        <input type="checkbox" ng-model="model.user.emailVisible" ng-disabled="!model.user.email" cp-disabled-value="false" />
+        <input type="checkbox" ng-model="model.user.emailVisible" />
         @Resources.VisibleToOtherUsers
       </label>
     </div>
@@ -69,16 +68,17 @@
 <div class="form-group">
   <label class="col-md-2 control-label">@Resources.Phone</label>
   <div class="col-md-10">
-    <input type="tel" ng-model="model.user.phone" class="form-control" val-phone="{ countryCodeRequired: false }" val-friendly-name="@Resources.Phone" />
-    <div class="checkbox">
+    <input type="tel" ng-model="model.user.phone" class="form-control" val-phone="{ areaCodeRequired: true, allow9Digits: false }"
+           val-friendly-name="@Resources.Phone" />
+    <div class="checkbox animate-show" ng-show="model.user.phone">
       <label>
-        <input type="checkbox" ng-model="model.user.phoneNotify" ng-disabled="!model.user.phone" cp-disabled-value="false" />
+        <input type="checkbox" ng-model="model.user.phoneNotify" />
         Send notifications via SMS
       </label>
     </div>
-    <div class="checkbox" style="margin-bottom: 10px;">
+    <div class="checkbox animate-show" ng-show="model.user.phone" style="margin-bottom: 10px;">
       <label>
-        <input type="checkbox" ng-model="model.user.phoneVisible" ng-disabled="!model.user.phone" cp-disabled-value="false" />
+        <input type="checkbox" ng-model="model.user.phoneVisible" />
         @Resources.VisibleToOtherUsers
       </label>
     </div>

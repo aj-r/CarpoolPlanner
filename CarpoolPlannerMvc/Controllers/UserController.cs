@@ -250,6 +250,7 @@ namespace CarpoolPlanner.Controllers
                 model.User = serverUser;
                 AppUtils.UpdateCachedUser(serverUser);
             }
+            // TODO: send message to notification service
             model.SetMessage("Successful", MessageType.Success);
             return Ng(model);
         }

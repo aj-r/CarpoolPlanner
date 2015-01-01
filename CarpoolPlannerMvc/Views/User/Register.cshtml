@@ -12,14 +12,21 @@
       var s = $location.search();
       $scope.model.user.loginName = s.loginName;
       $scope.registerWithChecks = function() {
-        var emailNotifications = this.model.user.email && this.model.user.emailNotify;
-        var phoneNotifications = this.model.user.phone && this.model.user.phoneNotify;
-        if (!phoneNotifications && !emailNotifications) {
-          if (!confirm("You have opted out of all notifications. This means that you must manually log in to the website for every single carpool to confirm that you are coming. Are you sure you want to do this?")) {
-            return;
+        var scope = this;
+        if (scope.registerForm.$valid) {
+          var emailNotifications = scope.model.user.email && scope.model.user.emailNotify;
+          var phoneNotifications = scope.model.user.phone && scope.model.user.phoneNotify;
+          if (!phoneNotifications && !emailNotifications) {
+            var message = "You have opted out of e-mail and phone notifications. This means that you must manually log in to the website for every single carpool to confirm that you are coming.\n\n";
+            if (!scope.model.user.email && !scope.model.user.phone)
+              message += "To opt in to notifications, you must specify an e-mail or phone number.\n\n";
+            message += "Are you sure you want to opt out of all notifications?";
+            if (!confirm(message)) {
+              return;
+            }
           }
         }
-        this.registerForm.$submit();
+        scope.registerForm.$submit();
       };
       $scope.register = function() {
         this.trySubmit(this.registerForm, '@Url.Action("Register", "User")', $scope, 'model', function() {

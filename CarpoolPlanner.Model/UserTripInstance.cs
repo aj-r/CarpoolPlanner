@@ -12,16 +12,13 @@ namespace CarpoolPlanner.Model
     {
         public static UserTripInstance Create(User user, TripInstance tripInstance)
         {
-            return Create(user, tripInstance.Id, tripInstance.TripId);
-        }
-
-        public static UserTripInstance Create(User user, long tripInstanceId, long tripId)
-        {
             return new UserTripInstance
             {
                 UserId = user.Id,
-                TripInstanceId = tripInstanceId,
-                TripId = tripId,
+                User = user,
+                TripInstanceId = tripInstance.Id,
+                TripInstance = tripInstance,
+                TripId = tripInstance.TripId,
                 CommuteMethod = user.CommuteMethod,
                 CanDriveIfNeeded = user.CanDriveIfNeeded || user.CommuteMethod == CommuteMethod.Driver,
                 Seats = user.Seats

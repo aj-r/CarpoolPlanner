@@ -1,4 +1,4 @@
-﻿var app = angular.module('carpoolApp', ['angular.net', 'validation-ext', 'ui.bootstrap.datetimepicker']);
+﻿var app = angular.module('carpoolApp', ['ui.bootstrap', 'ngAnimate', 'angular.net', 'validation-ext', 'ui.bootstrap.datetimepicker']);
 
 app.config(function($locationProvider) {
   // Enable HTML5 mode so that $location.search() can read query strings that are not preceded by a hash (#).
@@ -128,17 +128,6 @@ app.controller('baseCtrl', ['$scope', '$q', '$window', 'AngularNet', 'Validation
     return s;
   };
 
-  $scope.tripInstanceToString = function(ti) {
-    var date = moment(ti.date);
-    var diff = date.diff(moment(), 'days'); // Difference between ti.Date and today
-    var specifier = '';
-    if (diff == 0)
-      specifier = '(today) ';
-    else if (diff == 1)
-      specifier = '(tomorrow) ';
-    return date.format('dddd, MMM d [' + specifier + 'at] h:mm a');
-  };
-
   $scope.errorHandler = function(model, message) {
     if (model) {
       var displayMessage = "An unexpected error occurred. Please report this error to the website administrator.";
@@ -148,6 +137,95 @@ app.controller('baseCtrl', ['$scope', '$q', '$window', 'AngularNet', 'Validation
       model.messageType = $scope.MessageType.Error;
     }
   };
+}]);
+
+app.controller('tripInstanceCtrl', ['$scope', function($scope) {
+
+  function eachUTI(trip, tripInstance, a) {
+    if (!trip.userTrips)
+      return;
+    for (var i in trip.userTrips) {
+      var ut = trip.userTrips[i];
+      var uti = null;
+      for (var j in ut.instances) {
+        if (ut.instances[j].tripInstanceId == tripInstance.id) {
+          uti = ut.instances[j];
+          break;
+        }
+      }
+      if (uti && a(uti) == false)
+        return;
+    }
+  }
+  eachUTI($scope.trip, $scope.tripInstance, function(uti) {
+    if (uti.userId == $scope.model.userId) {
+      $scope.userTripInstance = uti;
+      return false;
+    }
+  });
+
+  $scope.tripInstanceToString = function(ti) {
+    var date = moment(ti.date);
+    // Difference (in days) between ti.Date and today
+    var diff = moment(date).startOf('day').diff(moment().startOf('day'), 'days');
+    var specifier = '';
+    if (diff == 0)
+      specifier = '(today) ';
+    else if (diff == 1)
+      specifier = '(tomorrow) ';
+    return date.format('dddd, MMM D [' + specifier + 'at] h:mm a');
+  };
+
+  $scope.getAvailableSeats = function(trip, tripInstance) {
+    var available = 0;
+    eachUTI(trip, tripInstance, function(uti) {
+      if (uti.attending && (uti.commuteMethod == $scope.CommuteMethod.Driver || uti.canDriveIfNeeded))
+        available += uti.seats;
+    });
+    return available;
+  };
+  $scope.getRequiredSeats = function(trip, tripInstance) {
+    var required = 0;
+    eachUTI(trip, tripInstance, function(uti) {
+      if (uti.attending && uti.commuteMethod != $scope.CommuteMethod.HaveRide)
+        required++;
+    });
+    return required;
+  };
+  function updateSeats() {
+    $scope.availableSeats = $scope.getAvailableSeats($scope.trip, $scope.tripInstance);
+    $scope.requiredSeats = $scope.getRequiredSeats($scope.trip, $scope.tripInstance);
+
+    $scope.drivers = [];
+    $scope.passengers = [];
+    $scope.waitingList = [];
+    $scope.unconfirmed = [];
+    var currentUti = $scope.userTripInstance;
+    eachUTI($scope.trip, $scope.tripInstance, function(uti) {
+      var user = null;
+      for (var i in $scope.model.users) {
+        if ($scope.model.users[i].id == uti.userId) {
+          user = $scope.model.users[i];
+          break;
+        }
+      }
+      if (!user)
+        return true;
+      if (uti.attending == true) {
+        if (uti.commuteMethod == $scope.CommuteMethod.Driver) {
+          $scope.drivers.push(user);
+        } else if (uti.commuteMethod == $scope.CommuteMethod.NeedRide) {
+          $scope.passengers.push(user);
+        }
+      } else if (uti.attending == false && uti.noRoom) {
+        $scope.waitingList.push(user);
+      } else if (uti.attending == null) {
+        $scope.unconfirmed.push(user);
+      }
+    });
+  }
+  updateSeats();
+  $scope.$watch('trip.userTrips', updateSeats, true);
 }]);
 
 // Directive for nav links. Adds a 'current-page' class if the link points to the current location.
@@ -260,6 +338,31 @@ app.directive('chHierarchy', function($timeout) {
       });
       if (parentNode.$children)
         parentNode.$children.push(node);
+    }
+  };
+});
+
+// Directive for tri-state checkboxes (using indeterminate state)
+app.directive('chTriState', function($timeout) {
+  return {
+    restrict: 'A',
+    require: 'ngModel',
+    link: function(scope, elem, attr, ctrl) {
+      if (scope.$eval(attr.ngModel) == null)
+        elem.prop('indeterminate', true);
+      scope.$watch(attr.ngModel, function (newValue, oldValue) {
+        if (newValue == oldValue)
+          return;
+        elem.prop('indeterminate', newValue == null);
+      });
+      elem.change(function() {
+        var indeterminate = elem.prop('indeterminate');
+        if (indeterminate) {
+          elem.prop('indeterminate', false);
+          ctrl.$setViewValue(true);
+          ctrl.$render();
+        }
+      });
     }
   };
 });

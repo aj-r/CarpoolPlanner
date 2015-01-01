@@ -34,10 +34,10 @@ namespace CarpoolPlanner.Model
 
         public TripStatus Status { get; set; }
 
-        public IList<TripRecurrence> Recurrences { get; private set; }
+        public IList<TripRecurrence> Recurrences { get; set; }
 
-        public IList<TripInstance> Instances { get; private set; }
+        public IList<TripInstance> Instances { get; set; }
 
-        public UserTripCollection UserTrips { get; private set; }
+        public UserTripCollection UserTrips { get; set; }
     }
 }

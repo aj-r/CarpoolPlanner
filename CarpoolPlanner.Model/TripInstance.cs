@@ -28,32 +28,6 @@ namespace CarpoolPlanner.Model
 
         public bool DriversPicked { get; set; }
 
-        public int RequiredSeats
-        {
-            get
-            {
-                var seatsRequired = UserTripInstances.Count(uti => uti.User.Status == UserStatus.Active && uti.Attending == true && uti.CommuteMethod != CommuteMethod.HaveRide);
-                return seatsRequired;
-            }
-        }
-
-        public int AvailableSeats
-        {
-            get
-            {
-                var seatsAvailable = UserTripInstances.Sum(uti => (uti.User.Status == UserStatus.Active && uti.Attending == true && uti.CommuteMethod == CommuteMethod.Driver) ? uti.Seats : 0);
-                return seatsAvailable;
-            }
-        }
-
-        public string StatusReport
-        {
-            get
-            {
-                return GetStatusReport();
-            }
-        }
-
         /// <summary>
         /// Gets or sets the list of UserTripInstances that belong to this trip instance.
         /// </summary>

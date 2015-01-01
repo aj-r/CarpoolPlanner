@@ -69,11 +69,11 @@ namespace CarpoolPlanner
                     if (userTripInstance == null)
                     {
                         // If an instance does not exist, it is probably because the user is not attending it. Create one anyways with Attending = false
-                        userTripInstance = UserTripInstance.Create(user, tripInstanceId, tripId);
+                        /*userTripInstance = UserTripInstance.Create(user, tripInstanceId, tripId);
                         userTripInstance.Attending = false;
                         userTrip.Instances.Add(userTripInstance);
                         context.UserTripInstances.Add(userTripInstance);
-                        changed = true;
+                        changed = true;*/
                     }
                     if (chkAttending.Checked == true)
                     {

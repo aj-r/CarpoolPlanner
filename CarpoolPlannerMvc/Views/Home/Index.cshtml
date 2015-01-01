@@ -7,14 +7,31 @@
 }
 @section headScripts{
 <script type="text/javascript">
-  var tripCtrl = app.controller('tripCtrl', ['$scope', function($scope) {
+  var tripCtrl = app.controller('tripCtrl', function($scope) {
+    var first = true;
+    $scope.expandedGroups = [];
+    for (var i = 0; i < $scope.model.trips.length; i++) {
+      var arr = [];
+      $scope.expandedGroups.push(arr);
+      for (var j = 0; j < $scope.model.trips.length; j++) {
+        arr.push(first);
+        first = false;
+      }
+    }
     $scope.saveUserTrips = function() {
       this.trySubmit(this.tripInstanceForm, '@Url.Action("Index", "Home")', $scope, 'model', function() {
-        $scope.model.Message = "Updating...";
-        $scope.model.MessageType = $scope.MessageType.Info;
+        $scope.model.message = "Updating...";
+        $scope.model.messageType = $scope.MessageType.Info;
       });
     };
-  }]);
+    $scope.handleCheck = function($event) {
+      $event.stopPropagation();
+      var scope = this;
+      if (scope.userTripInstance.attending) {
+        $scope.expandedGroups[scope.tripIndex][scope.$index] = true;
+      }
+    }
+  });
 </script>
 }
 
@@ -26,37 +43,97 @@
       <div ng-show="model.trips.length > 0">
         <div>Select the days that you can come this week.</div><!-- TODO: generalize to not use the word "week" -->
         <form method="post" name="tripInstanceForm" ng-submit="saveUserTrips()" novalidate>
-          <div class="repeater-item" ng-repeat="trip in model.trips">
-            <h3>{{ trip.name }}</h3>
-            <div style="padding: 5px 0px;" ng-repeat="tripInstance in trip.instances" ng-init="userTripInstance = trip.userTrips[model.userId].instances[$index]">
-              <label style="margin-right:10px;">
-                <input type="checkbox" ng-model="userTripInstance.attending" class="checkbox" /><!-- todo: use indeterminate state -->
-                {{ tripInstanceToString(tripInstance) }}
-              </label>
-              <!-- TODO: accordion-ize this. Also set the first item to be expanded by default. -->
-              <!-- TODO: radio button list -->
-              <div style="margin-top:8px;" class="checkbox">
-                <label>
-                  <input type="checkbox" ng-model="userTripInstance.canDriveIfNeeded" />
-                  @Resources.CanDriveIfNeededInstance
-                </label>
-              </div>
-              <div style="display: inline-block; margin-left: 20px;">
-                <label>
-                  @Resources.Seats
-                  <input type="number" ng-model="userTripInstance.seats" min="1" class="form-control form-control-inline" style="width: 70px;" />
-                </label>
-              </div>
-              <hr style="margin:7px 0px;" />
-              <div ng-class="{ textDanger: tripInstance.availableSeats < tripInstance.requiredSeats }">
-                <b>Total seats:</b>
-                {{ tripInstance.availableSeats }}
-              </div>
-              <div><b>Total coming:</b> {{ tripInstance.requiredSeats }}</div><!-- TODO: calculate this on the client to enable live update -->
-              <div class="preserve-newlines">{{ tripInstance.statusReport }}</div><!-- TODO: calculate this on the client to enable live update -->
-            </div>
+          <input type="submit" value="Save all changes" class="btn btn-default" style="margin-top: 15px;" />
+          <div style="margin-top: 15px;">
+            <cp-message></cp-message>
+            <val-sumary></val-sumary>
           </div>
-          <input type="submit" value="@Resources.Save" class="btn btn-default" />
+          <accordion close-others="true">
+            <div ng-repeat="(tripIndex, trip) in model.trips">
+              <h3>{{ trip.name }}</h3>
+              <accordion-group ng-repeat="tripInstance in trip.instances"
+                               is-open="expandedGroups[tripIndex][$index]">
+                <div ng-controller="tripInstanceCtrl">
+                  <accordion-heading>
+                    <div class="checkbox">
+                      <input type="checkbox" ng-model="userTripInstance.attending" ng-click="handleCheck($event)" ch-tri-state />
+                      <label>{{ tripInstanceToString(tripInstance) }}</label>
+                    </div>
+                  </accordion-heading>
+
+                  <div class="form-horizontal">
+                    <div class="form-group">
+                      <div class="col-sm-12">
+                        <div class="radio">
+                          <label>
+                            <input type="radio" ng-model="userTripInstance.commuteMethod" ng-value="CommuteMethod.NeedRide" ng-disabled="!userTripInstance.attending" />
+                            @Resources.NeedRide
+                          </label>
+                          <br />
+                          <label>
+                            <input type="radio" ng-model="userTripInstance.commuteMethod" ng-value="CommuteMethod.Driver" ng-disabled="!userTripInstance.attending" />
+                            @Resources.Driver
+                            <br />
+                          </label>
+                          <br />
+                          <label>
+                            <input type="radio" ng-model="userTripInstance.commuteMethod" ng-value="CommuteMethod.HaveRide" ng-disabled="!userTripInstance.attending" />
+                            @Resources.HaveRide
+                            <br />
+                          </label>
+                        </div>
+                        <div style="margin-top:8px;" class="checkbox animate-show" ng-hide="userTripInstance.commuteMethod == CommuteMethod.Driver">
+                          <label>
+                            <input type="checkbox" ng-model="userTripInstance.canDriveIfNeeded"
+                                   ng-disabled="!userTripInstance.attending" />
+                            @Resources.CanDriveIfNeededInstance
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="form-group animate-show-50"
+                         style="width: 230px;"
+                         ng-hide="userTripInstance.commuteMethod != CommuteMethod.Driver && !userTripInstance.canDriveIfNeeded">
+                      <label class="col-xs-8 control-label" style="padding-top: 0;">
+                        @Resources.NumberOfSeats<br />
+                        <span class="small">(inluding your own)</span>
+                      </label>
+                      <div class="col-xs-4" style="padding: 0;">
+                        <input type="number" ng-model="userTripInstance.seats" min="1" val-number val-friendly-name="@Resources.NumberOfSeats"
+                               class="form-control form-control-small"
+                               ng-disabled="!userTripInstance.attending" />
+                      </div>
+                    </div>
+                  </div>
+                  <hr style="margin:7px 0px; border-color: #CCC;" />
+                  <div>
+                    <b>Total seats:</b>
+                    <span ng-class="{ 'text-danger': availableSeats < requiredSeats }">{{ availableSeats }}</span> 
+                  </div>
+                  <div><b>Total coming:</b> {{ requiredSeats }}</div>
+                  <div style="margin-top: 10px;">
+                    <p class="col-md-3" ng-show="drivers.length > 0">
+                      <b>Drivers:</b>
+                      <span ng-repeat="user in drivers"><br />{{ user.name || user.loginName }}</span>
+                    </p>
+                    <p class="col-md-3" ng-show="passengers.length > 0">
+                      <b>Passengers:</b>
+                      <span ng-repeat="user in passengers"><br />{{ user.name || user.loginName }}</span>
+                    </p>
+                    <p class="col-md-3" ng-show="waitingList.length > 0">
+                      <b>Waiting List:</b>
+                      <span ng-repeat="user in waitingList"><br />{{ user.name || user.loginName }}</span>
+                    </p>
+                    <p class="col-md-3" ng-show="unconfirmed.length > 0">
+                      <b>Unconfirmed:</b>
+                      <span ng-repeat="user in unconfirmed"><br />{{ user.name || user.loginName }}</span>
+                    </p>
+                  </div>
+                </div>
+              </accordion-group>
+            </div>
+          </accordion>
+          <input type="submit" value="Save all changes" class="btn btn-default" />
         </form>
       </div>
       <div ng-show="model.trips.length === 0">
@@ -70,6 +147,9 @@
     {
       <div class="text-danger">You cannot see upcoming carpools because your account has not yet been approved by an administrator.</div>
     }
-    <cp-message></cp-message>
+    <div style="margin-top: 15px;">
+      <cp-message></cp-message>
+      <val-sumary></val-sumary>
+    </div>
   </div>
 </div>

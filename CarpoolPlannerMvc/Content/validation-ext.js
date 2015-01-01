@@ -182,8 +182,12 @@
             normalizedPhone = normalizedPhone.substr(0, index);
           // If there is a '+', it must be at the beginning.
           var index = normalizedPhone.indexOf('+');
-          if (index == 0)
-            normalizedPhone.substr(1);
+          var countryCodeRequired = false;
+          if (index == 0) {
+            normalizedPhone = normalizedPhone.substr(1);
+            // If the user specified a '+' sign, then they must also specify the country code.
+            countryCodeRequired = true;
+          }
           else if (index != -1) {
             ctrl.phoneError = 'unexpected + sign';
             return false;
@@ -192,10 +196,10 @@
           // Validate based on the length.
           if (normalizedPhone.length == 11)
             return true;
-          if (options && options.countryCodeRequired == false) {
-            if (normalizedPhone.length == 10 || normalizedPhone.length == 9)
+          if (!countryCodeRequired && (!options || !options.countryCodeRequired)) {
+            if (normalizedPhone.length == 10 || ((!options || options.allow9Digits != false) && normalizedPhone.length == 9))
               return true;
-            if (options && options.areaCodeRequired == false) {
+            if (!options || !options.areaCodeRequired) {
               if (normalizedPhone.length == 7)
                 return true;
             } else {

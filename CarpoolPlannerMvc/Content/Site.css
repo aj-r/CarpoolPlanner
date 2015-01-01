@@ -54,12 +54,25 @@ input[type=radio], input[type=checkbox] {
   margin-top: 1px;
 }
 
-h3 .checkbox input[type=checkbox] {
+h3 .checkbox input[type=checkbox],
+h4 .checkbox input[type=checkbox] {
+  margin-top: 2px;
   margin-left: 0px;
+}
+
+h3 .checkbox input[type=checkbox] {
+  display: inline-block;
   position: static;
 }
 
-h3 .checkbox {
+h3 .checkbox input[type=checkbox]+label,
+h4 .checkbox input[type=checkbox]+label {
+  margin-left: 5px;
+  margin-top: 3px;
+}
+
+h3 .checkbox,
+h4 .checkbox {
   font-weight: inherit;
   cursor: pointer;
 }
@@ -76,15 +89,73 @@ hr {
     border-bottom: 1px solid #CCC;
 }
 
-.panel {
-    background-color: #E3E3E3;
-    border-radius: 10px;
-    padding: 25px;
+.form-panel {
+  background-color: #F3F3F3;
+  border: 1px #CCC solid;
+  border-radius: 6px;
+  padding: 20px;
+  margin-bottom: 15px;
+}
+
+.panel-heading {
+  padding: 0;
+}
+
+.panel-heading {
+  padding: 0;
+}
+
+.panel-title .checkbox {
+  padding: 15px 10px;
+  margin: 0;
+}
+
+.accordion-toggle, .accordion-toggle:focus {
+  text-decoration: none !important;
 }
 
 .form-control-inline {
     display: inline-block;
     width: auto;
+}
+
+.animate-show.ng-hide-add.ng-hide-add-active,
+.animate-show.ng-hide-remove.ng-hide-remove-active,
+.animate-show-50.ng-hide-add.ng-hide-add-active,
+.animate-show-50.ng-hide-remove.ng-hide-remove-active {
+  -webkit-transition: all linear 0.1s;
+  transition: all linear 0.1s;
+}
+
+.animate-show,
+.animate-show-50 {
+  overflow: hidden;
+}
+
+.animate-show.ng-hide,
+.animate-show-50.ng-hide {
+  min-height: 0 !important;
+  max-height: 0 !important;
+  margin-top: 0;
+  margin-bottom: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.animate-show-50 {
+  min-height: 50px !important;
+  max-height: 50px !important;
+}
+
+.animate-seats {
+  min-height: 90px !important;
+  max-height: 90px !important;
+}
+@media (min-width: 992px) {
+  .animate-seats {
+    min-height: 50px !important;
+    max-height: 50px !important;
+  }
 }
 
 .indent {
@@ -121,12 +192,12 @@ textarea.ng-dirty.ng-invalid:focus,
 }
 
 cp-message {
-  font-size: 0.9em;
+  font-size: 0.95em;
   color: #707070;
 }
 
 val-summary {
-  font-size: 0.9em;
+  font-size: 0.95em;
   color: #a94442;
 }
 

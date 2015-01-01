@@ -31,26 +31,41 @@ namespace CarpoolPlanner.Controllers
             // We should only be saving the attendance here,
             // so load the model form the DB and update the attendance values.
             // DON'T simly save the clientModel to the DB.
+            if (model == null)
+            {
+                Response.StatusCode = 400;
+                model = new TripsViewModel();
+                model.SetMessage("Model not specified.", MessageType.Error);
+                return Ng(model);
+            }
+            if (model.Trips == null)
+            {
+                model.SetMessage("No changes to save.", MessageType.Error);
+                return Ng(model);
+            }
             TripsViewModel serverModel;
+            var user = AppUtils.CurrentUser;
             bool save = false;
             using (var context = ApplicationDbContext.Create())
             {
                 serverModel = GetTripsViewModel(context);
-                foreach (var userTrip in serverModel.Trips.Select(t => t.UserTrips[AppUtils.CurrentUser.Id]))
+                foreach (var serverUserTrip in from t in serverModel.Trips
+                                         where t.UserTrips.Contains(user.Id)
+                                         select t.UserTrips[AppUtils.CurrentUser.Id])
                 {
-                    var clientUserTrip = model.Trips.Where(t => t.Id == userTrip.TripId && t.UserTrips.Contains(AppUtils.CurrentUser.Id))
+                    var clientUserTrip = model.Trips.Where(t => t.Id == serverUserTrip.TripId && t.UserTrips.Contains(AppUtils.CurrentUser.Id))
                         .Select(t => t.UserTrips[AppUtils.CurrentUser.Id])
                         .FirstOrDefault();
                     if (clientUserTrip == null)
                         continue;
-                    if (clientUserTrip.Attending != userTrip.Attending)
+                    if (clientUserTrip.Attending != serverUserTrip.Attending)
                     {
-                        userTrip.Attending = clientUserTrip.Attending;
+                        serverUserTrip.Attending = clientUserTrip.Attending;
                         save = true;
                     }
-                    if (userTrip.Attending)
+                    if (serverUserTrip.Attending)
                     {
-                        foreach (var recurrence in userTrip.Recurrences)
+                        foreach (var recurrence in serverUserTrip.Recurrences)
                         {
                             var clientRecurrence = clientUserTrip.Recurrences.FirstOrDefault(utr => utr.TripRecurrenceId == recurrence.TripRecurrenceId);
                             if (clientRecurrence == null)
@@ -58,13 +73,19 @@ namespace CarpoolPlanner.Controllers
                             if (clientRecurrence.Attending != recurrence.Attending)
                             {
                                 recurrence.Attending = clientRecurrence.Attending;
+                                if (recurrence.Attending)
+                                {
+                                    // Ensure the trip instance exists
+                                    context.GetNextUserTripInstance(recurrence.TripRecurrence, AppUtils.CurrentUser);
+                                    // TODO: send message to notification service
+                                }
                                 save = true;
                             }
                         }
                     }
                     else
                     {
-                        foreach (var recurrence in userTrip.Recurrences.Where(utr => utr.Attending))
+                        foreach (var recurrence in serverUserTrip.Recurrences.Where(utr => utr.Attending))
                         {
                             recurrence.Attending = false;
                             save = true;

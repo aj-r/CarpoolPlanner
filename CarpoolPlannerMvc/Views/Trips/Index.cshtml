@@ -78,7 +78,7 @@
     </div>
 
     <form method="post" name="tripRecurrenceForm" ng-submit="saveTrips()" novalidate>
-      <div class="repeater-item" ng-repeat="trip in model.tripsModel.trips">
+      <div ng-repeat="trip in model.tripsModel.trips">
         <h3 class="editable-region-header">
           <label class="checkbox">
             <input type="checkbox" id="attending-{{ trip.id }}" ng-model="trip.userTrips[model.userId].attending" ch-hierarchy="attending-{{ trip.id }}" />
@@ -131,7 +131,7 @@
             </div>
           </div>
         </div>
-        <div class="panel">
+        <div class="form-panel">
           <h3 style="margin-top:0px;">Recurrence:</h3>
           <div class="form-horizontal" ng-repeat="tripRecurrence in model.createModel.trip.recurrences">
             <div><a ng-click="removeTripRecurrence(model.createModel.trip, $index)" href="javascript:;">Delete Recurrence</a></div>
@@ -154,6 +154,7 @@
             <div class="form-group">
               <span class="control-label col-sm-2">Starting on</span>
               <div class="col-sm-10">
+                <!-- TODO: use ui-bootstrap datepicker and timepicker and get rid of this component. -->
                 <div class="dropdown">
                   <a class="dropdown-toggle" id="dropdown1" role="button" data-toggle="dropdown" data-target="#" href="#">
                     <div class="input-group">

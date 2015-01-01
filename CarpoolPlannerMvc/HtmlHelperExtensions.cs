@@ -71,7 +71,6 @@ namespace CarpoolPlanner
                 serializer.Serialize(writer, model);
                 json = writer.ToString();
             }
-            json = json.Replace("\\", "\\\\");
             return new MvcHtmlString(json);
         }
 
