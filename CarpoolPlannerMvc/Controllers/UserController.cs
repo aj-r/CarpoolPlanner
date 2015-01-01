@@ -124,7 +124,10 @@ namespace CarpoolPlanner.Controllers
                 return Ng(model);
             }
             SetPassword(model.User, model.Password);
+            // Override any bad data the client may have sent.
+            model.User.IsAdmin = false;
             model.User.Status = UserStatus.Unapproved;
+            model.User.LastTextMessageId = null;
             using (var context = ApplicationDbContext.Create())
             {
                 if (context.Users.Any(u => u.LoginName == model.User.LoginName))
@@ -137,6 +140,8 @@ namespace CarpoolPlanner.Controllers
                 context.Users.Add(model.User);
                 context.SaveChanges();
             }
+            // Automatically log in.
+            FormsAuthentication.SetAuthCookie(model.User.LoginName, false);
             // Take the user to the trips page because unapproved users won't have access to the default page anyways.
             // This allows users to enrol in trips while they wait to be approved.
             return NgRedirect(Url.Action("Index", "Trips"));
@@ -295,6 +300,19 @@ namespace CarpoolPlanner.Controllers
             user.Iterations = defaultIterationCount;
             user.Password = Crypto.PBKDF2(password, user.Salt, user.Iterations, hashSize);
             log.Info(string.Concat("User ", user.Id, " changed his/her password"));
+        }
+
+        /// <summary>
+        /// Gets a value that indicates whether the current user has access to modify the specified user.
+        /// </summary>
+        /// <param name="user"></param>
+        /// <returns></returns>
+        public static bool CanCurrentUserModify(User user)
+        {
+            if (user == null || user.IsNew())
+                return true;
+            var currentUser = AppUtils.CurrentUser;
+            return currentUser != null && (currentUser.IsAdmin || currentUser.Id == user.Id);
         }
     }
 }

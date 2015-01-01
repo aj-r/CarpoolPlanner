@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Globalization;
 using System.Reflection;
+using CarpoolPlanner.Controllers;
 using CarpoolPlanner.Model;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
@@ -29,23 +30,21 @@ namespace CarpoolPlanner
                         property.ShouldSerialize = instance =>
                         {
                             var user = (User)instance;
-                            return AppUtils.IsUserAdmin() || (AppUtils.CurrentUser != null && AppUtils.CurrentUser.Id == user.Id);
+                            return UserController.CanCurrentUserModify(user);
                         };
                         break;
                     case "email":
                         property.ShouldSerialize = instance =>
                         {
                             var user = (User)instance;
-                            return user.EmailVisible || AppUtils.IsUserAdmin() ||
-                                (AppUtils.CurrentUser != null && AppUtils.CurrentUser.Id == user.Id);
+                            return user.EmailVisible || UserController.CanCurrentUserModify(user);
                         };
                         break;
                     case "phone":
                         property.ShouldSerialize = instance =>
                         {
                             var user = (User)instance;
-                            return user.PhoneVisible || AppUtils.IsUserAdmin() ||
-                                (AppUtils.CurrentUser != null && AppUtils.CurrentUser.Id == user.Id);
+                            return user.PhoneVisible || UserController.CanCurrentUserModify(user);
                         };
                         break;
                 }

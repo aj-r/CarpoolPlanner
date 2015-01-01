@@ -141,7 +141,7 @@ app.controller('baseCtrl', ['$scope', '$q', '$window', 'AngularNet', 'Validation
 
 app.controller('tripInstanceCtrl', ['$scope', function($scope) {
 
-  function eachUTI(trip, tripInstance, a) {
+  function eachUti(trip, tripInstance, a) {
     if (!trip.userTrips)
       return;
     for (var i in trip.userTrips) {
@@ -157,7 +157,7 @@ app.controller('tripInstanceCtrl', ['$scope', function($scope) {
         return;
     }
   }
-  eachUTI($scope.trip, $scope.tripInstance, function(uti) {
+  eachUti($scope.trip, $scope.tripInstance, function(uti) {
     if (uti.userId == $scope.model.userId) {
       $scope.userTripInstance = uti;
       return false;
@@ -178,7 +178,7 @@ app.controller('tripInstanceCtrl', ['$scope', function($scope) {
 
   $scope.getAvailableSeats = function(trip, tripInstance) {
     var available = 0;
-    eachUTI(trip, tripInstance, function(uti) {
+    eachUti(trip, tripInstance, function(uti) {
       if (uti.attending && (uti.commuteMethod == $scope.CommuteMethod.Driver || uti.canDriveIfNeeded))
         available += uti.seats;
     });
@@ -186,7 +186,7 @@ app.controller('tripInstanceCtrl', ['$scope', function($scope) {
   };
   $scope.getRequiredSeats = function(trip, tripInstance) {
     var required = 0;
-    eachUTI(trip, tripInstance, function(uti) {
+    eachUti(trip, tripInstance, function(uti) {
       if (uti.attending && uti.commuteMethod != $scope.CommuteMethod.HaveRide)
         required++;
     });
@@ -201,7 +201,7 @@ app.controller('tripInstanceCtrl', ['$scope', function($scope) {
     $scope.waitingList = [];
     $scope.unconfirmed = [];
     var currentUti = $scope.userTripInstance;
-    eachUTI($scope.trip, $scope.tripInstance, function(uti) {
+    eachUti($scope.trip, $scope.tripInstance, function(uti) {
       var user = null;
       for (var i in $scope.model.users) {
         if ($scope.model.users[i].id == uti.userId) {

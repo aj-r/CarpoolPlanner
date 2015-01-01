@@ -45,6 +45,15 @@ namespace CarpoolPlanner.Model
             Status = UserStatus.Unapproved;
         }
 
+        /// <summary>
+        /// Gets whether the current user instance represents a new, unsaved user.
+        /// </summary>
+        /// <returns></returns>
+        public bool IsNew()
+        {
+            return Id == 0;
+        }
+
         [Key, Required]
         public long Id { get; set; }
 
