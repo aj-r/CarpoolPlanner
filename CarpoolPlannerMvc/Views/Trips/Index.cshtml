@@ -9,8 +9,10 @@
 @section headScripts{
 <script type="text/javascript">
 
-  var tripCtrl = app.controller('tripCtrl', ['$scope', '$http', function($scope, $http) {
+  var tripCtrl = app.controller('tripCtrl', function($scope, $http, $location) {
     @(Html.JSClass<TripRecurrence>())
+    var search = $location.search();
+    $scope.justRegistered = search.justRegistered == "true";
     $scope.saveTrips = function() {
       this.trySubmit(this.tripRecurrenceForm, '@Url.Action("Index", "Trips")', $scope.model, 'tripsModel', function() {
         $scope.model.tripsModel.message = "Saving...";
@@ -64,18 +66,23 @@
     $scope.removeTripRecurrence = function(trip, index) {
       trip.recurrences.splice(index, 1);
     };
-  }]);
+  });
 </script>
 }
 
 <h1>@Resources.AvailableCarpools</h1>
 <div class="row" ng-controller="tripCtrl">
   <div class="col-md-12">
-    <div>
+    <p ng-if="justRegistered" class="text-success">
+      Thank you for registering!<br />
+      Your account currently has limited access until you are approved by an administrator.<br />
+      While you wait to be approved, you can fill out this page.
+    </p>
+    <p>
       Select the days you plan on coming. You will receive
       <a href="@Url.Action("Index", "Notifications")" target="_blank" title="How do notifications work?">notifications</a>
       only on the days that you select.
-    </div>
+    </p>
 
     <form method="post" name="tripRecurrenceForm" ng-submit="saveTrips()" novalidate>
       <div ng-repeat="trip in model.tripsModel.trips">

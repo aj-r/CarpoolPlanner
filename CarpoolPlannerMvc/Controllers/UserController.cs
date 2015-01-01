@@ -4,6 +4,7 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Web;
 using System.Web.Mvc;
+using System.Web.Routing;
 using System.Web.Security;
 using CarpoolPlanner.Model;
 using CarpoolPlanner.ViewModel;
@@ -62,7 +63,7 @@ namespace CarpoolPlanner.Controllers
         public ActionResult Logout()
         {
             FormsAuthentication.SignOut();
-            return Redirect(FormsAuthentication.LoginUrl);
+            return Redirect(FormsAuthentication.LoginUrl + "?reason=logout");
         }
 
         public ActionResult List()
@@ -144,7 +145,7 @@ namespace CarpoolPlanner.Controllers
             FormsAuthentication.SetAuthCookie(model.User.LoginName, false);
             // Take the user to the trips page because unapproved users won't have access to the default page anyways.
             // This allows users to enrol in trips while they wait to be approved.
-            return NgRedirect(Url.Action("Index", "Trips"));
+            return NgRedirect(Url.Action("Index", "Trips", new RouteValueDictionary { { "justRegistered", "true" } }));
         }
 
         public ActionResult Manage()
