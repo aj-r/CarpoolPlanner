@@ -71,7 +71,7 @@ ALTER TABLE `user_trip_instance`
 DROP COLUMN `login_name`;
 ALTER TABLE `user_trip_instance` 
 CHANGE COLUMN `user_id` `user_id` BIGINT(20) NOT NULL ,
-ADD PRIMARY KEY (`trip_ID`, `user_id`);
+ADD PRIMARY KEY (`trip_instance_id`, `user_id`);
 ALTER TABLE `user_trip_instance` 
 ADD INDEX `fk_usertripinstance_usertrip_idx` (`user_id` ASC, `trip_id` ASC);
 ALTER TABLE `user_trip_instance` 
@@ -98,7 +98,7 @@ ALTER TABLE `user_trip_recurrence`
 DROP COLUMN `login_name`;
 ALTER TABLE `user_trip_recurrence` 
 CHANGE COLUMN `user_id` `user_id` BIGINT(20) NOT NULL ,
-ADD PRIMARY KEY (`trip_ID`, `user_id`);
+ADD PRIMARY KEY (`trip_recurrence_id`, `user_id`);
 ALTER TABLE `user_trip_recurrence` 
 ADD INDEX `fk_usertriprecurrence_usertrip_idx` (`user_id` ASC, `trip_id` ASC);
 ALTER TABLE `user_trip_recurrence` 

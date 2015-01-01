@@ -109,12 +109,13 @@ namespace CarpoolPlanner.Controllers
                 log.Warn(model.Message);
                 return Ng(model);
             }
-            // TODO: validate trip
             using (var context = ApplicationDbContext.Create())
             {
                 context.Trips.Add(model.Trip);
                 context.SaveChanges();
                 model.CreatedTrip = model.Trip;
+                if (EnsureUserTrips(context, model.CreatedTrip, AppUtils.CurrentUser))
+                    context.SaveChanges();
             }
             model.Trip = new Trip();
             model.Trip.Recurrences.Add(new TripRecurrence());
@@ -150,33 +151,56 @@ namespace CarpoolPlanner.Controllers
             return Ng(model);
         }
 
-        private TripsViewModel GetTripsViewModel(ApplicationDbContext context)
+        private static TripsViewModel GetTripsViewModel(ApplicationDbContext context)
         {
             var model = new TripsViewModel();
+            var user = AppUtils.CurrentUser;
             model.Trips = context.Trips.Include(t => t.Recurrences).ToList();
-            context.GetUserTrips(AppUtils.CurrentUser.Id).Include(ut => ut.Recurrences).ToList();
+            context.GetUserTrips(user.Id).Include(ut => ut.Recurrences).ToList();
 
+            bool save = false;
             // Create UserTrips and UserTripRecurrences if they don't exist for this user.
             foreach (var trip in model.Trips)
             {
-                if (!trip.UserTrips.Contains(AppUtils.CurrentUser.Id))
+                save = EnsureUserTrips(context, trip, user) || save;
+            }
+            if (save)
+                context.SaveChanges();
+            return model;
+        }
+
+        private static bool EnsureUserTrips(ApplicationDbContext context, Trip trip, User user)
+        {
+            bool save = false;
+            UserTrip userTrip;
+            if (trip.UserTrips.Contains(user.Id))
+            {
+                userTrip = trip.UserTrips[user.Id];
+            }
+            else
+            {
+                userTrip = new UserTrip { Attending = false, UserId = AppUtils.CurrentUser.Id, TripId = trip.Id };
+                trip.UserTrips.Add(userTrip);
+                context.UserTrips.Add(userTrip);
+                save = true;
+            }
+            foreach (var tripRecurrence in trip.Recurrences)
+            {
+                if (userTrip.Recurrences.All(utr => utr.TripRecurrenceId != tripRecurrence.Id))
                 {
-                    var userTrip = new UserTrip { Attending = false, UserId = AppUtils.CurrentUser.Id, TripId = trip.Id };
-                    foreach (var tripRecurrence in trip.Recurrences)
+                    var userTripRecurrence = new UserTripRecurrence
                     {
-                        var userTripRecurrence = new UserTripRecurrence
-                        {
-                            Attending = false,
-                            TripId = trip.Id,
-                            TripRecurrenceId = tripRecurrence.Id,
-                            UserId = AppUtils.CurrentUser.Id
-                        };
-                        userTrip.Recurrences.Add(userTripRecurrence);
-                    }
-                    trip.UserTrips.Add(userTrip);
+                        Attending = false,
+                        TripId = trip.Id,
+                        TripRecurrenceId = tripRecurrence.Id,
+                        UserId = AppUtils.CurrentUser.Id
+                    };
+                    userTrip.Recurrences.Add(userTripRecurrence);
+                    context.UserTripRecurrences.Add(userTripRecurrence);
+                    save = true;
                 }
             }
-            return model;
+            return save;
         }
     }
 }

@@ -1,33 +1,64 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Web;
-using System.Web.Hosting;
 using System.Web.Http;
 using System.Web.Mvc;
 using System.Web.Routing;
 using CarpoolPlanner.Model;
+using log4net;
+using log4net.Config;
 
 namespace CarpoolPlanner
 {
-    // Note: For instructions on enabling IIS6 or IIS7 classic mode, 
-    // visit http://go.microsoft.com/?LinkId=9394801
     public class MvcApplication : System.Web.HttpApplication
     {
+        private static readonly ILog log = LogManager.GetLogger(typeof(MvcApplication));
+
         protected void Application_Start()
         {
+            XmlConfigurator.Configure();
             AreaRegistration.RegisterAllAreas();
 
             WebApiConfig.Register(GlobalConfiguration.Configuration);
             FilterConfig.RegisterGlobalFilters(GlobalFilters.Filters);
             RouteConfig.RegisterRoutes(RouteTable.Routes);
 
-            // Replace the default JSON provider with our own that uses JSON.NET and can handle dictionaries.
+            // Remove the default JSON provider and use a special model binder instead.
+            // This allows us to use strongly typed deserialization.
             ValueProviderFactories.Factories.Remove(ValueProviderFactories.Factories.OfType<JsonValueProviderFactory>().FirstOrDefault());
-            //ValueProviderFactories.Factories.Add(new JsonNetValueProviderFactory());
             ModelBinders.Binders.DefaultBinder = new JsonNetModelBinder();
 
             JsonSerializerFactory.Current = new CarpoolSerializerFactory();
+            log.Info("Application started");
+        }
+
+        public void Application_End(object sender, EventArgs e)
+        {
+            log.Info("Application ended");
+        }
+
+        protected void Application_AuthorizeRequest(object sender, EventArgs e)
+        {
+            if (AppUtils.CurrentUser != null)
+                ThreadContext.Properties["UserId"] = AppUtils.CurrentUser.Id;
+        }
+
+        private void Application_Error(object sender, EventArgs e)
+        {
+            var ex = Server.GetLastError();
+            log.Error("An error occurred");
+            if (ex != null)
+            {
+                log.Error(ex.ToString());
+                while (ex.InnerException != null)
+                {
+                    ex = ex.InnerException;
+                    log.Error("Inner Exception: " + ex.ToString());
+                }
+            }
+            else
+            {
+                log.Error("An unhandled exception occurred");
+            }
         }
     }
 }

@@ -15,7 +15,7 @@ namespace CarpoolPlanner.Model
 
         public string Logger { get; set; }
 
-        public string UserId { get; set; }
+        public long? UserId { get; set; }
 
         public DateTime Date { get; set; }
 

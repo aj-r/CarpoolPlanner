@@ -23,7 +23,7 @@ namespace CarpoolPlanner.Model.Appender
                         Message = (string)loggingEvent.MessageObject,
                         Level = loggingEvent.Level.Name,
                         Logger = loggingEvent.LoggerName,
-                        UserId = (string)userId,
+                        UserId = (long?)userId,
                         Date = DateTime.Now,
                         Ndc = ndc != null ? ndc.ToString() : null
                     };

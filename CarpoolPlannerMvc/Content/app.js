@@ -21,7 +21,7 @@ app.controller('baseCtrl', ['$scope', '$q', '$window', 'AngularNet', 'Validation
     if (model)
       model.message = '';
 
-    if (!ValidationSummary.validate(form)) {
+    if (form && !ValidationSummary.validate(form)) {
       // Move focus to the first invalid control (NOTE: only works if form has a name). TODO: move to a directive?
       if (form.$name) {
         $("[name=" + form.$name + "] .ng-invalid").first().focus();
@@ -34,16 +34,11 @@ app.controller('baseCtrl', ['$scope', '$q', '$window', 'AngularNet', 'Validation
       promise.error = function(a) { if (a) a(msg); };
       return promise;
     }
-    var state = {
-      form: form,
-      modelContainer: modelContainer,
-      modelName: modelName
-    };
 
     if (beforesubmit)
       beforesubmit();
 
-    return AngularNet.submitModel(model, url, state)
+    return AngularNet.submitModel(model, url)
       .success(function(result) {
         if (result.model) {
           modelContainer[modelName] = result.model;

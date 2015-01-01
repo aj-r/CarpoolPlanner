@@ -10,12 +10,12 @@
 <script type="text/javascript">
   app.controller('userCtrl', ['$scope', '$window', function($scope, $window) {
     $scope.UserStatus = @Html.JSEnum(typeof(UserStatus));
-    $scope.updateUser = function(index) {
-      this.trySubmit(this.loginForm, '@Url.Action("UpdateStatus", "User", Request.QueryStringRouteValues())', $scope.model.users, index, function() {
-        $scope.model.users[index].message = "Saving...";
-        $scope.model.users[index].messageType = $scope.MessageType.Info;
-      });
-    }
+      $scope.updateUser = function(index) {
+        this.trySubmit(null, '@(AppUtils.IsUserAdmin() ? Url.Action("UpdateStatus", "User", Request.QueryStringRouteValues()) : "")', $scope.model.users, index, function() {
+          $scope.model.users[index].message = "Saving...";
+          $scope.model.users[index].messageType = $scope.MessageType.Info;
+        });
+      }
   }]);
 </script>
 }
