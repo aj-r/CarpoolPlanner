@@ -1,27 +1,80 @@
 ﻿/* Move down content because we have a fixed navbar that is 50px tall */
 body {
-    padding-top: 50px;
-    padding-bottom: 20px;
+  padding-top: 50px;
+  padding-bottom: 20px;
 }
 
 /* Wrapping element */
 /* Set some basic padding to keep content from hitting the edges */
 .body-content {
-    padding-left: 15px;
-    padding-right: 15px;
+  padding-left: 15px;
+  padding-right: 15px;
+}
+
+.current-page {
+  color: #FFF !important;
+  cursor: default;
 }
 
 .small {
-    font-size: 0.85em;
+  font-size: 0.85em;
+}
+
+.preserve-newlines {
+  white-space: pre-wrap;
+}
+
+.form-control-small {
+  width: 70px;
 }
 
 /* Set widths on the form inputs since otherwise they're 100% wide */
-input {
+@media (min-width: 768px) {
+  input {
     max-width: 280px;
+  }
+
+  .input-group input {
+    max-width: inherit;
+  }
 }
 
 input[type=radio], input[type=checkbox] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
     max-width: none;
+}
+
+.checkbox label input[type=checkbox] {
+  margin-top: 1px;
+}
+
+.radio label input[type=radio] {
+  margin-top: 1px;
+}
+
+h3 .checkbox input[type=checkbox],
+h4 .checkbox input[type=checkbox] {
+  margin-top: 2px;
+  margin-left: 0px;
+}
+
+h3 .checkbox input[type=checkbox] {
+  display: inline-block;
+  position: static;
+}
+
+h3 .checkbox input[type=checkbox]+label,
+h4 .checkbox input[type=checkbox]+label {
+  margin-left: 5px;
+  margin-top: 3px;
+}
+
+h3 .checkbox,
+h4 .checkbox {
+  font-weight: inherit;
+  cursor: pointer;
 }
 
 hr {
@@ -36,16 +89,73 @@ hr {
     border-bottom: 1px solid #CCC;
 }
 
-.panel {
-    background-color: #EEE;
-    border-radius: 10px;
-    max-width: 700px;
-    padding: 25px;
+.form-panel {
+  background-color: #F3F3F3;
+  border: 1px #CCC solid;
+  border-radius: 6px;
+  padding: 20px;
+  margin-bottom: 15px;
+}
+
+.panel-heading {
+  padding: 0;
+}
+
+.panel-heading {
+  padding: 0;
+}
+
+.panel-title .checkbox {
+  padding: 15px 10px;
+  margin: 0;
+}
+
+.accordion-toggle, .accordion-toggle:focus {
+  text-decoration: none !important;
 }
 
 .form-control-inline {
     display: inline-block;
     width: auto;
+}
+
+.animate-show.ng-hide-add.ng-hide-add-active,
+.animate-show.ng-hide-remove.ng-hide-remove-active,
+.animate-show-50.ng-hide-add.ng-hide-add-active,
+.animate-show-50.ng-hide-remove.ng-hide-remove-active {
+  -webkit-transition: all linear 0.1s;
+  transition: all linear 0.1s;
+}
+
+.animate-show,
+.animate-show-50 {
+  overflow: hidden;
+}
+
+.animate-show.ng-hide,
+.animate-show-50.ng-hide {
+  min-height: 0 !important;
+  max-height: 0 !important;
+  margin-top: 0;
+  margin-bottom: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.animate-show-50 {
+  min-height: 50px !important;
+  max-height: 50px !important;
+}
+
+.animate-seats {
+  min-height: 90px !important;
+  max-height: 90px !important;
+}
+@media (min-width: 992px) {
+  .animate-seats {
+    min-height: 50px !important;
+    max-height: 50px !important;
+  }
 }
 
 .indent {
@@ -54,7 +164,8 @@ hr {
 
 .editable-region-header {
     display: inline-block;
-    margin-bottom:0;
+    margin-bottom: 0;
+    margin-top: 0;
 }
 
 .edit-buttons {
@@ -63,35 +174,34 @@ hr {
 }
 
 .image-button {
-    cursor: pointer;
+  cursor: pointer;
 }
 
-.details-container {
-    display: inline-block;
-    position: relative;
+input.ng-dirty.ng-invalid,
+select.ng-dirty.ng-invalid,
+textarea.ng-dirty.ng-invalid,
+.ng-submitted .ng-invalid {
+    border-color: #F00;
 }
 
-.details {
-    position: absolute;
-    left: 5px;
-    top: -80px;
-    width: 330px;
-    background-color: #DDD;
-    border-radius: 8px;
-    padding: 20px;
+input.ng-dirty.ng-invalid:focus,
+select.ng-dirty.ng-invalid:focus,
+textarea.ng-dirty.ng-invalid:focus,
+.ng-submitted .ng-invalid:focus {
+    -webkit-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075), 0 0 8px rgba(255, 0, 0, 0.5);
+            box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075), 0 0 8px rgba(255, 0, 0, 0.5);
 }
 
-.detail-header {
-    font-weight: bold;
-    font-size: 1.1em;
-    margin-bottom: 5px;
+cp-message {
+  font-size: 0.95em;
+  color: #707070;
 }
 
-.x {
-    position: absolute;
-    right: 10px;
-    top: 10px;
+val-summary {
+  font-size: 0.95em;
+  color: #a94442;
 }
+
 
 @media (max-width: 768px) {
     .details-container {
