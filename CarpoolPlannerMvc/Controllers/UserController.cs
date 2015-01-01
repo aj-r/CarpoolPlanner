@@ -52,6 +52,7 @@ namespace CarpoolPlanner.Controllers
                 }
                 else
                 {
+                    log.Warn(string.Concat("Incorrect username/password for loginName '", model.LoginNameInput, "'"));
                     model.SetMessage(Resources.InvalidUsernameOrPassword, MessageType.Error);
                 }
                 // Clear the password
@@ -221,6 +222,7 @@ namespace CarpoolPlanner.Controllers
                 }
                 SetPassword(user, model.NewPassword);
                 context.SaveChanges();
+                log.Info(string.Concat("User ", + user.Id, " changed his/her password"));
                 AppUtils.UpdateCachedUser(user);
             }
             model.OldPassword = "";
