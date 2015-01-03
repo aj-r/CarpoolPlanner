@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Data.Entity;
 using System.Linq;
+using System.Reflection;
 using System.Web;
 using System.Web.Mvc;
 using CarpoolPlanner.Model;
@@ -102,6 +103,14 @@ namespace CarpoolPlanner.Controllers
                     serverModel.SetMessage(save ? "Saved successfully." : "No changes to save.", MessageType.Success);
             }
             return Ng(serverModel);
+        }
+
+        [AllowAnonymous]
+        public ActionResult Version()
+        {
+            var assembly = Assembly.GetExecutingAssembly();
+            var version = assembly.GetName().Version;
+            return Content(version.ToString(), "text/plain");
         }
 
         private static HomeViewModel GetHomeViewModel(ApplicationDbContext context)

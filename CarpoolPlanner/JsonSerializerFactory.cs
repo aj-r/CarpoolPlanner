@@ -23,10 +23,8 @@ namespace CarpoolPlanner
         public virtual JsonSerializer GetSerializer()
         {
             var serializer = new JsonSerializer();
-            serializer.Converters.Add(new IsoDateTimeConverter());
-            serializer.Converters.Add(new KeyedCollectionConverter());
-            serializer.ReferenceLoopHandling = ReferenceLoopHandling.Ignore;
             serializer.ContractResolver = new CamelCasePropertyNamesContractResolver();
+            serializer.DateTimeZoneHandling = DateTimeZoneHandling.Utc;
             return serializer;
         }
     }

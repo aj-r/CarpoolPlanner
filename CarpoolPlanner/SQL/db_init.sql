@@ -1,5 +1,3 @@
-CREATE DATABASE  IF NOT EXISTS `climbing` /*!40100 DEFAULT CHARACTER SET utf8 */;
-USE `climbing`;
 -- MySQL dump 10.13  Distrib 5.6.17, for Win64 (x86_64)
 --
 -- Host: localhost    Database: climbing

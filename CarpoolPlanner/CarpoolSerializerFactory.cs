@@ -9,8 +9,10 @@ namespace CarpoolPlanner
         public override JsonSerializer GetSerializer()
         {
             var serializer = base.GetSerializer();
-            serializer.NullValueHandling = NullValueHandling.Ignore;
+            serializer.Converters.Add(new KeyedCollectionConverter());
             serializer.ContractResolver = new FilterContractResolver();
+            serializer.NullValueHandling = NullValueHandling.Ignore;
+            serializer.ReferenceLoopHandling = ReferenceLoopHandling.Ignore;
             return serializer;
         }
     }
