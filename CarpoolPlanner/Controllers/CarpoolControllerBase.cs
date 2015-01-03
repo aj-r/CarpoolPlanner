@@ -15,7 +15,14 @@ namespace CarpoolPlanner.Controllers
             else
             {
                 filterContext.HttpContext.Response.StatusCode = 500;
-                filterContext.Result = Content(filterContext.Exception.Message);
+                var message = filterContext.Exception.Message;
+                var ex = filterContext.Exception;
+                while (ex.InnerException != null)
+                {
+                    ex = ex.InnerException;
+                    message += "\nInner Exception: " + ex.Message;
+                }
+                filterContext.Result = Content(message);
                 filterContext.ExceptionHandled = true;
             }
         }
