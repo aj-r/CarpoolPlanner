@@ -51,6 +51,15 @@ namespace CarpoolPlanner.Model
         }
 
         /// <summary>
+        /// Gets all UserTripRecurrences for the specified user.
+        /// </summary>
+        /// <returns>An IEnumerable&lt;UserTrip&gt;.</returns>
+        public IQueryable<UserTripRecurrence> GetUserTripRecurrences(long userId)
+        {
+            return UserTripRecurrences.Where(ut => ut.UserId == userId);
+        }
+
+        /// <summary>
         /// Gets the trip instance with the specified ID using the eager loading required to calculate statistics (such as seats available).
         /// </summary>
         /// <param name="tripInstanceId">The ID of the TripInstance to get.</param>
@@ -108,7 +117,6 @@ namespace CarpoolPlanner.Model
             foreach (var userTripRecurrence in UserTripRecurrences.Include(utr => utr.User).Where(utr => utr.TripRecurrenceId == recurrence.Id))
             {
                 var userTripInstance = UserTripInstance.Create(userTripRecurrence.User, tripInstance);
-                userTripInstance.Attending = userTripRecurrence.Attending;
                 UserTripInstances.Add(userTripInstance);
             }
             SaveChanges();
@@ -132,7 +140,7 @@ namespace CarpoolPlanner.Model
                 return userTripInstance;
             userTripInstance = UserTripInstance.Create(user, instance);
             var userTripRecurrence = recurrence.UserTripRecurrences[user.Id];
-            userTripInstance.Attending = userTripRecurrence != null && userTripRecurrence.Attending;
+            userTripInstance.Attending = (userTripRecurrence != null && userTripRecurrence.Attending) ? (bool?)null : false;
             UserTripInstances.Add(userTripInstance);
             return userTripInstance;
         }

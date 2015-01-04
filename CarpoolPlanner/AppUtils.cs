@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Linq;
 using System.Reflection;
 using System.Web;
@@ -10,8 +11,7 @@ namespace CarpoolPlanner
 {
     public static class AppUtils
     {
-        public const string AppName = "Climbers Carpooling";
-        public const string DateFormat = "dd-MMM-yyyy";
+        public static readonly string AppName = ConfigurationManager.AppSettings["AppName"];
 
         private static readonly ConcurrentDictionary<string, User> Users = new ConcurrentDictionary<string, User>();
 

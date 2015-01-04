@@ -41,7 +41,6 @@ namespace CarpoolPlanner.Model
 
         public RecurrenceType Type { get; set; }
 
-        [JsonIgnore]
         public UserTripRecurrenceCollection UserTripRecurrences { get; set; }
         
         /// <summary>
@@ -62,25 +61,30 @@ namespace CarpoolPlanner.Model
         {
             if (Start == null)
                 return default(DateTime);
-            var date = Start.Value;
-            while (date < afterDate)
+            DateTime date;
+            switch (Type)
             {
-                switch (Type)
-                {
-                    case RecurrenceType.Daily:
-                        date = date.AddDays(Every);
-                        break;
-                    case RecurrenceType.Weekly:
-                        date = date.AddDays(Every * 7);
-                        break;
-                    case RecurrenceType.Monthly:
-                        date = date.AddMonths(Every);
-                        break;
-                    case RecurrenceType.Yearly:
-                        date = date.AddYears(Every);
-                        break;
-                    case RecurrenceType.MonthlyByDayOfWeek:
-                    case RecurrenceType.YearlyByDayOfWeek:
+                case RecurrenceType.Daily:
+                    date = Start.Value.AddDays(Math.Ceiling((afterDate - Start.Value).TotalDays));
+                    break;
+                case RecurrenceType.Weekly:
+                    date = Start.Value.AddDays(Math.Ceiling((afterDate - Start.Value).Days / 7.0) * 7.0);
+                    break;
+                case RecurrenceType.Monthly:
+                    date = new DateTime(afterDate.Year, afterDate.Month, Start.Value.Day);
+                    if (date < afterDate)
+                        date = date.AddMonths(1);
+                    break;
+                case RecurrenceType.Yearly:
+                    date = new DateTime(afterDate.Year, Start.Value.Month, Start.Value.Day);
+                    if (date < afterDate)
+                        date = date.AddMonths(1);
+                    break;
+                case RecurrenceType.MonthlyByDayOfWeek:
+                case RecurrenceType.YearlyByDayOfWeek:
+                    date = Start.Value;
+                    while (date < afterDate)
+                    {
                         var week = (date.Day - 1) / 7;
                         var dayOfWeek = (int)date.DayOfWeek;
                         var firstOfMonth = date.AddDays(DateTime.DaysInMonth(date.Year, date.Month) - date.Day + 1);
@@ -94,9 +98,12 @@ namespace CarpoolPlanner.Model
                         // Note that dayOfMonth could be larger than the number of days in the month, pushing the date to the next month.
                         // This will cause weird things, so hopefully nobody does it :P
                         date = firstOfMonth.AddDays(dayOfMonth); // Note that dayOfMonth is 0-based, not 1-based like DateTime.Day
-                        date = date.AddMonths(Every);
                         break;
-                }
+                    }
+                    break;
+                default:
+                    date = default(DateTime);
+                    break;
             }
             return date;
         }

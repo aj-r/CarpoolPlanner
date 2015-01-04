@@ -32,8 +32,10 @@ namespace CarpoolPlanner.Model
         [JsonIgnore]
         public User User { get; set; }
 
+        [JsonIgnore]
         public ICollection<UserTripRecurrence> Recurrences { get; private set; }
 
+        [JsonIgnore]
         public ICollection<UserTripInstance> Instances { get; private set; }
 
         /// <summary>

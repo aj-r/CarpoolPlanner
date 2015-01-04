@@ -101,10 +101,10 @@
           </div>
         }
         <div class="indent">
-          <div ng-repeat="tripRecurrence in trip.recurrences" class="checkbox">
+          <div ng-repeat="tripRecurrence in trip.recurrences" ng-init="userTripRecurrence = tripRecurrence.userTripRecurrences[model.userId]" class="checkbox">
             <label>
               <input type="checkbox"
-                     ng-model="trip.userTrips[model.userId].recurrences[$index].attending"
+                     ng-model="userTripRecurrence.attending"
                      ch-hierarchy="attending-{{ trip.id + '.' + tripRecurrence.id }}" />
               {{ tripRecurrenceToString(tripRecurrence) }}
             </label>
@@ -114,7 +114,7 @@
       <div class="form-group">
         <input type="submit" value="@Resources.Save" ng-show="model.tripsModel.trips.length > 0" class="btn btn-default" />
       </div>
-      <div ng-show="model.tripsModel.trips.length === 0">There are currently no trips. An administrator can create new trips.</div>
+      <div ng-show="model.tripsModel.trips.length === 0">There are currently no carpools. An administrator can create new carpools.</div>
       <div class="form-group">
         <cp-message model="model.tripsModel"></cp-message>
       </div>

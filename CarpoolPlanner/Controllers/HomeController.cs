@@ -44,44 +44,46 @@ namespace CarpoolPlanner.Controllers
             {
                 serverModel = GetHomeViewModel(context);
                 foreach (var serverUserTrip in from t in serverModel.Trips
-                                         where t.UserTrips.Contains(user.Id)
+                                               where t.UserTrips.Contains(user.Id)
                                                select t.UserTrips[user.Id])
                 {
-                    var clientUserTrip = model.Trips.Where(t => t.Id == serverUserTrip.TripId && t.UserTrips.Contains(user.Id))
-                        .Select(t => t.UserTrips[user.Id])
-                        .FirstOrDefault();
-                    if (clientUserTrip == null)
+                    var clientTrip = model.Trips.FirstOrDefault(t => t.Id == serverUserTrip.TripId);
+                    if (clientTrip == null || !clientTrip.UserTrips.Contains(user.Id))
                         continue;
-                    foreach (var serverInstance in serverUserTrip.Instances)
+                    var clientUserTrip = clientTrip.UserTrips[user.Id];
+                    if (!clientUserTrip.Attending)
+                        continue;
+                    foreach (var serverUserTripInstance in serverUserTrip.Instances)
                     {
-                        var clientInstance = clientUserTrip.Instances.FirstOrDefault(utr => utr.TripInstanceId == serverInstance.TripInstanceId);
-                        if (clientInstance == null)
+                        var clientTripInstance = clientTrip.Instances.FirstOrDefault(tr => tr.Id == serverUserTripInstance.TripInstanceId);
+                        if (clientTripInstance == null || !clientTripInstance.UserTripInstances.Contains(user.Id))
                             continue;
-                        if (clientInstance.Attending == true && (serverInstance.Attending != true
-                            ||serverInstance.CommuteMethod != clientInstance.CommuteMethod
-                            || serverInstance.CanDriveIfNeeded != clientInstance.CanDriveIfNeeded
-                            || serverInstance.Seats != clientInstance.Seats))
+                        var clientUserTripInstance = clientTripInstance.UserTripInstances[user.Id];
+                        if (clientUserTripInstance.Attending == true && (serverUserTripInstance.Attending != true
+                            || serverUserTripInstance.CommuteMethod != clientUserTripInstance.CommuteMethod
+                            || serverUserTripInstance.CanDriveIfNeeded != clientUserTripInstance.CanDriveIfNeeded
+                            || serverUserTripInstance.Seats != clientUserTripInstance.Seats))
                         {
-                            serverInstance.CommuteMethod = clientInstance.CommuteMethod;
-                            serverInstance.CanDriveIfNeeded = clientInstance.CanDriveIfNeeded;
-                            serverInstance.Seats = clientInstance.Seats;
-                            if (serverInstance.Attending != true)
+                            serverUserTripInstance.CommuteMethod = clientUserTripInstance.CommuteMethod;
+                            serverUserTripInstance.CanDriveIfNeeded = clientUserTripInstance.CanDriveIfNeeded;
+                            serverUserTripInstance.Seats = clientUserTripInstance.Seats;
+                            if (serverUserTripInstance.Attending != true)
                             {
                                 // User wants to attend. Make sure there is space.
-                                if (serverInstance.ConfirmTime == null)
-                                    serverInstance.ConfirmTime = DateTime.Now;
-                                serverInstance.Attending = true;
-                                if (serverInstance.CommuteMethod == CommuteMethod.NeedRide && !serverInstance.CanDriveIfNeeded)
+                                if (serverUserTripInstance.ConfirmTime == null)
+                                    serverUserTripInstance.ConfirmTime = DateTime.Now;
+                                serverUserTripInstance.Attending = true;
+                                if (serverUserTripInstance.CommuteMethod == CommuteMethod.NeedRide && !serverUserTripInstance.CanDriveIfNeeded)
                                 {
-                                    if (serverInstance.TripInstance.DriversPicked)
+                                    if (serverUserTripInstance.TripInstance.DriversPicked)
                                     {
                                         // Drivers have already been picked. Make sure there is enough room for this user.
-                                        var requiredSeats = serverInstance.TripInstance.GetRequiredSeats();
-                                        var availableSeats = serverInstance.TripInstance.GetAvailableSeats();
+                                        var requiredSeats = serverUserTripInstance.TripInstance.GetRequiredSeats();
+                                        var availableSeats = serverUserTripInstance.TripInstance.GetAvailableSeats();
                                         if (requiredSeats > availableSeats)
                                         {
-                                            serverInstance.Attending = false;
-                                            serverInstance.NoRoom = true;
+                                            serverUserTripInstance.Attending = false;
+                                            serverUserTripInstance.NoRoom = true;
                                             serverModel.SetMessage("You cannot attend because there are not enough seats. You have been added to the waiting list.", MessageType.Error);
                                         }
                                     }
@@ -89,10 +91,10 @@ namespace CarpoolPlanner.Controllers
                             }
                             save = true;
                         }
-                        else if (clientInstance.Attending == false && serverInstance.Attending != false)
+                        else if (clientUserTripInstance.Attending == false && serverUserTripInstance.Attending != false)
                         {
-                            serverInstance.Attending = false;
-                            serverInstance.ConfirmTime = null;
+                            serverUserTripInstance.Attending = false;
+                            serverUserTripInstance.ConfirmTime = null;
                             save = true;
                         }
                     }
@@ -116,11 +118,12 @@ namespace CarpoolPlanner.Controllers
         private static HomeViewModel GetHomeViewModel(ApplicationDbContext context)
         {
             var model = new HomeViewModel();
-            if (AppUtils.IsUserStatus(UserStatus.Active))
+            var user = AppUtils.CurrentUser;
+            if (user != null && user.Status == UserStatus.Active)
             {
                 model.Users = context.Users.Where(u => u.Status == UserStatus.Active).ToList();
                 model.Trips = context.Trips
-                    .Where(t => t.UserTrips.Any(ut => ut.UserId == AppUtils.CurrentUser.Id && ut.Attending))
+                    .Where(t => t.UserTrips.Any(ut => ut.UserId == user.Id && ut.Attending))
                     .Include(t => t.Recurrences)
                     .Include(t => t.UserTrips.Select(ut => ut.Instances))
                     .ToList();
@@ -135,8 +138,8 @@ namespace CarpoolPlanner.Controllers
                 {
                     trip.Instances = trip.Instances.OrderBy(ti => ti.Date).ToList();
                     UserTrip userTrip;
-                    if (trip.UserTrips.Contains(AppUtils.CurrentUser.Id))
-                        userTrip = trip.UserTrips[AppUtils.CurrentUser.Id];
+                    if (trip.UserTrips.Contains(user.Id))
+                        userTrip = trip.UserTrips[user.Id];
                     else
                         continue;
                     foreach (var tripInstance in trip.Instances)
@@ -145,7 +148,9 @@ namespace CarpoolPlanner.Controllers
                         if (userTripInstance == null)
                         {
                             // Create the UserTripInstance if it doesn't exist
-                            userTripInstance = UserTripInstance.Create(AppUtils.CurrentUser, tripInstance);
+                            userTripInstance = UserTripInstance.Create(user, tripInstance);
+                            userTripInstance.Attending = false;
+                            // Set User to null, otherwise EF might think we are trying to create a new user.
                             userTripInstance.User = null;
                             userTrip.Instances.Add(userTripInstance);
                             context.UserTripInstances.Add(userTripInstance);

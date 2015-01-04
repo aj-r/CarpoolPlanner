@@ -51,13 +51,12 @@ namespace CarpoolPlanner.Controllers
                 serverModel = GetTripsViewModel(context);
                 foreach (var serverUserTrip in from t in serverModel.Trips
                                          where t.UserTrips.Contains(user.Id)
-                                         select t.UserTrips[AppUtils.CurrentUser.Id])
+                                         select t.UserTrips[user.Id])
                 {
-                    var clientUserTrip = model.Trips.Where(t => t.Id == serverUserTrip.TripId && t.UserTrips.Contains(AppUtils.CurrentUser.Id))
-                        .Select(t => t.UserTrips[AppUtils.CurrentUser.Id])
-                        .FirstOrDefault();
-                    if (clientUserTrip == null)
+                    var clientTrip = model.Trips.FirstOrDefault(t => t.Id == serverUserTrip.TripId);
+                    if (clientTrip == null || !clientTrip.UserTrips.Contains(user.Id))
                         continue;
+                    var clientUserTrip = clientTrip.UserTrips[user.Id];
                     if (clientUserTrip.Attending != serverUserTrip.Attending)
                     {
                         serverUserTrip.Attending = clientUserTrip.Attending;
@@ -65,18 +64,28 @@ namespace CarpoolPlanner.Controllers
                     }
                     if (serverUserTrip.Attending)
                     {
-                        foreach (var recurrence in serverUserTrip.Recurrences)
+                        foreach (var serverUserTripRecurrence in serverUserTrip.Recurrences)
                         {
-                            var clientRecurrence = clientUserTrip.Recurrences.FirstOrDefault(utr => utr.TripRecurrenceId == recurrence.TripRecurrenceId);
-                            if (clientRecurrence == null)
+                            //var clientRecurrence = clientUserTrip.Recurrences.FirstOrDefault(utr => utr.TripRecurrenceId == recurrence.TripRecurrenceId);
+                            var clientTripRecurrence = clientTrip.Recurrences.FirstOrDefault(tr => tr.Id == serverUserTripRecurrence.TripRecurrenceId);
+                            if (clientTripRecurrence == null || !clientTripRecurrence.UserTripRecurrences.Contains(user.Id))
                                 continue;
-                            if (clientRecurrence.Attending != recurrence.Attending)
+                            var clientUserTripRecurrence = clientTripRecurrence.UserTripRecurrences[user.Id];
+                            if (clientUserTripRecurrence.Attending != serverUserTripRecurrence.Attending)
                             {
-                                recurrence.Attending = clientRecurrence.Attending;
-                                if (recurrence.Attending)
+                                serverUserTripRecurrence.Attending = clientUserTripRecurrence.Attending;
+                                // Ensure the trip instance exists and the attendance status is correct
+                                var instance = context.GetNextUserTripInstance(serverUserTripRecurrence.TripRecurrence, AppUtils.CurrentUser);
+                                if (serverUserTripRecurrence.Attending)
                                 {
-                                    // Ensure the trip instance exists
-                                    context.GetNextUserTripInstance(recurrence.TripRecurrence, AppUtils.CurrentUser);
+                                    if (instance.Attending == false)
+                                        instance.Attending = null;
+                                    // TODO: send message to notification service
+                                }
+                                else
+                                {
+                                    if (instance.Attending == null)
+                                        instance.Attending = false;
                                     // TODO: send message to notification service
                                 }
                                 save = true;
@@ -88,6 +97,11 @@ namespace CarpoolPlanner.Controllers
                         foreach (var recurrence in serverUserTrip.Recurrences.Where(utr => utr.Attending))
                         {
                             recurrence.Attending = false;
+                            // Change the attendance status of any instances to false (unless they were already confirmed)
+                            var instance = context.GetNextUserTripInstance(recurrence.TripRecurrence, AppUtils.CurrentUser);
+                            if (instance.Attending == null)
+                                instance.Attending = false;
+                            // TODO: send message to notification service
                             save = true;
                         }
                     }
@@ -106,6 +120,13 @@ namespace CarpoolPlanner.Controllers
             {
                 Response.StatusCode = 403;
                 model.SetMessage("You are not authorized to create trips.", MessageType.Error);
+                log.Warn(model.Message);
+                return Ng(model);
+            }
+            if (model.Trip == null)
+            {
+                Response.StatusCode = 400;
+                model.SetMessage("Trip not specified.", MessageType.Error);
                 log.Warn(model.Message);
                 return Ng(model);
             }

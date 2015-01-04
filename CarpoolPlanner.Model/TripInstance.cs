@@ -31,7 +31,6 @@ namespace CarpoolPlanner.Model
         /// <summary>
         /// Gets or sets the list of UserTripInstances that belong to this trip instance.
         /// </summary>
-        [JsonIgnore]
         public UserTripInstanceCollection UserTripInstances { get; private set; }
 
         // TODO: remove these 2 functions

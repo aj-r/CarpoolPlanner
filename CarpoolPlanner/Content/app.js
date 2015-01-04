@@ -93,11 +93,11 @@ app.controller('baseCtrl', ['$scope', '$q', '$window', 'AngularNet', 'Validation
       case RecurrenceType.MonthlyByDayOfWeek:
         var week = Math.floor((start.date() - 1) / 7) + 1;
         s += 'The ' + week + $scope.getSuffix(week) + ' ' + start.format('dddd');
-        if (tr.Type == RecurrenceType.YearlyByDayOfWeek)
+        if (tr.type == RecurrenceType.YearlyByDayOfWeek)
           s += ' of ' + start.format('MMMM');
         s += ' every ';
         if (tr.every > 1) {
-          s += tr.eery + $scope.getSuffix(tr.every) + ' ';
+          s += tr.every + $scope.getSuffix(tr.every) + ' ';
         }
         s += tr.type == RecurrenceType.YearlyByDayOfWeek ? 'year' : 'month';
         break;
@@ -136,28 +136,7 @@ app.controller('baseCtrl', ['$scope', '$q', '$window', 'AngularNet', 'Validation
 
 app.controller('tripInstanceCtrl', ['$scope', function($scope) {
 
-  function eachUti(trip, tripInstance, a) {
-    if (!trip.userTrips)
-      return;
-    for (var i in trip.userTrips) {
-      var ut = trip.userTrips[i];
-      var uti = null;
-      for (var j in ut.instances) {
-        if (ut.instances[j].tripInstanceId == tripInstance.id) {
-          uti = ut.instances[j];
-          break;
-        }
-      }
-      if (uti && a(uti) == false)
-        return;
-    }
-  }
-  eachUti($scope.trip, $scope.tripInstance, function(uti) {
-    if (uti.userId == $scope.model.userId) {
-      $scope.userTripInstance = uti;
-      return false;
-    }
-  });
+  $scope.userTripInstance = $scope.tripInstance.userTripInstances[$scope.model.userId];
 
   $scope.tripInstanceToString = function(ti) {
     var date = moment(ti.date);
@@ -171,32 +150,31 @@ app.controller('tripInstanceCtrl', ['$scope', function($scope) {
     return date.format('dddd, MMM D [' + specifier + 'at] h:mm a');
   };
 
-  $scope.getAvailableSeats = function(trip, tripInstance) {
+  $scope.getAvailableSeats = function() {
     var available = 0;
-    eachUti(trip, tripInstance, function(uti) {
+    angular.forEach($scope.tripInstance.userTripInstances, function(uti) {
       if (uti.attending && (uti.commuteMethod == $scope.CommuteMethod.Driver || uti.canDriveIfNeeded))
         available += uti.seats;
     });
     return available;
   };
-  $scope.getRequiredSeats = function(trip, tripInstance) {
+  $scope.getRequiredSeats = function() {
     var required = 0;
-    eachUti(trip, tripInstance, function(uti) {
+    angular.forEach($scope.tripInstance.userTripInstances, function(uti) {
       if (uti.attending && uti.commuteMethod != $scope.CommuteMethod.HaveRide)
         required++;
     });
     return required;
   };
   function updateSeats() {
-    $scope.availableSeats = $scope.getAvailableSeats($scope.trip, $scope.tripInstance);
-    $scope.requiredSeats = $scope.getRequiredSeats($scope.trip, $scope.tripInstance);
+    $scope.availableSeats = $scope.getAvailableSeats();
+    $scope.requiredSeats = $scope.getRequiredSeats();
 
     $scope.drivers = [];
     $scope.passengers = [];
     $scope.waitingList = [];
     $scope.unconfirmed = [];
-    var currentUti = $scope.userTripInstance;
-    eachUti($scope.trip, $scope.tripInstance, function(uti) {
+    angular.forEach($scope.tripInstance.userTripInstances, function(uti) {
       var user = null;
       for (var i in $scope.model.users) {
         if ($scope.model.users[i].id == uti.userId) {
@@ -220,7 +198,7 @@ app.controller('tripInstanceCtrl', ['$scope', function($scope) {
     });
   }
   updateSeats();
-  $scope.$watch('trip.userTrips', updateSeats, true);
+  $scope.$watch('userTripInstance', updateSeats, true);
 }]);
 
 // Directive for nav links. Adds a 'current-page' class if the link points to the current location.

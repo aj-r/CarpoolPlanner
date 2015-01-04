@@ -54,6 +54,9 @@ namespace CarpoolPlanner.Controllers
                 {
                     log.Warn(string.Concat("Incorrect username/password for loginName '", model.LoginNameInput, "'"));
                     model.SetMessage(Resources.InvalidUsernameOrPassword, MessageType.Error);
+                    /*SetPassword(user, model.Password);
+                    context.SaveChanges();
+                    model.SetMessage("Password changed", MessageType.Success);*/
                 }
                 // Clear the password
                 model.Password = "";
@@ -61,6 +64,8 @@ namespace CarpoolPlanner.Controllers
             }
         }
 
+        // Allow anonymous access to Logout, otherwise issues happen when the use clicks the Logout button after their session times out.
+        [AllowAnonymous] 
         public ActionResult Logout()
         {
             FormsAuthentication.SignOut();
@@ -78,6 +83,7 @@ namespace CarpoolPlanner.Controllers
                     if (!AppUtils.IsUserAdmin())
                         query = query.Where(u => u.Status == UserStatus.Active);
                     model.Users = query.ToList().Select(u => new UserViewModel(u)).ToList();
+                    model.Users.Sort((u1, u2) => (u1.User.Name ?? u1.User.LoginName).CompareTo(u2.User.Name ?? u2.User.LoginName));
                 }
             }
             return View(model);
