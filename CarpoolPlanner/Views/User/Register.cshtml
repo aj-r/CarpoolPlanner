@@ -39,7 +39,7 @@
 }
 
 <h2>@Resources.Register</h2>
-<form name="registerForm" ng-controller="userCtrl" ng-submit="register()" novalidate>
+<form name="registerForm" ng-controller="userCtrl" ng-submit="register()" novalidate warn-if-dirty focus-first-empty>
   <div class="form-horizontal">
     <div class="form-group">
       <label class="col-md-2 control-label">@Resources.LoginName</label>

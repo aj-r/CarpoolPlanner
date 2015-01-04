@@ -26,12 +26,36 @@
     };
     $scope.handleCheck = function($event) {
       $event.stopPropagation();
+      var elem = angular.element($event.target);
       var scope = this;
       if (scope.userTripInstance.attending) {
         $scope.expandedGroups[scope.tripIndex][scope.$index] = true;
       }
     }
   });
+
+  var tripCtrl = app.directive('expandWhenChecked', function() {
+    return {
+      restrict: 'A',
+      require: 'ngModel',
+      scope: {
+        isOpen: '=expandWhenChecked'
+      },
+      link: function(scope, elem, attr, modelCtrl) {
+        // Tap into the check box click event so we can stop propagation up to the accordion header.
+        angular.element(elem).click(function(e) {
+          e.stopPropagation();
+          if (modelCtrl.$modelValue) {
+            scope.isOpen = true;
+          }
+          // Since we are stopping propagation, we need to manually mark the form as dirty.
+          var form = scope.$parent.tripInstanceForm;
+          form.$setDirty();
+        })
+      }
+    };
+  });
+
 </script>
 }
 
@@ -42,7 +66,7 @@
     {
       <div ng-show="model.trips.length > 0">
         <div>Select the days that you can come this week.</div><!-- TODO: generalize to not use the word "week" -->
-        <form method="post" name="tripInstanceForm" ng-submit="saveUserTrips()" novalidate>
+        <form method="post" name="tripInstanceForm" ng-submit="saveUserTrips()" novalidate warn-if-dirty>
           <input type="submit" value="Save all changes" class="btn btn-default" style="margin-top: 15px;" />
           <div style="margin-top: 15px;">
             <cp-message></cp-message>
@@ -56,7 +80,7 @@
                 <div ng-controller="tripInstanceCtrl">
                   <accordion-heading>
                     <div class="checkbox">
-                      <input type="checkbox" ng-model="userTripInstance.attending" ng-click="handleCheck($event)" ch-tri-state />
+                      <input type="checkbox" ng-model="userTripInstance.attending" expand-when-checked="expandedGroups[tripIndex][$index]" ch-tri-state />
                       <label>{{ tripInstanceToString(tripInstance) }}</label>
                     </div>
                   </accordion-heading>

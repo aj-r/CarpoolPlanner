@@ -386,12 +386,37 @@ app.directive('form', function() {
   };
 });
 
-// On load, focus the first empty input.
-$(document).ready(function() {
-  $('input:not([type=image],[type=button],[type=submit],[type=hidden]), textarea, select').each(function() {
-    if (this.value == '') {
-      this.focus();
-      return false;
+// Directive to warn the user before leaving the page if the form (or control) is dirty.
+app.directive('warnIfDirty', function() {
+  return {
+    restrict: 'A',
+    require: ['?form', '?ngModel'],
+    link: function(scope, elem, attr, ctrls) {
+      var formCtrl = ctrls[0];
+      var modelCtrl = ctrls[1];
+      $(window).bind('beforeunload', function() {
+        if ((formCtrl && formCtrl.$dirty) || (modelCtrl && modelCtrl.$dirty))
+          return 'There is unsaved data on the page. If you leave this page now, your changes will be discarded.';
+      });
     }
-  });
-})
+  };
+});
+
+// Directive to focus the first empty control on a form when the page loads.
+app.directive('focusFirstEmpty', ['$document', function($document) {
+  return {
+    restrict: 'A',
+    require: 'form',
+    link: function(scope, elem, attr) {
+      $document.ready(function() {
+        var inputs = angular.element(elem).find('input:not([type=image],[type=button],[type=submit],[type=hidden]), textarea, select');
+        inputs.each(function() {
+          if (this.value == '') {
+            this.focus();
+            return false;
+          }
+        });
+      });
+    }
+  };
+}]);

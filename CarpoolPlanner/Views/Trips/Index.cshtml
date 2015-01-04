@@ -84,7 +84,7 @@
       only on the days that you select.
     </p>
 
-    <form method="post" name="tripRecurrenceForm" ng-submit="saveTrips()" novalidate>
+    <form method="post" name="tripRecurrenceForm" ng-submit="saveTrips()" novalidate warn-if-dirty>
       <div ng-repeat="trip in model.tripsModel.trips">
         <h3 class="editable-region-header">
           <label class="checkbox">
@@ -123,7 +123,7 @@
     {
       <hr />
       <h2>Create New Carpool</h2>
-      <form method="post" name="createTripForm" ng-submit="createTrip()" style="max-width: 700px;" novalidate>
+      <form method="post" name="createTripForm" ng-submit="createTrip()" style="max-width: 700px;" novalidate warn-if-dirty>
         <div class="form-horizontal">
           <div class="form-group">
             <span class="control-label col-sm-3">Name</span>

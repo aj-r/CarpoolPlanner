@@ -28,7 +28,7 @@
 
 <h2>@Resources.Login</h2>
 <div class="form-horizontal" ng-controller="loginCtrl">
-  <form method="post" name="loginForm" ng-submit="submitLogin()" novalidate>
+  <form method="post" name="loginForm" ng-submit="submitLogin()" novalidate focus-first-empty>
     <div class="form-group">
       <div class="col-sm-offset-2 col-sm-10 text-success" ng-if="reason == 'logout'">
         You have been logged out.
@@ -68,6 +68,7 @@
         <cp-message></cp-message>
         <val-summary></val-summary>
         <div><a ng-href="@Url.Action("Register", "User")?loginName={{ encodeURIComponent(model.loginNameInput || '') }}">Register as a new user</a></div>
+        <!-- TODO: also make the register link at the top-right of the page set the loginName in the query string -->
       </div>
     </div>
 </form>

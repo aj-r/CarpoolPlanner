@@ -53,7 +53,7 @@
 
 <h2>Manage Account - {{ model.loginName }}</h2>
 
-<form name="manageForm" ng-controller="userCtrl" ng-submit="updateUser()" novalidate style="margin-top: 20px;">
+<form name="manageForm" ng-controller="userCtrl" ng-submit="updateUser()" novalidate warn-if-dirty style="margin-top: 20px;">
   <div class="form-horizontal">
     @Html.Partial("UserData")
     <div class="form-group">
