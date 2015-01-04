@@ -87,7 +87,8 @@ namespace CarpoolPlanner.NotificationService
                         foreach (var tripRecurrence in context.TripRecurrences.ToList())
                         {
                             var tripInstance = context.GetNextTripInstance(tripRecurrence, ApplicationDbContext.TripInstanceRemovalDelay);
-                            SetNextNotificationTimes(tripInstance, tripRecurrence.Id);
+                            if (tripInstance != null)
+                                SetNextNotificationTimes(tripInstance, tripRecurrence.Id);
                         }
                     }
                     catch (Exception ex)
@@ -478,7 +479,8 @@ namespace CarpoolPlanner.NotificationService
                 }
                 var tripRecurrence = context.TripRecurrences.Find(tripRecurrenceId);
                 var tripInstance = context.GetNextTripInstance(tripRecurrence, TimeSpan.Zero);
-                SetNextNotificationTimes(tripInstance, tripRecurrence.Id);
+                if (tripInstance != null)
+                    SetNextNotificationTimes(tripInstance, tripRecurrence.Id);
             }
         }
 

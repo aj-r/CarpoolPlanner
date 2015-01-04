@@ -131,7 +131,8 @@ namespace CarpoolPlanner.Controllers
                 {
                     // With EF magic, this method automatically adds the next TripInstance for each recurrence to the Trip
                     var instance = context.GetNextTripInstance(tripRecurrence, ApplicationDbContext.TripInstanceRemovalDelay);
-                    context.GetTripInstanceById(instance.Id);
+                    if (instance != null)
+                        context.GetTripInstanceById(instance.Id);
                 }
                 bool save = false;
                 foreach (var trip in model.Trips)

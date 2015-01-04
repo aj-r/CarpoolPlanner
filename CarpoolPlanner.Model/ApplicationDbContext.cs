@@ -94,17 +94,19 @@ namespace CarpoolPlanner.Model
             lock (tripInstanceCreationLock)
             {
                 var expectedDate = recurrence.GetNextInstanceDate(DateTime.Now - delay);
+                if (expectedDate == null)
+                    return null;
                 var instance = TripInstances.FirstOrDefault(ti => ti.TripId == recurrence.TripId && ti.Date == expectedDate);
                 while (instance != null && instance.Skip)
                 {
-                    expectedDate = recurrence.GetNextInstanceDate(expectedDate);
-                    if (expectedDate >= recurrence.End)
+                    expectedDate = recurrence.GetNextInstanceDate(expectedDate.Value);
+                    if (expectedDate == null)
                         return null;
                     instance = TripInstances.FirstOrDefault(ti => ti.TripId == recurrence.TripId && ti.Date == expectedDate);
                 }
                 if (instance != null)
                     return instance;
-                var tripInstance = CreateTripInstance(recurrence, expectedDate);
+                var tripInstance = CreateTripInstance(recurrence, expectedDate.Value);
                 return tripInstance;
             }
         }

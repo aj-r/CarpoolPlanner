@@ -76,6 +76,8 @@ namespace CarpoolPlanner.Controllers
                                 serverUserTripRecurrence.Attending = clientUserTripRecurrence.Attending;
                                 // Ensure the trip instance exists and the attendance status is correct
                                 var instance = context.GetNextUserTripInstance(serverUserTripRecurrence.TripRecurrence, AppUtils.CurrentUser);
+                                if (instance == null)
+                                    continue;
                                 if (serverUserTripRecurrence.Attending)
                                 {
                                     if (instance.Attending == false)
@@ -99,6 +101,8 @@ namespace CarpoolPlanner.Controllers
                             recurrence.Attending = false;
                             // Change the attendance status of any instances to false (unless they were already confirmed)
                             var instance = context.GetNextUserTripInstance(recurrence.TripRecurrence, AppUtils.CurrentUser);
+                            if (instance == null)
+                                continue;
                             if (instance.Attending == null)
                                 instance.Attending = false;
                             // TODO: send message to notification service

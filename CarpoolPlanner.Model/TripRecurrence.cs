@@ -44,23 +44,14 @@ namespace CarpoolPlanner.Model
         public UserTripRecurrenceCollection UserTripRecurrences { get; set; }
         
         /// <summary>
-        /// Gets the date of the next trip instance that occurs after the current date.
-        /// </summary>
-        /// <returns>A DateTime.</returns>
-        public DateTime GetNextInstanceDate()
-        {
-            return GetNextInstanceDate(DateTime.Now);
-        }
-
-        /// <summary>
         /// Gets the date of the next trip instance that occurs after the specified date.
         /// </summary>
         /// <param name="afterDate">A DateTime.</param>
         /// <returns>A DateTime.</returns>
-        public DateTime GetNextInstanceDate(DateTime afterDate)
+        public DateTime? GetNextInstanceDate(DateTime afterDate)
         {
             if (Start == null)
-                return default(DateTime);
+                return null;
             DateTime date;
             switch (Type)
             {
@@ -83,7 +74,7 @@ namespace CarpoolPlanner.Model
                 case RecurrenceType.MonthlyByDayOfWeek:
                 case RecurrenceType.YearlyByDayOfWeek:
                     date = Start.Value;
-                    while (date < afterDate)
+                    while (date < afterDate && (!End.HasValue || date <= End.Value))
                     {
                         var week = (date.Day - 1) / 7;
                         var dayOfWeek = (int)date.DayOfWeek;
@@ -102,9 +93,10 @@ namespace CarpoolPlanner.Model
                     }
                     break;
                 default:
-                    date = default(DateTime);
-                    break;
+                    return null;
             }
+            if (End.HasValue && date > End.Value)
+                return null;
             return date;
         }
     }
