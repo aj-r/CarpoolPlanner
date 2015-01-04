@@ -14,9 +14,15 @@
     var search = $location.search();
     $scope.justRegistered = search.justRegistered == "true";
     $scope.saveTrips = function() {
-      this.trySubmit(this.tripRecurrenceForm, '@Url.Action("Index", "Trips")', $scope.model, 'tripsModel', function() {
+      var scope = this;
+      scope.trySubmit(scope.tripRecurrenceForm, '@Url.Action("Index", "Trips")', $scope.model, 'tripsModel', function() {
         $scope.model.tripsModel.message = "Saving...";
         $scope.model.tripsModel.messageType = $scope.MessageType.Info;
+      }).success(function(result) {
+        if (result.model && result.model.messageType == MessageType.Success) {
+          // Set the form as pristine so the user won't get "unsaved data" warnings
+          scope.tripRecurrenceForm.$setPristine();
+        }
       });
     };
     $scope.createTrip = function() {

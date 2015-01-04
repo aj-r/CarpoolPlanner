@@ -26,9 +26,15 @@
         scope.manageForm.$submit();
       };
       $scope.updateUser = function() {
-        this.trySubmit(this.manageForm, '@Url.Action("Manage", "User")', $scope, 'model', function() {
+        var scope = this;
+        scope.trySubmit(scope.manageForm, '@Url.Action("Manage", "User")', $scope, 'model', function() {
           $scope.model.message = "Saving...";
           $scope.model.messageType = $scope.MessageType.Info;
+        }).success(function(result) {
+          if (result.model && result.model.messageType == MessageType.Success) {
+            // Set the form as pristine so the user won't get "unsaved data" warnings
+            scope.manageForm.$setPristine();
+          }
         });
       };
     });

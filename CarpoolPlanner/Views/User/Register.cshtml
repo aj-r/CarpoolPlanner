@@ -29,9 +29,15 @@
         scope.registerForm.$submit();
       };
       $scope.register = function() {
-        this.trySubmit(this.registerForm, '@Url.Action("Register", "User")', $scope, 'model', function() {
+        var scope = this;
+        scope.trySubmit(scope.registerForm, '@Url.Action("Register", "User")', $scope, 'model', function() {
           $scope.model.message = "Submitting...";
           $scope.model.messageType = $scope.MessageType.Info;
+        }).success(function(result) {
+          if (result.model && result.model.messageType == MessageType.Success) {
+            // Set the form as pristine so the user won't get "unsaved data" warnings
+            scope.registerForm.$setPristine();
+          }
         });
       };
     });

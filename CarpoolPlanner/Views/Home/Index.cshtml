@@ -19,9 +19,15 @@
       }
     }
     $scope.saveUserTrips = function() {
-      this.trySubmit(this.tripInstanceForm, '@Url.Action("Index", "Home")', $scope, 'model', function() {
+      var scope = this;
+      scope.trySubmit(scope.tripInstanceForm, '@Url.Action("Index", "Home")', $scope, 'model', function() {
         $scope.model.message = "Updating...";
         $scope.model.messageType = $scope.MessageType.Info;
+      }).success(function(result) {
+        if (result.model && result.model.messageType == MessageType.Success) {
+          // Set the form as pristine so the user won't get "unsaved data" warnings
+          scope.tripInstanceForm.$setPristine();
+        }
       });
     };
     $scope.handleCheck = function($event) {
@@ -51,6 +57,7 @@
           // Since we are stopping propagation, we need to manually mark the form as dirty.
           var form = scope.$parent.tripInstanceForm;
           form.$setDirty();
+          scope.$apply();
         })
       }
     };

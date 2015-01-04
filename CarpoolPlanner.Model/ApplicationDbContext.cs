@@ -93,7 +93,7 @@ namespace CarpoolPlanner.Model
         {
             lock (tripInstanceCreationLock)
             {
-                var expectedDate = recurrence.GetNextInstanceDate(DateTime.Now - delay);
+                var expectedDate = recurrence.GetNextInstanceDate(DateTime.UtcNow - delay);
                 if (expectedDate == null)
                     return null;
                 var instance = TripInstances.FirstOrDefault(ti => ti.TripId == recurrence.TripId && ti.Date == expectedDate);

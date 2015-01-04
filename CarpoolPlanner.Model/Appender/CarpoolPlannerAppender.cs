@@ -24,7 +24,7 @@ namespace CarpoolPlanner.Model.Appender
                         Level = loggingEvent.Level.Name,
                         Logger = loggingEvent.LoggerName,
                         UserId = (long?)userId,
-                        Date = DateTime.Now,
+                        Date = DateTime.UtcNow,
                         Ndc = ndc != null ? ndc.ToString() : null
                     };
                     context.Logs.Add(log);

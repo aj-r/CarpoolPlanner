@@ -71,7 +71,7 @@ namespace CarpoolPlanner.Controllers
                             {
                                 // User wants to attend. Make sure there is space.
                                 if (serverUserTripInstance.ConfirmTime == null)
-                                    serverUserTripInstance.ConfirmTime = DateTime.Now;
+                                    serverUserTripInstance.ConfirmTime = DateTime.UtcNow;
                                 serverUserTripInstance.Attending = true;
                                 if (serverUserTripInstance.CommuteMethod == CommuteMethod.NeedRide && !serverUserTripInstance.CanDriveIfNeeded)
                                 {

@@ -117,7 +117,7 @@ namespace CarpoolPlanner.NotificationService
 
         private void SetNextNotificationTime(DateTime time, long id, Dictionary<long, Timer> dictionary, Action<long> action)
         {
-            if (time <= DateTime.Now)
+            if (time <= DateTime.UtcNow)
             {
                 try
                 {
@@ -154,7 +154,7 @@ namespace CarpoolPlanner.NotificationService
                     dictionary.Add(id, timer);
                 }
                 // Note: if changing the interval while the timer is running, the timer will restart with the new interval.
-                timer.Interval = (time - DateTime.Now).TotalMilliseconds;
+                timer.Interval = (time - DateTime.UtcNow).TotalMilliseconds;
                 timer.Start();
             }
         }
@@ -253,7 +253,7 @@ namespace CarpoolPlanner.NotificationService
                             userTripInstance.User.LastTextMessageId = message.Id;
                             lastMessageIds.AddOrUpdate(userTripInstance.UserId, message.Id, (id, m) => message.Id);
                             changed = true;
-                            if (message.Date <= DateTime.Now - TimeSpan.FromHours(5.5))// TODO: use the actual 1st notification time, or slightly before it
+                            if (message.Date <= DateTime.UtcNow - TimeSpan.FromHours(5.5))// TODO: use the actual 1st notification time, or slightly before it
                             {
                                 // Message was sent before the 1st notification. Ignore it.
                                 log.WarnFormat("Ignoring message '{0}' with ID {1} from user {2} because it was sent too long ago ({3})",
@@ -271,11 +271,10 @@ namespace CarpoolPlanner.NotificationService
                                 {
                                     if (userTripInstance.ConfirmTime == null)
                                     {
-                                        // TODO: account for time zones
                                         // To prevent people from cheating by sending false message times, limit the message time to be at most 2 minutes ago.
                                         if (message.Date == default(DateTime))
-                                            message.Date = DateTime.Now;
-                                        var minDate = DateTime.Now - TimeSpan.FromMinutes(2);
+                                            message.Date = DateTime.UtcNow;
+                                        var minDate = DateTime.UtcNow - TimeSpan.FromMinutes(2);
                                         if (message.Date < minDate)
                                             message.Date = minDate;
                                         userTripInstance.ConfirmTime = message.Date;
