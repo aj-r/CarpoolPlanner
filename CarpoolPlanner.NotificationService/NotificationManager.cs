@@ -117,7 +117,8 @@ namespace CarpoolPlanner.NotificationService
 
         private void SetNextNotificationTime(DateTime time, long id, Dictionary<long, Timer> dictionary, Action<long> action)
         {
-            if (time <= DateTime.UtcNow)
+            var interval = (time - DateTime.UtcNow).TotalMilliseconds;
+            if (interval <= 0)
             {
                 try
                 {
@@ -127,6 +128,11 @@ namespace CarpoolPlanner.NotificationService
                 {
                     Program.HandleException(ex);
                 }
+                return;
+            }
+            else if (interval >= int.MaxValue)
+            {
+                // TODO: timer cannot handle intervals of greater than Int32.MaxValue. Handle this case somehow.
                 return;
             }
             lock (dictionary)
@@ -154,7 +160,7 @@ namespace CarpoolPlanner.NotificationService
                     dictionary.Add(id, timer);
                 }
                 // Note: if changing the interval while the timer is running, the timer will restart with the new interval.
-                timer.Interval = (time - DateTime.UtcNow).TotalMilliseconds;
+                timer.Interval = interval;
                 timer.Start();
             }
         }
@@ -376,18 +382,18 @@ namespace CarpoolPlanner.NotificationService
             using (var context = ApplicationDbContext.Create())
             {
                 var tripInstance = context.GetTripInstanceById(tripInstanceId);
-                context.SaveChanges();
+                var localDate = tripInstance.Date.ToLocalTime();
                 var sb = new StringBuilder(250);
                 foreach (var userTripInstance in tripInstance.UserTripInstances.Where(uti => uti.Attending == null && uti.User.Status == UserStatus.Active))
                 {
                     sb.Append("Are you coming to ");
                     sb.Append(tripInstance.Trip.Name);
                     sb.Append(" at ");
-                    sb.Append(tripInstance.Date.ToString("h:mm tt"));
+                    sb.Append(localDate.ToString("h:mm tt"));
                     sb.Append("?\n");
                     bool isDriver = userTripInstance.CommuteMethod == CommuteMethod.Driver;
                     sb.Append("Reply with yes/no. \n");
-                    sb.Append("For more options, go to http://climbing.pororeplays.com"); // TODO: don't hard-code the url
+                    sb.Append("For more options, go to http://climberscarpool.cf"); // TODO: don't hard-code the url
                     SendNotification(userTripInstance.User, sb.ToString());
                     sb.Clear();
                 }

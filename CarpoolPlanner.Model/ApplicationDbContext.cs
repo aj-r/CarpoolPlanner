@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data.Entity;
+using System.Data.Entity.Infrastructure;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text.RegularExpressions;
@@ -18,6 +19,30 @@ namespace CarpoolPlanner.Model
         public ApplicationDbContext()
             : base("LocalMySql")
         {
+            // All dates should be stored as UTC in the database. As such, specify the DateTimeKind when loading them.
+            ((IObjectContextAdapter)this).ObjectContext.ObjectMaterialized += (sender, e) =>
+            {
+                var entity = e.Entity;
+                if (entity == null)
+                    return;
+
+                var properties = entity.GetType().GetProperties()
+                    .Where(x => x.PropertyType == typeof(DateTime) || x.PropertyType == typeof(DateTime?));
+
+                foreach (var property in properties)
+                {
+                    DateTime? dt = null;
+                    if (property.PropertyType == typeof(DateTime))
+                        dt = (DateTime)property.GetValue(entity);
+                    else if (property.PropertyType == typeof(DateTime?))
+                        dt = (DateTime?)property.GetValue(entity);
+
+                    if (dt == null)
+                        continue;
+
+                    property.SetValue(entity, DateTime.SpecifyKind(dt.Value, DateTimeKind.Utc));
+                }
+            };
         }
 
         public static ApplicationDbContext Create()

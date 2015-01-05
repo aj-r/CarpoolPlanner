@@ -67,6 +67,7 @@ namespace CarpoolPlanner.NotificationService
             while (ex.InnerException != null)
                 ex = ex.InnerException;
             log.Error(ex.ToString());
+            Console.Error.WriteLine(ex.ToString());
         }
     }
 }
