@@ -16,25 +16,26 @@ namespace CarpoolPlanner.NotificationService
 
         static void Main(string[] args)
         {
-            NotificationManager manager;
             XmlConfigurator.Configure();
 
             if (args.Length == 1)
             {
-                string userId = args[0];
-                manager = NotificationManager.GetInstance();
+                // Argument was specified -> this is for testing.
+                // Send a test notification to the user identified by the specified login name.
+                string loginName = args[0];
+                var manager = NotificationManager.GetInstance();
                 using (var context = ApplicationDbContext.Create())
                 {
-                    var user = context.Users.Find(userId);
+                    var user = context.Users.FirstOrDefault(u => u.LoginName == loginName);
                     if (user == null)
                     {
-                        Console.WriteLine("User '" + userId + "' does not exist.");
+                        Console.WriteLine("User '" + loginName + "' does not exist.");
                         return;
                     }
-                    Console.WriteLine("Sending test notification to " + userId + "...");
+                    Console.WriteLine("Sending test notification to " + loginName + "...");
                     manager.SendNotification(user, "test message").Wait();
                     Console.WriteLine("Test notification sent; exiting.");
-                    log.Info("Test notification sent to " + userId + "; exiting");
+                    log.Info("Test notification sent to " + loginName + "; exiting");
                 }
 #if DEBUG
                 Console.WriteLine("Press enter to exit.");
@@ -45,8 +46,7 @@ namespace CarpoolPlanner.NotificationService
 
             log.Info("CarpoolPlanner notification service started");
             AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;
-            manager = NotificationManager.GetInstance();
-            manager.Init();
+            NotificationManager.GetInstance().Init();
             var listener = new ChangeListener();
             listener.Start();
 
@@ -68,6 +68,7 @@ namespace CarpoolPlanner.NotificationService
                 ex = ex.InnerException;
             log.Error(ex.ToString());
             Console.Error.WriteLine(ex.ToString());
+            // TODO: notify admin
         }
     }
 }

@@ -55,6 +55,7 @@ namespace CarpoolPlanner.Controllers
                         continue;
                     foreach (var serverUserTripInstance in serverUserTrip.Instances)
                     {
+                        var notifyTripInstance = false;
                         var clientTripInstance = clientTrip.Instances.FirstOrDefault(tr => tr.Id == serverUserTripInstance.TripInstanceId);
                         if (clientTripInstance == null || !clientTripInstance.UserTripInstances.Contains(user.Id))
                             continue;
@@ -67,6 +68,8 @@ namespace CarpoolPlanner.Controllers
                             serverUserTripInstance.CommuteMethod = clientUserTripInstance.CommuteMethod;
                             serverUserTripInstance.CanDriveIfNeeded = clientUserTripInstance.CanDriveIfNeeded;
                             serverUserTripInstance.Seats = clientUserTripInstance.Seats;
+                            notifyTripInstance = true;
+                            save = true;
                             if (serverUserTripInstance.Attending != true)
                             {
                                 // User wants to attend. Make sure there is space.
@@ -79,23 +82,29 @@ namespace CarpoolPlanner.Controllers
                                     {
                                         // Drivers have already been picked. Make sure there is enough room for this user.
                                         var requiredSeats = serverUserTripInstance.TripInstance.GetRequiredSeats();
-                                        var availableSeats = serverUserTripInstance.TripInstance.GetAvailableSeats();
+                                        var availableSeats = serverUserTripInstance.TripInstance.GetMaxAvailableSeats();
                                         if (requiredSeats > availableSeats)
                                         {
                                             serverUserTripInstance.Attending = false;
                                             serverUserTripInstance.NoRoom = true;
                                             serverModel.SetMessage("You cannot attend because there are not enough seats. You have been added to the waiting list.", MessageType.Error);
+                                            notifyTripInstance = false;
                                         }
                                     }
                                 }
                             }
-                            save = true;
                         }
                         else if (clientUserTripInstance.Attending == false && serverUserTripInstance.Attending != false)
                         {
                             serverUserTripInstance.Attending = false;
                             serverUserTripInstance.ConfirmTime = null;
+                            notifyTripInstance = true;
                             save = true;
+                        }
+                        if (notifyTripInstance)
+                        {
+                            var client = new NotificationServiceClient();
+                            client.NotifyTripInstance(serverUserTripInstance.TripInstanceId);
                         }
                     }
                 }

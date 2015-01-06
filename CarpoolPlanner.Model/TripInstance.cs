@@ -33,7 +33,6 @@ namespace CarpoolPlanner.Model
         /// </summary>
         public UserTripInstanceCollection UserTripInstances { get; private set; }
 
-        // TODO: remove these 2 functions
         public int GetRequiredSeats()
         {
             var seatsRequired = UserTripInstances.Count(uti => uti.User.Status == UserStatus.Active && uti.Attending == true && uti.CommuteMethod != CommuteMethod.HaveRide);
@@ -43,6 +42,15 @@ namespace CarpoolPlanner.Model
         public int GetAvailableSeats()
         {
             var seatsAvailable = UserTripInstances.Sum(uti => (uti.User.Status == UserStatus.Active && uti.Attending == true && uti.CommuteMethod == CommuteMethod.Driver) ? uti.Seats : 0);
+            return seatsAvailable;
+        }
+
+        public int GetMaxAvailableSeats()
+        {
+            var seatsAvailable = UserTripInstances.Sum(uti => (uti.User.Status == UserStatus.Active
+                && uti.Attending == true
+                && (uti.CommuteMethod == CommuteMethod.Driver || uti.CanDriveIfNeeded))
+                ? uti.Seats : 0);
             return seatsAvailable;
         }
 

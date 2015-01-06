@@ -19,7 +19,7 @@ namespace CarpoolPlanner
         {
             get
             {
-                if (HttpContext.Current.User == null)
+                if (HttpContext.Current == null || HttpContext.Current.User == null)
                     return null;
                 var loginName = HttpContext.Current.User.Identity.Name;
                 if (string.IsNullOrEmpty(loginName))

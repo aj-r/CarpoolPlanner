@@ -22,7 +22,7 @@ namespace CarpoolPlanner.NotificationService
     {
         // TODO: make these settings not hard-coded
         public static readonly TimeSpan InitialAdvanceNotificationTime = TimeSpan.FromHours(4);
-        public static readonly TimeSpan SecondAdvanceNotificationTime = TimeSpan.FromHours(1);
+        public static readonly TimeSpan ReminderAdvanceNotificationTime = TimeSpan.FromHours(1);
         public static readonly TimeSpan FinalAdvanceNotificationTime = TimeSpan.FromMinutes(30);
 
         private static readonly ILog log = LogManager.GetLogger(typeof(NotificationManager));
@@ -43,7 +43,7 @@ namespace CarpoolPlanner.NotificationService
         }
 
         private readonly Dictionary<long, Timer> initialTimers = new Dictionary<long, Timer>();
-        private readonly Dictionary<long, Timer> secondTimers = new Dictionary<long, Timer>();
+        private readonly Dictionary<long, Timer> reminderTimers = new Dictionary<long, Timer>();
         private readonly Dictionary<long, Timer> finalTimers = new Dictionary<long, Timer>();
         private readonly Dictionary<long, Timer> nextInstanceTimers = new Dictionary<long, Timer>();
         private readonly Dictionary<long, Timer> receiveMessageTimers = new Dictionary<long, Timer>();
@@ -105,14 +105,18 @@ namespace CarpoolPlanner.NotificationService
             if (tripInstance == null)
                 return;
             // Ask people if they are coming
-            SetNextNotificationTime(tripInstance.Date - InitialAdvanceNotificationTime, tripInstance.Id, initialTimers, SendInitialNotification);
+            var initialTime = tripInstance.Date - InitialAdvanceNotificationTime;
+            var reminderTime = tripInstance.Date - ReminderAdvanceNotificationTime;
+            var finalTime = tripInstance.Date - FinalAdvanceNotificationTime;
+            if (DateTime.Now < reminderTime)
+                SetNextNotificationTime(initialTime, tripInstance.Id, initialTimers, SendInitialNotification);
             // Ask anyone who didn't respond again
-            SetNextNotificationTime(tripInstance.Date - SecondAdvanceNotificationTime, tripInstance.Id, secondTimers, SendInitialNotification);
+            SetNextNotificationTime(reminderTime, tripInstance.Id, reminderTimers, SendReminderNotification);
             // Tell attendees who is coming & driving
-            SetNextNotificationTime(tripInstance.Date - FinalAdvanceNotificationTime, tripInstance.Id, finalTimers, SendFinalNotification);
+            SetNextNotificationTime(finalTime, tripInstance.Id, finalTimers, SendFinalNotification);
             // Clean up
             SetNextNotificationTime(tripInstance.Date + ApplicationDbContext.TripInstanceRemovalDelay, tripRecurrenceId, nextInstanceTimers,
-                (id) => LoadNextTripInstance(id, tripInstance.Id));
+                id => LoadNextTripInstance(id, tripInstance.Id));
         }
 
         private void SetNextNotificationTime(DateTime time, long id, Dictionary<long, Timer> dictionary, Action<long> action)
@@ -173,6 +177,8 @@ namespace CarpoolPlanner.NotificationService
         /// <param name="force">If true, will send the message even if the user's notification settings are all turned off (assuming the user has specified an e-mail or phone number).</param>
         public async Task SendNotification(User user, string message, bool force = false)
         {
+            if (user == null)
+                return;
             bool sendEmail = user.EmailNotify && !string.IsNullOrEmpty(user.Email);
             bool sendSms = user.PhoneNotify && !string.IsNullOrEmpty(user.Phone);
             if (force && !sendEmail && !sendSms)
@@ -239,6 +245,8 @@ namespace CarpoolPlanner.NotificationService
             using (var context = ApplicationDbContext.Create())
             {
                 var tripInstance = context.GetTripInstanceById(tripInstanceId);
+                if (tripInstance == null)
+                    return;
                 var tasks = new List<Task>(tripInstance.UserTripInstances.Count);
                 foreach (var userTripInstance in tripInstance.UserTripInstances)
                 {
@@ -286,16 +294,19 @@ namespace CarpoolPlanner.NotificationService
                                         userTripInstance.ConfirmTime = message.Date;
                                     }
                                     userTripInstance.Attending = true;
-                                    if (tripInstance.DriversPicked)
+                                    if (userTripInstance.CommuteMethod == CommuteMethod.NeedRide && !userTripInstance.CanDriveIfNeeded)
                                     {
-                                        // Drivers have already been picked. Make sure there is enough room for this user.
-                                        var requiredSeats = tripInstance.GetRequiredSeats();
-                                        var availableSeats = tripInstance.GetAvailableSeats();
-                                        if (requiredSeats > availableSeats)
+                                        if (tripInstance.DriversPicked)
                                         {
-                                            userTripInstance.Attending = false;
-                                            userTripInstance.NoRoom = true;
-                                            SendNotification(userTripInstance.User, "You cannot attend because there are not enough seats. You have been added to the waiting list.");
+                                            // Drivers have already been picked. Make sure there is enough room for this user.
+                                            var requiredSeats = tripInstance.GetRequiredSeats();
+                                            var availableSeats = tripInstance.GetMaxAvailableSeats();
+                                            if (requiredSeats > availableSeats)
+                                            {
+                                                userTripInstance.Attending = false;
+                                                userTripInstance.NoRoom = true;
+                                                SendNotification(userTripInstance.User, "You cannot attend because there are not enough seats. You have been added to the waiting list.");
+                                            }
                                         }
                                     }
                                     if (userTripInstance.Attending == true)
@@ -346,46 +357,47 @@ namespace CarpoolPlanner.NotificationService
                         // But make sure to mention if there are not enough drivers.
                         SendFinalNotification(tripInstanceId, true);
                     }
-                    else
-                    {
-                        // TEMP CODE for running NotificationService on my PC.
-                        // Check the DB to see if any data changed from the web app.
-                        TripInstance prevValue;
-                        if (prevTripInstances.TryGetValue(tripInstanceId, out prevValue) && HasCommuteDataChanged(tripInstance, prevValue))
-                        {
-                            SendFinalNotification(tripInstanceId, true);
-                        }
-                        // end temp code
-                    }
                 }
                 // Wait for tasks to finish before disposing the DB context.
                 await Task.WhenAll(tasks.ToArray()).ConfigureAwait(false);
             }
         }
 
-        private static bool HasCommuteDataChanged(TripInstance a, TripInstance b)
+        public void SendInitialNotification(long tripInstanceId)
         {
-            if (a.UserTripInstances.Count != b.UserTripInstances.Count)
-                return true;
-            for (int i = 0; i < a.UserTripInstances.Count; i++)
-            {
-                var utia = a.UserTripInstances[i];
-                var utib = b.UserTripInstances[i];
-                if (utia.Attending != utib.Attending || utia.CommuteMethod != utib.CommuteMethod || utia.NoRoom != utib.NoRoom || utia.Seats != utib.Seats)
-                    return true;
-            }
-            return false;
+            SendInitialNotification(tripInstanceId, false);
         }
 
-        private void SendInitialNotification(long tripInstanceId)
+        public void SendReminderNotification(long tripInstanceId)
+        {
+            SendInitialNotification(tripInstanceId, true);
+        }
+
+        public void SendInitialNotification(long tripInstanceId, bool isReminder)
         {
             using (var context = ApplicationDbContext.Create())
             {
                 var tripInstance = context.GetTripInstanceById(tripInstanceId);
+                if (tripInstance == null)
+                    return;
                 var localDate = tripInstance.Date.ToLocalTime();
                 var sb = new StringBuilder(250);
                 foreach (var userTripInstance in tripInstance.UserTripInstances.Where(uti => uti.Attending == null && uti.User.Status == UserStatus.Active))
                 {
+                    if (isReminder)
+                    {
+                        if (userTripInstance.ReminderNotificationTime != null)
+                            continue; // Notification was already sent
+                        userTripInstance.ReminderNotificationTime = DateTime.UtcNow;
+                        if (userTripInstance.InitialNotificationTime == null)
+                            userTripInstance.InitialNotificationTime = DateTime.UtcNow;
+                    }
+                    else
+                    {
+                        if (userTripInstance.InitialNotificationTime != null)
+                            continue; // Notification was already sent
+                        userTripInstance.InitialNotificationTime = DateTime.UtcNow;
+                    }
                     sb.Append("Are you coming to ");
                     sb.Append(tripInstance.Trip.Name);
                     sb.Append(" at ");
@@ -414,16 +426,18 @@ namespace CarpoolPlanner.NotificationService
             }
         }
 
-        private void SendFinalNotification(long tripInstanceId)
+        public void SendFinalNotification(long tripInstanceId)
         {
             SendFinalNotification(tripInstanceId, false);
         }
 
-        private void SendFinalNotification(long tripInstanceId, bool isUpdate)
+        public void SendFinalNotification(long tripInstanceId, bool isUpdate)
         {
             using (var context = ApplicationDbContext.Create())
             {
                 var tripInstance = context.GetTripInstanceById(tripInstanceId);
+                if (tripInstance == null)
+                    return;
                 PickDrivers(tripInstance);
                 var availableSeats = tripInstance.GetAvailableSeats();
                 var requiredSeats = tripInstance.GetRequiredSeats();
@@ -436,7 +450,15 @@ namespace CarpoolPlanner.NotificationService
                 foreach (var userTripInstance in utisToNotify)
                 {
                     if (isUpdate)
+                    {
                         sb.Append("UPDATE: ");
+                    }
+                    else
+                    {
+                        if (userTripInstance.FinalNotificationTime != null)
+                            continue; // Notification was already sent
+                        userTripInstance.FinalNotificationTime = DateTime.UtcNow;
+                    }
 
                     if (userTripInstance.CommuteMethod == CommuteMethod.Driver)
                     {
@@ -491,6 +513,8 @@ namespace CarpoolPlanner.NotificationService
 
         public void PickDrivers(TripInstance tripInstance)
         {
+            if (tripInstance == null)
+                return;
             try
             {
                 // If any users were kicked before, re-add them to try to include them now. They will be re-kicked if there are still not enough seats.

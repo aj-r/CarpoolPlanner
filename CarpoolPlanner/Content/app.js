@@ -11,6 +11,7 @@ app.controller('baseCtrl', ['$scope', '$q', '$window', 'AngularNet', 'Validation
   $scope.MessageType = $window.MessageType;
   $scope.CommuteMethod = $window.CommuteMethod;
   $scope.model = $window.originalModel;
+  $scope.encodeURIComponent = $window.encodeURIComponent;
   $scope.trySubmit = function(form, url, modelContainer, modelName, beforesubmit) {
     var scope = this;
     if (modelContainer == null)

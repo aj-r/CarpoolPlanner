@@ -66,7 +66,6 @@ namespace CarpoolPlanner.Controllers
                     {
                         foreach (var serverUserTripRecurrence in serverUserTrip.Recurrences)
                         {
-                            //var clientRecurrence = clientUserTrip.Recurrences.FirstOrDefault(utr => utr.TripRecurrenceId == recurrence.TripRecurrenceId);
                             var clientTripRecurrence = clientTrip.Recurrences.FirstOrDefault(tr => tr.Id == serverUserTripRecurrence.TripRecurrenceId);
                             if (clientTripRecurrence == null || !clientTripRecurrence.UserTripRecurrences.Contains(user.Id))
                                 continue;
@@ -81,14 +80,17 @@ namespace CarpoolPlanner.Controllers
                                 if (serverUserTripRecurrence.Attending)
                                 {
                                     if (instance.Attending == false)
+                                    {
                                         instance.Attending = null;
-                                    // TODO: send message to notification service
+                                    }
+                                    // Send a notification to the user in case we are past the notification time.
+                                    var client = new NotificationServiceClient();
+                                    client.UpdateTripInstance(instance.TripInstanceId, serverUserTripRecurrence.TripRecurrenceId);
                                 }
                                 else
                                 {
                                     if (instance.Attending == null)
                                         instance.Attending = false;
-                                    // TODO: send message to notification service
                                 }
                                 save = true;
                             }
@@ -105,7 +107,6 @@ namespace CarpoolPlanner.Controllers
                                 continue;
                             if (instance.Attending == null)
                                 instance.Attending = false;
-                            // TODO: send message to notification service
                             save = true;
                         }
                     }

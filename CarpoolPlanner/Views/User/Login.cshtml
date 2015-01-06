@@ -67,7 +67,7 @@
       <div class="col-sm-offset-2 col-sm-10">
         <cp-message></cp-message>
         <val-summary></val-summary>
-        <div><a ng-href="@Url.Action("Register", "User")?loginName={{ encodeURIComponent(model.loginNameInput || '') }}">Register as a new user</a></div>
+        <div><a ng-href="@Url.Action("Register", "User"){{ model.loginNameInput ? '?loginName=' + encodeURIComponent(model.loginNameInput) : '' }}">Register as a new user</a></div>
         <!-- TODO: also make the register link at the top-right of the page set the loginName in the query string -->
       </div>
     </div>

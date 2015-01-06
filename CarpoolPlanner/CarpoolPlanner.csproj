@@ -147,6 +147,7 @@
     <Compile Include="JsonNetResult.cs" />
     <Compile Include="KeyedCollectionConverter.cs" />
     <Compile Include="NgResultData.cs" />
+    <Compile Include="NotificationServiceClient.cs" />
     <Compile Include="Resources.Designer.cs">
       <DependentUpon>Resources.resx</DependentUpon>
       <AutoGen>True</AutoGen>

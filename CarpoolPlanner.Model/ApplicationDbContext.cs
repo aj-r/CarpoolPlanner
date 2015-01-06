@@ -100,6 +100,8 @@ namespace CarpoolPlanner.Model
             var tripInstance = TripInstances
                 .Include(ti => ti.UserTripInstances.Select(uti => uti.UserTrip))
                 .FirstOrDefault(ti => ti.Id == tripInstanceId);
+            if (tripInstance == null)
+                return null;
             Trips.Find(tripInstance.TripId);
             foreach (var userTripInstance in tripInstance.UserTripInstances)
             {
@@ -116,6 +118,8 @@ namespace CarpoolPlanner.Model
         /// <returns>The next TripInstance.</returns>
         public TripInstance GetNextTripInstance(TripRecurrence recurrence, TimeSpan delay)
         {
+            if (recurrence == null)
+                return null;
             lock (tripInstanceCreationLock)
             {
                 var expectedDate = recurrence.GetNextInstanceDate(DateTime.UtcNow - delay);

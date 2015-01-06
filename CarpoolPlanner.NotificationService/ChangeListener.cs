@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data.Entity;
 using System.Linq;
 using System.Net;
 using System.Text;
@@ -19,25 +20,34 @@ namespace CarpoolPlanner.NotificationService
         [RestMethod(Name = "/update-ti", ParamCount = 2, ContentType = "application/json")]
         public string UpdateTripInstance(string[] args)
         {
-            var tripInstanceId = int.Parse(args[0]);
-            var tripRecurrenceId = int.Parse(args[1]);
+            var tripInstanceId = long.Parse(args[0]);
+            var tripRecurrenceId = long.Parse(args[1]);
+            TripInstance tripInstance;
             using (var context = ApplicationDbContext.Create())
             {
-                var tripInstance = context.TripInstances.Find(tripInstanceId);
-                NotificationManager.GetInstance().SetNextNotificationTimes(tripInstance, tripRecurrenceId);
+                tripInstance = context.TripInstances.Find(tripInstanceId);
             }
+            if (tripInstance == null)
+                return "";
+            NotificationManager.GetInstance().SetNextNotificationTimes(tripInstance, tripRecurrenceId);
             return "";
         }
 
-        [RestMethod(Name = "/notify-ti", ParamCount = 2, ContentType = "application/json")]
+        [RestMethod(Name = "/notify-ti", ParamCount = 1, ContentType = "application/json")]
         public string NotifyTripInstance(string[] args)
         {
-            var tripInstanceId = int.Parse(args[0]);
-            var tripRecurrenceId = int.Parse(args[1]);
+            var tripInstanceId = long.Parse(args[0]);
+            TripInstance tripInstance;
             using (var context = ApplicationDbContext.Create())
             {
-                var tripInstance = context.TripInstances.Find(tripInstanceId);
-                // TODO: re-notify users who are attending this instance
+                tripInstance = context.TripInstances.Include(ti => ti.UserTripInstances).FirstOrDefault(ti => ti.Id == tripInstanceId);
+            }
+            if (tripInstance == null)
+                return "";
+            // Only re-send notifications if the final notification has been sent.
+            if (tripInstance.UserTripInstances.Any(uti => uti.FinalNotificationTime != null))
+            {
+                NotificationManager.GetInstance().SendFinalNotification(tripInstanceId, true);
             }
             return "";
         }

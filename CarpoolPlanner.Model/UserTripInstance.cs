@@ -68,5 +68,20 @@ namespace CarpoolPlanner.Model
         [MaxLength(5000)]
         public string Note { get; set; }
 
+        /// <summary>
+        /// Gets or sets the time when the initial notification was sent for this instance, or null if it has not been sent yet.
+        /// </summary>
+        public DateTime? InitialNotificationTime { get; set; }
+
+        /// <summary>
+        /// Gets or sets the time when the reminder notification was sent for this instance, or null if it has not been sent yet.
+        /// </summary>
+        public DateTime? ReminderNotificationTime { get; set; }
+
+        /// <summary>
+        /// Gets or sets the time when the final notification was sent for this instance, or null if it has not been sent yet.
+        /// </summary>
+        public DateTime? FinalNotificationTime { get; set; }
+
     }
 }
