@@ -18,6 +18,16 @@ namespace CarpoolPlanner
         /// notified before will be notified now.
         /// </summary>
         /// <param name="tripInstanceId"></param>
+        public void UpdateTripInstance(long tripInstanceId)
+        {
+            UpdateTripInstance(tripInstanceId, -1);
+        }
+
+        /// <summary>
+        /// Updates the notification times for the specified trip instance. If notifications have already been sent, then any users that were not
+        /// notified before will be notified now.
+        /// </summary>
+        /// <param name="tripInstanceId"></param>
         /// <param name="tripRecurrenceId"></param>
         public void UpdateTripInstance(long tripInstanceId, long tripRecurrenceId)
         {

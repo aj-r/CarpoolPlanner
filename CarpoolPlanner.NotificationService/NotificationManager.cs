@@ -116,8 +116,11 @@ namespace CarpoolPlanner.NotificationService
             // Tell attendees who is coming & driving
             SetNextNotificationTime(finalTime, tripInstance.Id, finalTimers, SendFinalNotification);
             // Clean up
-            SetNextNotificationTime(tripInstance.Date + ApplicationDbContext.TripInstanceRemovalDelay, tripRecurrenceId, nextInstanceTimers,
-                id => LoadNextTripInstance(id, tripInstance.Id));
+            if (tripRecurrenceId > 0)
+            {
+                SetNextNotificationTime(tripInstance.Date + ApplicationDbContext.TripInstanceRemovalDelay, tripRecurrenceId, nextInstanceTimers,
+                    id => LoadNextTripInstance(id, tripInstance.Id));
+            }
         }
 
         private void SetNextNotificationTime(DateTime time, long id, Dictionary<long, Timer> dictionary, Action<long> action)

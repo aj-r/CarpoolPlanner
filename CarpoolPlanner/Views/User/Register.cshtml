@@ -34,7 +34,7 @@
           $scope.model.message = "Submitting...";
           $scope.model.messageType = $scope.MessageType.Info;
         }).success(function(result) {
-          if (result.model && result.model.messageType == MessageType.Success) {
+          if (!result.model || result.model.messageType == MessageType.Success) {
             // Set the form as pristine so the user won't get "unsaved data" warnings
             scope.registerForm.$setPristine();
           }

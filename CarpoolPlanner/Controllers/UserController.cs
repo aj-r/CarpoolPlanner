@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data.Entity;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Web;
@@ -249,6 +250,8 @@ namespace CarpoolPlanner.Controllers
                 model.SetMessage("You are not authorized to update the specified user's status.", MessageType.Error);
                 return Ng(model);
             }
+            var updateNotifications = false;
+            var tripInstancesToUpdate = new List<long>();
             using (var context = ApplicationDbContext.Create())
             {
                 var serverUser = context.Users.Find(model.User.Id);
@@ -258,13 +261,31 @@ namespace CarpoolPlanner.Controllers
                     model.SetMessage("Specified user does not exist.", MessageType.Error);
                     return Ng(model);
                 }
-                serverUser.Status = model.User.Status;
+                if (serverUser.Status != model.User.Status)
+                {
+                    serverUser.Status = model.User.Status;
+                    updateNotifications = true;
+                    foreach (var userTrip in context.UserTrips.Where(ut => ut.User.Id == serverUser.Id && ut.Attending).Include(ut => ut.Instances))
+                    {
+                        foreach (var userTripInstance in userTrip.Instances.Where(uti => uti.Attending == null))
+                        {
+                            tripInstancesToUpdate.Add(userTripInstance.TripInstanceId);
+                        }
+                    }
+                }
                 serverUser.IsAdmin = model.User.IsAdmin;
                 context.SaveChanges();
                 model.User = serverUser;
                 AppUtils.UpdateCachedUser(serverUser);
             }
-            // TODO: send message to notification service
+            if (updateNotifications)
+            {
+                var client = new NotificationServiceClient();
+                foreach (var id in tripInstancesToUpdate)
+                {
+                    client.UpdateTripInstance(id);
+                }
+            }
             model.SetMessage("Successful", MessageType.Success);
             return Ng(model);
         }
