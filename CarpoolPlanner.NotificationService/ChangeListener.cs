@@ -20,6 +20,8 @@ namespace CarpoolPlanner.NotificationService
         [RestMethod(Name = "/update-ti", ParamCount = 2, ContentType = "application/json")]
         public string UpdateTripInstance(string[] args)
         {
+            if (Program.Verbose)
+                Console.WriteLine("Received update message (" + args[0] + ")");
             var tripInstanceId = long.Parse(args[0]);
             var tripRecurrenceId = long.Parse(args[1]);
             TripInstance tripInstance;
@@ -28,14 +30,18 @@ namespace CarpoolPlanner.NotificationService
                 tripInstance = context.TripInstances.Find(tripInstanceId);
             }
             if (tripInstance == null)
-                return "";
+                return "Trip instance not found";
+            if (Program.Verbose)
+                Console.WriteLine("Updating notifications");
             NotificationManager.GetInstance().SetNextNotificationTimes(tripInstance, tripRecurrenceId);
-            return "";
+            return "Success";
         }
 
         [RestMethod(Name = "/notify-ti", ParamCount = 1, ContentType = "application/json")]
         public string NotifyTripInstance(string[] args)
         {
+            if (Program.Verbose)
+                Console.WriteLine("Received notify message (" + args[0] + ")");
             var tripInstanceId = long.Parse(args[0]);
             TripInstance tripInstance;
             using (var context = ApplicationDbContext.Create())
@@ -43,13 +49,15 @@ namespace CarpoolPlanner.NotificationService
                 tripInstance = context.TripInstances.Include(ti => ti.UserTripInstances).FirstOrDefault(ti => ti.Id == tripInstanceId);
             }
             if (tripInstance == null)
-                return "";
-            // Only re-send notifications if the final notification has been sent.
-            if (tripInstance.UserTripInstances.Any(uti => uti.FinalNotificationTime != null))
+                return "Trip instance not found";
+            // Only re-send notifications if drivers have been picked (i.e. the final notification has been sent)
+            if (tripInstance.DriversPicked)
             {
+                if (Program.Verbose)
+                    Console.WriteLine("Re-notifying");
                 NotificationManager.GetInstance().SendFinalNotification(tripInstanceId, true);
             }
-            return "";
+            return "Success";
         }
     }
 }

@@ -7,14 +7,16 @@ using System.Security.Cryptography;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Web;
+using log4net;
 
 namespace CarpoolPlanner.Model
 {
     public class ApplicationDbContext : DbContext
     {
         public static readonly TimeSpan TripInstanceRemovalDelay = TimeSpan.FromHours(1); // TODO: make this a DB setting? maybe a property of Trip.
-
         private static object tripInstanceCreationLock = new object();
+
+        private static readonly ILog log = LogManager.GetLogger(typeof(ApplicationDbContext));
 
         public ApplicationDbContext()
             : base("LocalMySql")
@@ -125,6 +127,11 @@ namespace CarpoolPlanner.Model
                 var expectedDate = recurrence.GetNextInstanceDate(DateTime.UtcNow - delay);
                 if (expectedDate == null)
                     return null;
+                if (expectedDate < DateTime.UtcNow)
+                {
+                    log.Warn("expectedDate is before now. This probably indicates a bug.");
+                    return null;
+                }
                 var instance = TripInstances.FirstOrDefault(ti => ti.TripId == recurrence.TripId && ti.Date == expectedDate);
                 while (instance != null && instance.Skip)
                 {

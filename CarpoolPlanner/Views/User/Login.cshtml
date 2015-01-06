@@ -10,7 +10,6 @@
   app.controller('loginCtrl', function($scope, $window, $location) {
     var search = $location.search();
     $scope.reason = search.reason;
-    $scope.encodeURIComponent = $window.encodeURIComponent;
     $scope.submitLogin = function() {
       this.trySubmit(this.loginForm, '@Url.Action("Login", "User", Request.QueryStringRouteValues())', $scope, 'model', function() {
         $scope.model.message = "Logging in...";

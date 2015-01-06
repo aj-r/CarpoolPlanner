@@ -84,6 +84,7 @@ namespace CarpoolPlanner.NotificationService
                 {
                     try
                     {
+                        var trs = context.TripRecurrences.ToList();
                         foreach (var tripRecurrence in context.TripRecurrences.ToList())
                         {
                             var tripInstance = context.GetNextTripInstance(tripRecurrence, ApplicationDbContext.TripInstanceRemovalDelay);
@@ -108,7 +109,7 @@ namespace CarpoolPlanner.NotificationService
             var initialTime = tripInstance.Date - InitialAdvanceNotificationTime;
             var reminderTime = tripInstance.Date - ReminderAdvanceNotificationTime;
             var finalTime = tripInstance.Date - FinalAdvanceNotificationTime;
-            if (DateTime.Now < reminderTime)
+            if (DateTime.UtcNow < reminderTime)
                 SetNextNotificationTime(initialTime, tripInstance.Id, initialTimers, SendInitialNotification);
             // Ask anyone who didn't respond again
             SetNextNotificationTime(reminderTime, tripInstance.Id, reminderTimers, SendReminderNotification);
@@ -179,6 +180,8 @@ namespace CarpoolPlanner.NotificationService
         {
             if (user == null)
                 return;
+            if (Program.Verbose)
+                Console.WriteLine("Attempting to send notification...");
             bool sendEmail = user.EmailNotify && !string.IsNullOrEmpty(user.Email);
             bool sendSms = user.PhoneNotify && !string.IsNullOrEmpty(user.Phone);
             if (force && !sendEmail && !sendSms)
@@ -271,7 +274,7 @@ namespace CarpoolPlanner.NotificationService
                             {
                                 // Message was sent before the 1st notification. Ignore it.
                                 log.WarnFormat("Ignoring message '{0}' with ID {1} from user {2} because it was sent too long ago ({3})",
-                                    message.Value, message.Id, userTripInstance.UserId, message.Date.ToString("dd-MMM-yyyy hh:mm:ss"));
+                                    message.Value, message.Id, userTripInstance.UserId, message.Date.ToString("dd-MMM-yyyy hh:mm:ss 'UTC'"));
                                 continue;
                             }
                             string messageValue = message.Value.ToLower();
@@ -306,6 +309,8 @@ namespace CarpoolPlanner.NotificationService
                                                 userTripInstance.Attending = false;
                                                 userTripInstance.NoRoom = true;
                                                 SendNotification(userTripInstance.User, "You cannot attend because there are not enough seats. You have been added to the waiting list.");
+                                                if (userTripInstance.FinalNotificationTime == null)
+                                                    userTripInstance.FinalNotificationTime = DateTime.UtcNow;
                                             }
                                         }
                                     }
@@ -341,7 +346,7 @@ namespace CarpoolPlanner.NotificationService
                             if (!understood)
                             {
                                 // TODO: don't hard-code the url
-                                SendSMS(userTripInstance.User, "Sorry, I didn't understand that.\nFor more details, see http://climbing.pororeplays.com/Notifications.aspx");
+                                SendSMS(userTripInstance.User, "Sorry, I didn't understand that.\nFor more details, see https://climbing.pororeplays.com/Notifications.aspx");
                             }
                         }
                         if (changed)
@@ -405,7 +410,7 @@ namespace CarpoolPlanner.NotificationService
                     sb.Append("?\n");
                     bool isDriver = userTripInstance.CommuteMethod == CommuteMethod.Driver;
                     sb.Append("Reply with yes/no. \n");
-                    sb.Append("For more options, go to http://climberscarpool.cf"); // TODO: don't hard-code the url
+                    sb.Append("For more options, go to https://climbing.pororeplays.com"); // TODO: don't hard-code the url
                     SendNotification(userTripInstance.User, sb.ToString());
                     sb.Clear();
                 }
@@ -452,6 +457,8 @@ namespace CarpoolPlanner.NotificationService
                     if (isUpdate)
                     {
                         sb.Append("UPDATE: ");
+                        if (userTripInstance.FinalNotificationTime == null)
+                            userTripInstance.FinalNotificationTime = DateTime.UtcNow;
                     }
                     else
                     {
@@ -476,10 +483,10 @@ namespace CarpoolPlanner.NotificationService
                     }
                     sb.Append(tripInstance.Trip.Name);
                     sb.Append(" at ");
-                    sb.Append(tripInstance.Date.ToString("h:mm tt"));
+                    sb.Append(tripInstance.Date.ToLocalTime().ToString("h:mm tt"));
                     sb.AppendFormat(".\nThere are {0} seats and {1} people coming.\n", availableSeats, requiredSeats);
                     sb.Append("\n" + tripInstance.GetStatusReport() + "\n");
-                    sb.Append("\nFor more details, go to http://climbing.pororeplays.com"); // TODO: don't hard-code the url
+                    sb.Append("\nFor more details, go to https://climbing.pororeplays.com"); // TODO: don't hard-code the url
                     SendNotification(userTripInstance.User, sb.ToString());
                     sb.Clear();
                 }

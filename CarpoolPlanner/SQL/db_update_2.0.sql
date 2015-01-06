@@ -122,8 +122,7 @@ SET l.user_id = u.id;
 ALTER TABLE `log`
 DROP COLUMN `login_name`;
 
-ALTER TABLE `climbing`.`user_trip_instance` 
+ALTER TABLE `user_trip_instance` 
 ADD COLUMN `initial_notification_time` DATETIME NULL AFTER `no_room`,
 ADD COLUMN `reminder_notification_time` DATETIME NULL AFTER `initial_notification_time`,
 ADD COLUMN `final_notification_time` DATETIME NULL AFTER `reminder_notification_time`;
-
