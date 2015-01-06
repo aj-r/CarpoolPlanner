@@ -8,6 +8,7 @@ namespace CarpoolPlanner.Controllers
     {
         protected override void OnException(ExceptionContext filterContext)
         {
+            MvcApplication.HandleError(filterContext.Exception);
             if (filterContext.HttpContext.Request.HttpMethod == "GET")
             {
                 base.OnException(filterContext);

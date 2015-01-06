@@ -80,7 +80,9 @@
 <div class="row" ng-controller="tripCtrl">
   <div class="col-md-12">
     <p ng-if="justRegistered" class="text-success">
-      Thank you for registering!<br />
+      Thank you for registering!
+    </p>
+    <p ng-if="model.user.status == UserStatus.Unapproved">
       Your account currently has limited access until you are approved by an administrator.<br />
       While you wait to be approved, you can fill out this page.
     </p>

@@ -179,6 +179,7 @@ namespace CarpoolPlanner.Model
             userTripInstance = UserTripInstance.Create(user, instance);
             var userTripRecurrence = recurrence.UserTripRecurrences[user.Id];
             userTripInstance.Attending = (userTripRecurrence != null && userTripRecurrence.Attending) ? (bool?)null : false;
+            userTripInstance.User = null;
             UserTripInstances.Add(userTripInstance);
             return userTripInstance;
         }

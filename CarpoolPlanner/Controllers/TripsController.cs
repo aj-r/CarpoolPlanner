@@ -77,7 +77,6 @@ namespace CarpoolPlanner.Controllers
                                 var instance = context.GetNextUserTripInstance(serverUserTripRecurrence.TripRecurrence, AppUtils.CurrentUser);
                                 if (instance == null)
                                     continue;
-                                instance.User = null;
                                 if (serverUserTripRecurrence.Attending)
                                 {
                                     if (instance.Attending == false)
@@ -106,7 +105,6 @@ namespace CarpoolPlanner.Controllers
                             var instance = context.GetNextUserTripInstance(recurrence.TripRecurrence, AppUtils.CurrentUser);
                             if (instance == null)
                                 continue;
-                            instance.User = null;
                             if (instance.Attending == null)
                                 instance.Attending = false;
                             save = true;

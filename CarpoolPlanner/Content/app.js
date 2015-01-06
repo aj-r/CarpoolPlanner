@@ -10,6 +10,7 @@ app.controller('baseCtrl', ['$scope', '$q', '$window', 'AngularNet', 'Validation
   $scope.RecurrenceType = $window.RecurrenceType;
   $scope.MessageType = $window.MessageType;
   $scope.CommuteMethod = $window.CommuteMethod;
+  $scope.UserStatus = $window.UserStatus;
   $scope.model = $window.originalModel;
   $scope.encodeURIComponent = $window.encodeURIComponent;
   $scope.trySubmit = function(form, url, modelContainer, modelName, beforesubmit) {

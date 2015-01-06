@@ -19,5 +19,10 @@ namespace CarpoolPlanner.ViewModel
         public TripsViewModel TripsModel { get; set; }
 
         public CreateTripViewModel CreateModel { get; set; }
+
+        public User User
+        {
+            get { return AppUtils.CurrentUser; }
+        }
     }
 }

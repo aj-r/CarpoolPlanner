@@ -45,20 +45,31 @@ namespace CarpoolPlanner
         private void Application_Error(object sender, EventArgs e)
         {
             var ex = Server.GetLastError();
+            // For some reason, the first error in this event handler does not get logged, but the rest do.
+            // This is meant to be a dummy first error to make sure the rest get logged.
             log.Error("An error occurred");
-            if (ex != null)
+            HandleError(ex);
+        }
+
+        public static void HandleError(Exception ex)
+        {
+            try
             {
-                log.Error(ex.ToString());
-                while (ex.InnerException != null)
+                if (ex != null)
                 {
-                    ex = ex.InnerException;
-                    log.Error("Inner Exception: " + ex.ToString());
+                    log.Error(ex.ToString());
+                    while (ex.InnerException != null)
+                    {
+                        ex = ex.InnerException;
+                        log.Error("Inner Exception: " + ex.ToString());
+                    }
+                }
+                else
+                {
+                    log.Error("An unhandled exception occurred");
                 }
             }
-            else
-            {
-                log.Error("An unhandled exception occurred");
-            }
+            catch { }
         }
     }
 }
