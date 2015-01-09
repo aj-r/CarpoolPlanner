@@ -22,7 +22,6 @@ namespace CarpoolPlanner.Model
             UserTrips = new UserTripCollection();
         }
 
-        // TODO: use JsonPropertyAttribute to make name lowercase in javascript
         [Key]
         public long Id { get; set; }
 

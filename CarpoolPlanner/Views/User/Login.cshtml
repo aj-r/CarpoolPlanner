@@ -27,7 +27,7 @@
 
 <h2>@Resources.Login</h2>
 <div class="form-horizontal" ng-controller="loginCtrl">
-  <form method="post" name="loginForm" ng-submit="submitLogin()" novalidate focus-first-empty>
+  <form method="post" name="loginForm" ng-submit="submitLogin()" novalidate focus-first-empty focus-first-invalid>
     <div class="form-group">
       <div class="col-sm-offset-2 col-sm-10 text-success" ng-if="reason == 'logout'">
         You have been logged out.
@@ -37,14 +37,14 @@
       <label class="col-sm-2 control-label">@Resources.LoginName</label>
       <div class="col-sm-10">
         <input type="text" ng-model="model.loginNameInput" class="form-control" required="required"
-                val-friendly-name="@Resources.LoginName" />
+               val-friendly-name="@Resources.LoginName" />
       </div>
     </div>
     <div class="form-group">
       <label class="col-sm-2 control-label">@Resources.Password</label>
       <div class="col-sm-10">
         <input id="password" type="password" ng-model="model.password" class="form-control" required="required"
-                val-friendly-name="@Resources.Password" />
+               val-friendly-name="@Resources.Password" />
       </div>
     </div>
     <div class="form-group">
@@ -67,8 +67,7 @@
         <cp-message></cp-message>
         <val-summary></val-summary>
         <div><a ng-href="@Url.Action("Register", "User"){{ model.loginNameInput ? '?loginName=' + encodeURIComponent(model.loginNameInput) : '' }}">Register as a new user</a></div>
-        <!-- TODO: also make the register link at the top-right of the page set the loginName in the query string -->
       </div>
     </div>
-</form>
+  </form>
 </div>

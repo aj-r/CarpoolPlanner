@@ -59,7 +59,7 @@
 
 <h2>Manage Account - {{ model.loginName }}</h2>
 
-<form name="manageForm" ng-controller="userCtrl" ng-submit="updateUser()" novalidate warn-if-dirty style="margin-top: 20px;">
+<form name="manageForm" ng-controller="userCtrl" ng-submit="updateUser()" novalidate warn-if-dirty style="margin-top: 20px;" focus-first-invalid>
   <div class="form-horizontal">
     @Html.Partial("UserData")
     <div class="form-group">
@@ -78,7 +78,7 @@
 
 <hr />
 
-<form name="passwordForm" ng-controller="passwordCtrl" ng-submit="setPassword()" ng-init="passwordModel.userId = model.user.id" novalidate>
+<form name="passwordForm" ng-controller="passwordCtrl" ng-submit="setPassword()" ng-init="passwordModel.userId = model.user.id" novalidate focus-first-invalid>
   <div class="form-horizontal">
     <h4>Change Password</h4>
     <div class="form-group">

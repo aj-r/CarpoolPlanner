@@ -53,6 +53,10 @@
             {
               <li><a href="@Url.Action("List", "User")" cp-nav>Users</a></li>
             }
+            if (AppUtils.IsUserAdmin())
+            {
+              <li><a href="@Url.Action("Index", "Log")" cp-nav>Logs</a></li>
+            }
           }
         </ul>
         <ul class="nav navbar-nav navbar-right">

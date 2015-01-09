@@ -43,14 +43,6 @@ namespace CarpoolPlanner.Model
         /// </summary>
         public double GetDrivingRatio()
         {
-            if (Instances.Count == 0)
-            {
-                using (var context = ApplicationDbContext.Create())
-                {
-                    // TODO: test to make sure this works
-                    context.UserTripInstances.Where(uti => uti.TripId == TripId && uti.UserId == UserId).ToList();
-                }
-            }
             // TODO: eventually delete old trip instances (how old?)
             int total = Instances.Count(uti => uti.Attending == true && uti.CommuteMethod != CommuteMethod.HaveRide);
             int driveCount = Instances.Count(uti => uti.Attending == true && uti.CommuteMethod == CommuteMethod.Driver);

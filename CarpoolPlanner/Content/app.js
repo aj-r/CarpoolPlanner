@@ -24,10 +24,7 @@ app.controller('baseCtrl', ['$scope', '$q', '$window', 'AngularNet', 'Validation
       model.message = '';
 
     if (form && !ValidationSummary.validate(form)) {
-      // Move focus to the first invalid control (NOTE: only works if form has a name). TODO: move to a directive?
-      if (form.$name) {
-        $("[name=" + form.$name + "] .ng-invalid").first().focus();
-      }
+      // Return a fake http promise that is rejected immediately (since we never actually sent an HTTP request)
       var deferred = $q.defer();
       var promise = deferred.promise;
       var msg = 'Form validation failed.';

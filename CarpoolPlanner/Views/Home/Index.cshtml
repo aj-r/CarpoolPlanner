@@ -72,8 +72,8 @@
     @if (AppUtils.IsUserStatus(CarpoolPlanner.Model.UserStatus.Active))
     {
       <div ng-show="model.trips.length > 0">
-        <div>Select the days that you can come this week.</div><!-- TODO: generalize to not use the word "week" -->
-        <form method="post" name="tripInstanceForm" ng-submit="saveUserTrips()" novalidate warn-if-dirty>
+        <div>Select the days that you can come this week.</div>
+        <form method="post" name="tripInstanceForm" ng-submit="saveUserTrips()" novalidate warn-if-dirty focus-first-invalid>
           <input type="submit" value="Save all changes" class="btn btn-default" style="margin-top: 15px;" />
           <div style="margin-top: 15px;">
             <cp-message></cp-message>
