@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
-VisualStudioVersion = 12.0.31101.0
+VisualStudioVersion = 12.0.30501.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CarpoolPlanner", "CarpoolPlanner\CarpoolPlanner.csproj", "{583E2376-F3E0-457C-89C5-4D54D83D860C}"
 EndProject
@@ -18,6 +18,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rest.Common", "..\Rest\Rest.Common\Rest.Common.csproj", "{2874D6F8-B93E-4A7B-AECC-21786A0205A7}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rest.Client", "..\Rest\Rest.Client\Rest.Client.csproj", "{B7C62D48-66A9-488B-9E40-44C0629212FB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PasswordFixer", "PasswordFixer\PasswordFixer.csproj", "{0255E4EC-09CC-4CF2-8949-D389F6A8AD1A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -57,6 +59,10 @@ Global
 		{B7C62D48-66A9-488B-9E40-44C0629212FB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B7C62D48-66A9-488B-9E40-44C0629212FB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B7C62D48-66A9-488B-9E40-44C0629212FB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0255E4EC-09CC-4CF2-8949-D389F6A8AD1A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0255E4EC-09CC-4CF2-8949-D389F6A8AD1A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0255E4EC-09CC-4CF2-8949-D389F6A8AD1A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0255E4EC-09CC-4CF2-8949-D389F6A8AD1A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

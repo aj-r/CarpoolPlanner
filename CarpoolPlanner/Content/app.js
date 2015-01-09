@@ -177,13 +177,28 @@ app.controller('tripInstanceCtrl', ['$scope', function($scope) {
     $scope.waitingList = [];
     $scope.unconfirmed = [];
     angular.forEach($scope.tripInstance.userTripInstances, function(uti) {
-      var user = null;
-      for (var i in $scope.model.users) {
-        if ($scope.model.users[i].id == uti.userId) {
-          user = $scope.model.users[i];
-          break;
+      // Skip this instance if the user is not attending the trip
+      var skipInstance = false;
+      angular.forEach($scope.model.trips, function (trip) {
+        if (trip.id == uti.tripId) {
+          angular.forEach(trip.userTrips, function(ut) {
+            if (ut.userId == uti.userId) {
+              skipInstance = !ut.attending;
+              return true;
+            }
+          });
+          return true;
         }
-      }
+      });
+      if (skipInstance)
+        return;
+      var user = null;
+      angular.forEach($scope.model.users, function (u) {
+        if (u.id == uti.userId) {
+          user = u;
+          return true;
+        }
+      });
       if (!user)
         return true;
       if (uti.attending == true) {

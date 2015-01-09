@@ -208,8 +208,9 @@ namespace CarpoolPlanner.NotificationService
                 {
                     if (retryCount > 0)
                     {
-                        log.WarnFormat("Failed to send message to {0}. Retrying in a little while ({1})", retryCount);
-                        await Task.Delay(10);
+                        const int retryDelay = 10;
+                        log.WarnFormat("Failed to send message to {0}. Retrying in a little while ({1} ms)", retryCount, retryDelay);
+                        await Task.Delay(retryDelay);
                     }
                     messageId = await client.SendMessage(message, user.Phone).ConfigureAwait(false);
                     retryCount++;

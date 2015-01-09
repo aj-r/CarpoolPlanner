@@ -35,7 +35,6 @@ namespace CarpoolPlanner
             {
                 var uri = string.Concat("http://localhost:23122/update-ti/", tripInstanceId, "/", tripRecurrenceId);
                 var request = (HttpWebRequest)WebRequest.Create(uri);
-                request.Accept = "*/*";
                 SendRequestAsync(request);
             }
             catch (Exception ex)
@@ -54,7 +53,24 @@ namespace CarpoolPlanner
             {
                 var uri = string.Concat("http://localhost:23122/notify-ti/", tripInstanceId);
                 var request = (HttpWebRequest)WebRequest.Create(uri);
-                request.Accept = "*/*";
+                SendRequestAsync(request);
+            }
+            catch (Exception ex)
+            {
+                log.Warn("Failed to send update message to notification service: " + ex.ToString());
+            }
+        }
+
+        /// <summary>
+        /// Sends a notification to all admins informing them that a new user has registered on the website.
+        /// </summary>
+        /// <param name="userId">The ID of the newly registered user.</param>
+        public void UserRegister(long userId)
+        {
+            try
+            {
+                var uri = string.Concat("http://localhost:23122/user-register/", userId);
+                var request = (HttpWebRequest)WebRequest.Create(uri);
                 SendRequestAsync(request);
             }
             catch (Exception ex)
@@ -64,15 +80,15 @@ namespace CarpoolPlanner
         }
 
         // NOTE: we don't use the async/await keywords here (although they would be nice) because they aren't supported on mono yet.
-        private void SendRequestAsync(WebRequest request)
+        private void SendRequestAsync(HttpWebRequest request)
         {
             var thread = new Thread(SendRequest);
-            thread.Start(new Tuple<WebRequest, User>(request, AppUtils.CurrentUser));
+            thread.Start(new Tuple<HttpWebRequest, User>(request, AppUtils.CurrentUser));
         }
 
         private void SendRequest(object args)
         {
-            var tuple = args as Tuple<WebRequest, User>;
+            var tuple = args as Tuple<HttpWebRequest, User>;
             if (tuple == null)
             {
                 log.Error("Failed to send request to notification service: tuple was null.");
@@ -81,7 +97,8 @@ namespace CarpoolPlanner
             try
             {
                 var request = tuple.Item1;
-                ((WebRequest)request).GetResponse();
+                request.Accept = "*/*";
+                request.GetResponse();
             }
             catch (Exception ex)
             {

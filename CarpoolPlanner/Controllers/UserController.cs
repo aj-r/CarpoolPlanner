@@ -149,6 +149,9 @@ namespace CarpoolPlanner.Controllers
                 context.Users.Add(model.User);
                 context.SaveChanges();
             }
+            var client = new NotificationServiceClient();
+            client.UserRegister(model.User.Id);
+
             // Automatically log in.
             FormsAuthentication.SetAuthCookie(model.User.LoginName, false);
             // Take the user to the trips page because unapproved users won't have access to the default page anyways.
@@ -294,7 +297,7 @@ namespace CarpoolPlanner.Controllers
         /// Checks whether the specified plain-text password is the correct password for the current user.
         /// </summary>
         /// <param name="password">The plain-text password to check.</param>
-        private static bool IsPasswordCorrect(User user, string password)
+        public static bool IsPasswordCorrect(User user, string password)
         {
             if (password == null)
                 password = "";
@@ -318,7 +321,7 @@ namespace CarpoolPlanner.Controllers
         /// Sets the current user's password.
         /// </summary>
         /// <param name="password">The plain-text password.</param>
-        private static void SetPassword(User user, string password)
+        public static void SetPassword(User user, string password)
         {
             if (user == null)
                 throw new ArgumentNullException("user");
@@ -335,7 +338,7 @@ namespace CarpoolPlanner.Controllers
         /// <summary>
         /// Gets a value that indicates whether the current user has access to modify the specified user.
         /// </summary>
-        /// <param name="user"></param>
+        /// <param name="user">The user being modified.</param>
         /// <returns></returns>
         public static bool CanCurrentUserModify(User user)
         {

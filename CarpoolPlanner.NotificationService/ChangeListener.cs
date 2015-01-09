@@ -21,7 +21,7 @@ namespace CarpoolPlanner.NotificationService
         public string UpdateTripInstance(string[] args)
         {
             if (Program.Verbose)
-                Console.WriteLine("Received update message (" + args[0] + ")");
+                Console.WriteLine("Received update-ti message (" + args[0] + ")");
             var tripInstanceId = long.Parse(args[0]);
             var tripRecurrenceId = long.Parse(args[1]);
             TripInstance tripInstance;
@@ -41,7 +41,7 @@ namespace CarpoolPlanner.NotificationService
         public string NotifyTripInstance(string[] args)
         {
             if (Program.Verbose)
-                Console.WriteLine("Received notify message (" + args[0] + ")");
+                Console.WriteLine("Received notify-ti message (" + args[0] + ")");
             var tripInstanceId = long.Parse(args[0]);
             TripInstance tripInstance;
             using (var context = ApplicationDbContext.Create())
@@ -56,6 +56,29 @@ namespace CarpoolPlanner.NotificationService
                 if (Program.Verbose)
                     Console.WriteLine("Re-notifying");
                 NotificationManager.GetInstance().SendFinalNotification(tripInstanceId, true);
+            }
+            return "Success";
+        }
+
+        [RestMethod(Name = "/user-register", ParamCount = 1, ContentType = "application/json")]
+        public string UserRegister(string[] args)
+        {
+            if (Program.Verbose)
+                Console.WriteLine("Received user-register message (" + args[0] + ")");
+            var userId = long.Parse(args[0]);
+            User user;
+            using (var context = ApplicationDbContext.Create())
+            {
+                user = context.Users.Find(userId);
+                if (user == null)
+                    return "User not found";
+                var manager = NotificationManager.GetInstance();
+                // Notify all admins that a user registered to they can approve/disable the new user.
+                var message = string.Concat("A new user has registered (", user.LoginName, "). Go to https://climbing.pororeplays.com/User/List to approve them.");
+                foreach (var admin in context.Users.Where(u => u.IsAdmin && u.Status == UserStatus.Active))
+                {
+                    manager.SendNotification(admin, message);
+                }
             }
             return "Success";
         }

@@ -134,7 +134,7 @@ namespace CarpoolPlanner.Controllers
                 model.Trips = context.Trips
                     .Where(t => t.UserTrips.Any(ut => ut.UserId == user.Id && ut.Attending))
                     .Include(t => t.Recurrences)
-                    .Include(t => t.UserTrips.Select(ut => ut.Instances))
+                    .Include(t => t.UserTrips)
                     .ToList();
                 foreach (var tripRecurrence in model.Trips.SelectMany(t => t.Recurrences))
                 {
