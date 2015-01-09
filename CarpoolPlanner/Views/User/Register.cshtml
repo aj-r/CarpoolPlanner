@@ -45,13 +45,12 @@
 }
 
 <h2>@Resources.Register</h2>
-<form name="registerForm" ng-controller="userCtrl" ng-submit="register()" novalidate warn-if-dirty focus-first-empty>
+<form name="registerForm" ng-controller="userCtrl" ng-submit="register()" novalidate warn-if-dirty focus-first-empty focus-first-invalid>
   <div class="form-horizontal">
     <div class="form-group">
       <label class="col-md-2 control-label">@Resources.LoginName</label>
       <div class="col-md-10">
         <input type="text" ng-model="model.user.loginName" class="form-control" val-friendly-name="@Resources.LoginName" required />
-        <!-- TODO: add an async validator to make sure the loginName does not already exist -->
       </div>
     </div>
     <div class="form-group">

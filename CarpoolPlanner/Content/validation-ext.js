@@ -33,10 +33,30 @@
     };
   }]);
 
+  // When this directive is applied to a form, it sets the focus to the first invalid control
+  // when ValidationSummary.validate() is called.
+  app.directive('focusFirstInvalid', function() {
+    return {
+      restrict: 'A',
+      require: 'form',
+      link: function(scope, elem, attr, form) {
+        scope.$on('ValidationSummary.validate', function(e, args) {
+          // Ignore validation event for other forms
+          if (args.form != form || form.$valid)
+            return;
+          angular.element(elem).find('.ng-invalid').first().focus();
+        });
+      }
+    };
+  });
+
   app.directive('valSummary', ['ValidationSummary', function(ValidationSummary) {
     var result = {
       restrict: 'E',
       require: '?^form',
+      scopre: {
+        errors: []
+      },
       link: function(scope, elem, attr, form) {
         if (scope.form == null)
           scope.form = form;
@@ -54,7 +74,7 @@
       result.template = ValidationSummary.templateUrl;
     else
       result.template = '<p ng-show="errors.length > 0">'
-        + '<span ng-repeat="error in errors track by $index"><br ng-show="$index > 0" />{{ error }}</span>'
+        + '<span ng-repeat="error in errors track by $index"><br ng-hide="$first" />{{ error }}</span>'
         + '</p>';
     return result;
   }]);

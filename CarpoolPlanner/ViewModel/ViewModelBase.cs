@@ -1,11 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Web;
-using System.Web.Mvc;
-using Newtonsoft.Json;
-
-namespace CarpoolPlanner.ViewModel
+﻿namespace CarpoolPlanner.ViewModel
 {
     public enum MessageType
     {
@@ -16,8 +9,6 @@ namespace CarpoolPlanner.ViewModel
 
     public class ViewModelBase
     {
-        private static readonly string[] classNameMappings = { "", "text-success", "text-danger" };
-
         public ViewModelBase()
         {
             Message = string.Empty;
@@ -54,21 +45,6 @@ namespace CarpoolPlanner.ViewModel
         public void ClearMessage()
         {
             Message = string.Empty;
-        }
-
-        /// <summary>
-        /// Gets the HTML-rendered message (if any) that should be displayed to the user.
-        /// </summary>
-        /// <returns>The HTML-rendered message.</returns>
-        public MvcHtmlString RenderMessage()
-        {
-            // TODO: use angular instead of id/class?
-            // Also, is there a better way to do this? It seems like we are putting view code in the model...
-            var index = (int)MessageType;
-            var result = string.Format("<p id=\"message\" class=\"{0}\">{1}</p>",
-                classNameMappings[index],
-                !string.IsNullOrWhiteSpace(Message) ? Message : "&nbsp;");
-            return MvcHtmlString.Create(result);
         }
     }
 }

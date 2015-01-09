@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Web;
 
@@ -16,6 +17,9 @@ namespace CarpoolPlanner.Model
         public string Logger { get; set; }
 
         public long? UserId { get; set; }
+
+        [Association("User", "user_id", "id")]
+        public User User { get; set; }
 
         public DateTime Date { get; set; }
 

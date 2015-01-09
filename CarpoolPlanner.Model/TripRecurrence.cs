@@ -85,7 +85,6 @@ namespace CarpoolPlanner.Model
                         if (diff < 0)
                             diff += 7;
                         int dayOfMonth = 7 * week + diff;
-                        // TODO: test
                         // Note that dayOfMonth could be larger than the number of days in the month, pushing the date to the next month.
                         // This will cause weird things, so hopefully nobody does it :P
                         date = firstOfMonth.AddDays(dayOfMonth); // Note that dayOfMonth is 0-based, not 1-based like DateTime.Day

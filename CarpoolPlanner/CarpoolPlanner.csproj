@@ -61,6 +61,9 @@
     <Reference Include="Newtonsoft.Json, Version=4.5.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <HintPath>..\packages\Newtonsoft.Json.4.5.11\lib\net40\Newtonsoft.Json.dll</HintPath>
     </Reference>
+    <Reference Include="PagedList">
+      <HintPath>..\packages\PagedList.1.17.0.0\lib\net40\PagedList.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
     <Reference Include="System.Drawing" />
@@ -132,6 +135,7 @@
     <Compile Include="CarpoolSerializerFactory.cs" />
     <Compile Include="Controllers\CarpoolControllerBase.cs" />
     <Compile Include="Controllers\Crypto.cs" />
+    <Compile Include="Controllers\LogController.cs" />
     <Compile Include="Controllers\TripsController.cs" />
     <Compile Include="Controllers\NotificationsController.cs" />
     <Compile Include="Controllers\NgController.cs" />
@@ -156,6 +160,8 @@
     <Compile Include="HttpRequestExtensions.cs" />
     <Compile Include="ViewModel\CreateTripViewModel.cs" />
     <Compile Include="ViewModel\CreateUserViewModel.cs" />
+    <Compile Include="ViewModel\LogFiltersViewModel.cs" />
+    <Compile Include="ViewModel\LogViewModel.cs" />
     <Compile Include="ViewModel\SetPasswordViewModel.cs" />
     <Compile Include="ViewModel\TripsCombinedViewModel.cs" />
     <Compile Include="ViewModel\TripsViewModel.cs" />
@@ -178,6 +184,7 @@
     <Content Include="Content\validation-ext.js" />
     <Content Include="Global.asax" />
     <None Include="Properties\PublishProfiles\Local.pubxml" />
+    <Content Include="Views\datetimepicker-template.html" />
     <Content Include="Web.config" />
     <Content Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>
@@ -194,6 +201,7 @@
     <Content Include="Views\User\Register.cshtml" />
     <Content Include="Views\Shared\UserData.cshtml" />
     <Content Include="Views\User\Manage.cshtml" />
+    <Content Include="Views\Log\Index.cshtml" />
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>

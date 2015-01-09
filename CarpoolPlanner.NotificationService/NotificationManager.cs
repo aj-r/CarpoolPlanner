@@ -20,11 +20,6 @@ namespace CarpoolPlanner.NotificationService
     // Note: this class WILL be accessed from multiple threads, so all methods must be thread-safe.
     public class NotificationManager
     {
-        // TODO: make these settings not hard-coded
-        public static readonly TimeSpan InitialAdvanceNotificationTime = TimeSpan.FromHours(4);
-        public static readonly TimeSpan ReminderAdvanceNotificationTime = TimeSpan.FromHours(1);
-        public static readonly TimeSpan FinalAdvanceNotificationTime = TimeSpan.FromMinutes(30);
-
         private static readonly ILog log = LogManager.GetLogger(typeof(NotificationManager));
         private static readonly object instanceLock = new object();
         private static NotificationManager instance;
@@ -42,6 +37,9 @@ namespace CarpoolPlanner.NotificationService
             }
         }
 
+        private readonly TimeSpan initialAdvanceNotificationTime;
+        private readonly TimeSpan reminderAdvanceNotificationTime;
+        private readonly TimeSpan finalAdvanceNotificationTime;
         private readonly Dictionary<long, Timer> initialTimers = new Dictionary<long, Timer>();
         private readonly Dictionary<long, Timer> reminderTimers = new Dictionary<long, Timer>();
         private readonly Dictionary<long, Timer> finalTimers = new Dictionary<long, Timer>();
@@ -55,6 +53,9 @@ namespace CarpoolPlanner.NotificationService
             client = new TextNowClient(ConfigurationManager.AppSettings["TextNowFromName"],
                 ConfigurationManager.AppSettings["TextNowUsername"],
                 ConfigurationManager.AppSettings["TextNowPassword"]);
+            initialAdvanceNotificationTime = ParseHours(ConfigurationManager.AppSettings["InitialAdvanceNotificationTime"]);
+            reminderAdvanceNotificationTime = ParseHours(ConfigurationManager.AppSettings["ReminderAdvanceNotificationTime"]);
+            finalAdvanceNotificationTime = ParseHours(ConfigurationManager.AppSettings["FinalAdvanceNotificationTime"]);
         }
 
         public void Init()
@@ -106,9 +107,9 @@ namespace CarpoolPlanner.NotificationService
             if (tripInstance == null)
                 return;
             // Ask people if they are coming
-            var initialTime = tripInstance.Date - InitialAdvanceNotificationTime;
-            var reminderTime = tripInstance.Date - ReminderAdvanceNotificationTime;
-            var finalTime = tripInstance.Date - FinalAdvanceNotificationTime;
+            var initialTime = tripInstance.Date - initialAdvanceNotificationTime;
+            var reminderTime = tripInstance.Date - reminderAdvanceNotificationTime;
+            var finalTime = tripInstance.Date - finalAdvanceNotificationTime;
             if (DateTime.UtcNow < reminderTime)
                 SetNextNotificationTime(initialTime, tripInstance.Id, initialTimers, SendInitialNotification);
             // Ask anyone who didn't respond again
@@ -274,7 +275,7 @@ namespace CarpoolPlanner.NotificationService
                             userTripInstance.User.LastTextMessageId = message.Id;
                             lastMessageIds.AddOrUpdate(userTripInstance.UserId, message.Id, (id, m) => message.Id);
                             changed = true;
-                            if (message.Date <= DateTime.UtcNow - TimeSpan.FromHours(5.5))// TODO: use the actual 1st notification time, or slightly before it
+                            if (message.Date <= userTripInstance.InitialNotificationTime - TimeSpan.FromMinutes(2))
                             {
                                 // Message was sent before the 1st notification. Ignore it.
                                 log.WarnFormat("Ignoring message '{0}' with ID {1} from user {2} because it was sent too long ago ({3})",
@@ -635,6 +636,14 @@ namespace CarpoolPlanner.NotificationService
             {
                 log.Error("Error picking drivers: " + ex.ToString());
             }
+        }
+
+        private TimeSpan ParseHours(string s)
+        {
+            int hours;
+            if (s == null || !int.TryParse(s, out hours))
+                return TimeSpan.Zero;
+            return TimeSpan.FromHours(hours);
         }
     }
 }
