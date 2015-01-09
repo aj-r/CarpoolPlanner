@@ -640,8 +640,8 @@ namespace CarpoolPlanner.NotificationService
 
         private TimeSpan ParseHours(string s)
         {
-            int hours;
-            if (s == null || !int.TryParse(s, out hours))
+            double hours;
+            if (s == null || !double.TryParse(s, out hours))
                 return TimeSpan.Zero;
             return TimeSpan.FromHours(hours);
         }

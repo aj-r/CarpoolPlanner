@@ -135,6 +135,28 @@ app.controller('baseCtrl', ['$scope', '$q', '$window', 'AngularNet', 'Validation
 
 app.controller('tripInstanceCtrl', ['$scope', function($scope) {
 
+  // Iterates over all valid UserTripInstances
+  function eachUti(utis, a) {
+    if (!a)
+      return;
+    angular.forEach(utis, function(uti) {
+      var skipInstance = false;
+      angular.forEach($scope.model.trips, function(trip) {
+        if (trip.id == uti.tripId) {
+          angular.forEach(trip.userTrips, function(ut) {
+            if (ut.userId == uti.userId) {
+              skipInstance = !ut.attending;
+              return true;
+            }
+          });
+          return true;
+        }
+      });
+      if (!skipInstance)
+        a(uti);
+    });
+  }
+
   $scope.userTripInstance = $scope.tripInstance.userTripInstances[$scope.model.userId];
 
   $scope.tripInstanceToString = function(ti) {
@@ -151,15 +173,15 @@ app.controller('tripInstanceCtrl', ['$scope', function($scope) {
 
   $scope.getAvailableSeats = function() {
     var available = 0;
-    angular.forEach($scope.tripInstance.userTripInstances, function(uti) {
-      if (uti.attending && (uti.commuteMethod == $scope.CommuteMethod.Driver || uti.canDriveIfNeeded))
+    eachUti($scope.tripInstance.userTripInstances, function(uti) {
+      if (uti.attending && uti.commuteMethod == $scope.CommuteMethod.Driver)
         available += uti.seats;
     });
     return available;
   };
   $scope.getRequiredSeats = function() {
     var required = 0;
-    angular.forEach($scope.tripInstance.userTripInstances, function(uti) {
+    eachUti($scope.tripInstance.userTripInstances, function(uti) {
       if (uti.attending && uti.commuteMethod != $scope.CommuteMethod.HaveRide)
         required++;
     });
@@ -173,22 +195,8 @@ app.controller('tripInstanceCtrl', ['$scope', function($scope) {
     $scope.passengers = [];
     $scope.waitingList = [];
     $scope.unconfirmed = [];
-    angular.forEach($scope.tripInstance.userTripInstances, function(uti) {
+    eachUti($scope.tripInstance.userTripInstances, function(uti) {
       // Skip this instance if the user is not attending the trip
-      var skipInstance = false;
-      angular.forEach($scope.model.trips, function (trip) {
-        if (trip.id == uti.tripId) {
-          angular.forEach(trip.userTrips, function(ut) {
-            if (ut.userId == uti.userId) {
-              skipInstance = !ut.attending;
-              return true;
-            }
-          });
-          return true;
-        }
-      });
-      if (skipInstance)
-        return;
       var user = null;
       angular.forEach($scope.model.users, function (u) {
         if (u.id == uti.userId) {

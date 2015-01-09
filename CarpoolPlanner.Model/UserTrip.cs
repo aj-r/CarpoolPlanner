@@ -45,6 +45,8 @@ namespace CarpoolPlanner.Model
         {
             // TODO: eventually delete old trip instances (how old?)
             int total = Instances.Count(uti => uti.Attending == true && uti.CommuteMethod != CommuteMethod.HaveRide);
+            if (total == 0)
+                return 0;
             int driveCount = Instances.Count(uti => uti.Attending == true && uti.CommuteMethod == CommuteMethod.Driver);
             return (double)driveCount / (double)total;
         }

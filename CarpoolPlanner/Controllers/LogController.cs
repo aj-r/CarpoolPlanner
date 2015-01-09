@@ -23,7 +23,7 @@ namespace CarpoolPlanner.Controllers
             {
                 var count = context.Logs.Count();
                 int lastPage = (int)Math.Ceiling((double)count / (double)PageSize);
-                model.Logs = context.Logs.ToPagedList(lastPage, PageSize);
+                model.Logs = context.Logs.OrderBy(log => log.Date).ToPagedList(lastPage, PageSize);
                 model.Loggers = context.Logs.Select(log => log.Logger).Distinct().ToList();
             }
             return View(model);
@@ -64,7 +64,7 @@ namespace CarpoolPlanner.Controllers
                 if (!string.IsNullOrEmpty(filters.Logger))
                     query = query.Where(log => log.Logger == filters.Logger);
 
-                logs = query.Include(log => log.User).ToPagedList(filters.Page, PageSize);
+                logs = query.OrderBy(log => log.Date).Include(log => log.User).ToPagedList(filters.Page, PageSize);
             }
             return Ng(logs);
         }

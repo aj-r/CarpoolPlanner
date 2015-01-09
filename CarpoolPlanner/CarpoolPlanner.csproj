@@ -184,7 +184,6 @@
     <Content Include="Content\validation-ext.js" />
     <Content Include="Global.asax" />
     <None Include="Properties\PublishProfiles\Local.pubxml" />
-    <Content Include="Views\datetimepicker-template.html" />
     <Content Include="Web.config" />
     <Content Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>
