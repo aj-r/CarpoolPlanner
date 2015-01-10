@@ -21,14 +21,17 @@ namespace CarpoolPlanner
             {
                 if (HttpContext.Current == null || HttpContext.Current.User == null)
                     return null;
-                var loginName = HttpContext.Current.User.Identity.Name;
-                if (string.IsNullOrEmpty(loginName))
+                var userIdString = HttpContext.Current.User.Identity.Name;
+                if (string.IsNullOrEmpty(userIdString))
                     return null;
-                var user = Users.GetOrAdd(loginName.ToLowerInvariant(), key =>
+                var user = Users.GetOrAdd(userIdString, key =>
                 {
                     using (var context = ApplicationDbContext.Create())
                     {
-                        return context.Users.FirstOrDefault(u => u.LoginName == key);
+                        long userId;
+                        if (long.TryParse(userIdString, out userId))
+                            return context.Users.Find(userId);
+                        return new User { Status = UserStatus.Unapproved };
                     }
                 });
                 return user;
@@ -54,7 +57,7 @@ namespace CarpoolPlanner
 
         public static void UpdateCachedUser(User user)
         {
-            Users.AddOrUpdate(user.LoginName.ToLowerInvariant(), user, (id, u) => user);
+            Users.AddOrUpdate(user.Id.ToString(), user, (id, u) => user);
         }
 
         /// <summary>

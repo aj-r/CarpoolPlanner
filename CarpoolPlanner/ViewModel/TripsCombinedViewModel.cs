@@ -6,7 +6,7 @@ using CarpoolPlanner.Model;
 
 namespace CarpoolPlanner.ViewModel
 {
-    public class TripsCombinedViewModel : ViewModelBase
+    public class TripsCombinedViewModel
     {
         public TripsCombinedViewModel()
         {
@@ -19,10 +19,5 @@ namespace CarpoolPlanner.ViewModel
         public TripsViewModel TripsModel { get; set; }
 
         public CreateTripViewModel CreateModel { get; set; }
-
-        public User User
-        {
-            get { return AppUtils.CurrentUser; }
-        }
     }
 }

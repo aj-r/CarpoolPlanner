@@ -28,6 +28,7 @@
     var CommuteMethod = @Html.JSEnum(typeof(CommuteMethod));
     var UserStatus = @Html.JSEnum(typeof(UserStatus));
     var originalModel = @Html.JSModel();
+    var user = @Html.JSModel(AppUtils.CurrentUser);
   </script>
   <script src="@Url.Content("~/Content/app.js")"></script>
   @RenderSection("headScripts", required: false)
@@ -62,12 +63,12 @@
         <ul class="nav navbar-nav navbar-right">
           @if (AppUtils.IsUserAuthenticated())
           {
-            <li><a href="@Url.Action("Manage", "User")" cp-nav>{{ model.loginName }}</a></li>
+            <li><a href="@Url.Action("Manage", "User")" cp-nav>{{ user.email }}</a></li>
             <li><a href="@Url.Action("Logout", "User")" cp-nav>Logout</a></li>
           }
           else
           {
-            <li><a ng-href="@Url.Action("Register", "User"){{ model.loginNameInput ? '?loginName=' + encodeURIComponent(model.loginNameInput) : '' }}" cp-nav>@Resources.Register</a></li>
+            <li><a ng-href="@Url.Action("Register", "User"){{ model.email ? '?email=' + encodeURIComponent(model.email) : '' }}" cp-nav>@Resources.Register</a></li>
             <li><a href="@Url.Action("Login", "User")" cp-nav>@Resources.Login</a></li>
           }
         </ul>

@@ -57,9 +57,7 @@ namespace CarpoolPlanner.Model
         [Key, Required]
         public long Id { get; set; }
 
-        [MaxLength(500), Required]
-        public string LoginName { get; set; }
-
+        [MaxLength(500)]
         public string Name { get; set; }
 
         /// <summary>
@@ -83,7 +81,7 @@ namespace CarpoolPlanner.Model
         /// <summary>
         /// Gets or sets the user's e-mail address.
         /// </summary>
-        [DataType(DataType.EmailAddress)]
+        [MaxLength(200), Required]
         public string Email { get; set; }
 
         /// <summary>
@@ -96,7 +94,7 @@ namespace CarpoolPlanner.Model
         /// </summary>
         public bool EmailVisible { get; set; }
 
-        [DataType(DataType.PhoneNumber)]
+        [MaxLength(45)]
         public string Phone { get; set; }
 
         /// <summary>
@@ -140,7 +138,7 @@ namespace CarpoolPlanner.Model
 
         public override string ToString()
         {
-            return LoginName;
+            return Name ?? Email;
         }
     }
 }

@@ -62,16 +62,16 @@ namespace CarpoolPlanner.Model
         {
             var drivers = (from uti in UserTripInstances
                            where uti.Attending == true && uti.CommuteMethod == CommuteMethod.Driver && uti.User.Status == UserStatus.Active
-                           select uti.User.Name ?? uti.User.LoginName).ToList();
+                           select uti.User.Name ?? uti.User.Email).ToList();
             var passengers = (from uti in UserTripInstances
                               where uti.Attending == true && uti.CommuteMethod == CommuteMethod.NeedRide && uti.User.Status == UserStatus.Active
-                              select uti.User.Name ?? uti.User.LoginName).ToList();
+                              select uti.User.Name ?? uti.User.Email).ToList();
             var kickedUsers = (from uti in UserTripInstances
                                where uti.Attending == false && uti.NoRoom && uti.User.Status == UserStatus.Active
-                               select uti.User.Name ?? uti.User.LoginName).ToList();
+                               select uti.User.Name ?? uti.User.Email).ToList();
             var unconfirmed = (from uti in UserTripInstances
                                where uti.Attending == null && uti.User.Status == UserStatus.Active
-                               select uti.User.Name ?? uti.User.LoginName).ToList();
+                               select uti.User.Name ?? uti.User.Email).ToList();
             var sb = new StringBuilder(75);
             if (drivers.Count > 0)
             {

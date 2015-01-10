@@ -18,24 +18,6 @@
         public string Message { get; set; }
         public MessageType MessageType { get; set; }
 
-        public long? UserId
-        {
-            get
-            {
-                var user = AppUtils.CurrentUser;
-                return user != null ? (int?)user.Id : null;
-            }
-        }
-
-        public string LoginName
-        {
-            get
-            {
-                var user = AppUtils.CurrentUser;
-                return user != null ? user.LoginName : null;
-            }
-        }
-
         public void SetMessage(string message, MessageType type)
         {
             Message = message;

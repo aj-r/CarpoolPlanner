@@ -2,8 +2,10 @@
 using System.Collections.Generic;
 using System.Data.Entity;
 using System.Data.Entity.Infrastructure;
+using System.Data.Entity.Validation;
 using System.Linq;
 using System.Security.Cryptography;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Web;
@@ -204,6 +206,31 @@ namespace CarpoolPlanner.Model
             var result = Regex.Replace(clrName, ".[A-Z]", m => m.Value[0] + "_" + m.Value[1]);
             // Table names in MySql are all lower case.
             return result.ToLower();
+        }
+
+        public override int SaveChanges()
+        {
+            try
+            {
+                return base.SaveChanges();
+            }
+            catch (DbEntityValidationException ex)
+            {
+                // Log the exception and re-throw it
+                var sb = new StringBuilder();
+                sb.AppendLine("Validation errors occured while saving entities:");
+                foreach (var eve in ex.EntityValidationErrors.Where(e => !e.IsValid))
+                {
+                    foreach (var dve in eve.ValidationErrors)
+                    {
+                        sb.Append(dve.PropertyName);
+                        sb.Append(": ");
+                        sb.AppendLine(dve.ErrorMessage);
+                    }
+                }
+                log.Error(sb.ToString());
+                throw;
+            }
         }
     }
 }

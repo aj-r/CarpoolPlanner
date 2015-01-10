@@ -21,10 +21,6 @@
 
 <h2>Users</h2>
 <div class="row light-separator">
-  @if (AppUtils.IsUserAdmin())
-  {
-    <div class="col-md-1"><h4>@Resources.LoginName</h4></div>
-  }
   <div class="col-md-2"><h4>Name</h4></div>
   <div class="col-md-2"><h4>@Resources.Phone</h4></div>
   <div class="col-md-2"><h4>@Resources.Email</h4></div>
@@ -36,10 +32,6 @@
   }
 </div>
 <div ng-controller="userCtrl" class="row light-separator" style="padding: 10px 0px;" ng-repeat="userVM in model.users" ng-init="user = userVM.user">
-  @if (AppUtils.IsUserAdmin())
-  {
-    <div class="col-md-1 control-label user-id" style="margin-top:8px;"><b>{{ user.loginName }}</b></div>
-  }
   <div class="col-md-2" style="margin-top:8px;">{{ user.name }}</div>
   <div class="col-md-2" style="margin-top:8px;">{{ user.phone }}</div>
   <div class="col-md-2" style="margin-top:8px;"><a href="mailto:{{ user.email }}" ng-show="user.email">{{ user.email }}</a></div>

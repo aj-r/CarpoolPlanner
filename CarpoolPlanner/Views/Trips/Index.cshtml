@@ -82,7 +82,7 @@
     <p ng-if="justRegistered" class="text-success">
       Thank you for registering!
     </p>
-    <p ng-if="model.user.status == UserStatus.Unapproved">
+    <p ng-if="user.status == UserStatus.Unapproved">
       Your account currently has limited access until you are approved by an administrator.<br />
       While you wait to be approved, you can fill out this page.
     </p>
@@ -96,7 +96,7 @@
       <div ng-repeat="trip in model.tripsModel.trips">
         <h3 class="editable-region-header">
           <label class="checkbox">
-            <input type="checkbox" id="attending-{{ trip.id }}" ng-model="trip.userTrips[model.userId].attending" ch-hierarchy="attending-{{ trip.id }}" />
+            <input type="checkbox" id="attending-{{ trip.id }}" ng-model="trip.userTrips[user.id].attending" ch-hierarchy="attending-{{ trip.id }}" />
             {{ trip.name }}
           </label>
         </h3>
@@ -109,7 +109,7 @@
           </div>
         }
         <div class="indent">
-          <div ng-repeat="tripRecurrence in trip.recurrences" ng-init="userTripRecurrence = tripRecurrence.userTripRecurrences[model.userId]" class="checkbox">
+          <div ng-repeat="tripRecurrence in trip.recurrences" ng-init="userTripRecurrence = tripRecurrence.userTripRecurrences[user.id]" class="checkbox">
             <label>
               <input type="checkbox"
                      ng-model="userTripRecurrence.attending"

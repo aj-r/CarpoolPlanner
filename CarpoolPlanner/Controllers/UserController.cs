@@ -34,7 +34,7 @@ namespace CarpoolPlanner.Controllers
         {
             using (var context = ApplicationDbContext.Create())
             {
-                var user = context.Users.FirstOrDefault(u => u.LoginName == model.LoginNameInput);
+                var user = context.Users.FirstOrDefault(u => u.Email == model.Email);
                 if (IsPasswordCorrect(user, model.Password))
                 {
                     AppUtils.UpdateCachedUser(user);
@@ -46,18 +46,15 @@ namespace CarpoolPlanner.Controllers
                         default:
                             // Note: allow unapproved accounts to log in, but give them limited access.
                             // Log the user in, redirect to the proper page.
-                            FormsAuthentication.SetAuthCookie(model.LoginNameInput, model.RememberMe);
+                            FormsAuthentication.SetAuthCookie(user.Id.ToString(), model.RememberMe);
                             var returnUrl = Request.QueryString["ReturnUrl"];
                             return NgRedirect(returnUrl ?? FormsAuthentication.DefaultUrl);
                     }
                 }
                 else
                 {
-                    log.Warn(string.Concat("Incorrect username/password for loginName '", model.LoginNameInput, "'"));
+                    log.Warn(string.Concat("Incorrect username/password for login '", model.Email, "'"));
                     model.SetMessage(Resources.InvalidUsernameOrPassword, MessageType.Error);
-                    /*SetPassword(user, model.Password);
-                    context.SaveChanges();
-                    model.SetMessage("Password changed", MessageType.Success);*/
                 }
                 // Clear the password
                 model.Password = "";
@@ -83,8 +80,7 @@ namespace CarpoolPlanner.Controllers
                     IQueryable<User> query = context.Users;
                     if (!AppUtils.IsUserAdmin())
                         query = query.Where(u => u.Status == UserStatus.Active);
-                    model.Users = query.ToList().Select(u => new UserViewModel(u)).ToList();
-                    model.Users.Sort((u1, u2) => (u1.User.Name ?? u1.User.LoginName).CompareTo(u2.User.Name ?? u2.User.LoginName));
+                    model.Users = query.OrderBy(u => u.Name).ToList().Select(u => new UserViewModel(u)).ToList();
                 }
             }
             return View(model);
@@ -116,10 +112,10 @@ namespace CarpoolPlanner.Controllers
                 log.Warn(model.Message);
                 return Ng(model);
             }
-            if (model.User.LoginName == null)
+            if (string.IsNullOrEmpty(model.User.Email))
             {
                 Response.StatusCode = 400;
-                model.SetMessage("Login name is required.", MessageType.Error);
+                model.SetMessage("E-mail is required.", MessageType.Error);
                 model.Password = "";
                 log.Warn(model.Message);
                 return Ng(model);
@@ -139,9 +135,9 @@ namespace CarpoolPlanner.Controllers
             model.User.LastTextMessageId = null;
             using (var context = ApplicationDbContext.Create())
             {
-                if (context.Users.Any(u => u.LoginName == model.User.LoginName))
+                if (context.Users.Any(u => u.Email == model.User.Email))
                 {
-                    model.SetMessage(string.Concat("User ID '", model.User.LoginName, "' already exists."), MessageType.Error);
+                    model.SetMessage(string.Concat("E-mail '", model.User.Email, "' is already used by another user."), MessageType.Error);
                     model.Password = "";
                     log.Warn(model.Message);
                     return Ng(model);
@@ -153,7 +149,7 @@ namespace CarpoolPlanner.Controllers
             client.UserRegister(model.User.Id);
 
             // Automatically log in.
-            FormsAuthentication.SetAuthCookie(model.User.LoginName, false);
+            FormsAuthentication.SetAuthCookie(model.User.Id.ToString(), false);
             // Take the user to the trips page because unapproved users won't have access to the default page anyways.
             // This allows users to enrol in trips while they wait to be approved.
             return NgRedirect(Url.Action("Index", "Trips", new RouteValueDictionary { { "justRegistered", "true" } }));

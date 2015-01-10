@@ -14,14 +14,14 @@ namespace PasswordFixer
         {
             if (args.Length < 2)
             {
-                Console.WriteLine("Usage: cppasswd loginName password");
+                Console.WriteLine("Usage: cppasswd email password");
                 return;
             }
-            var loginName = args[0];
+            var email = args[0];
             var password = args[1];
             using (var context = ApplicationDbContext.Create())
             {
-                var user = context.Users.FirstOrDefault(u => u.LoginName == loginName);
+                var user = context.Users.FirstOrDefault(u => u.Email == email);
                 if (user == null)
                 {
                     Console.WriteLine("User not found.");

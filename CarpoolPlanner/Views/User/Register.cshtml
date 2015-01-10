@@ -10,7 +10,7 @@
   <script type="text/javascript">
     app.controller('userCtrl', function($scope, $location) {
       var s = $location.search();
-      $scope.model.user.loginName = s.loginName;
+      $scope.model.user.email = s.email;
       $scope.registerWithChecks = function() {
         var scope = this;
         if (scope.registerForm.$valid) {
@@ -47,12 +47,7 @@
 <h2>@Resources.Register</h2>
 <form name="registerForm" ng-controller="userCtrl" ng-submit="register()" novalidate warn-if-dirty focus-first-empty focus-first-invalid>
   <div class="form-horizontal">
-    <div class="form-group">
-      <label class="col-md-2 control-label">@Resources.LoginName</label>
-      <div class="col-md-10">
-        <input type="text" ng-model="model.user.loginName" class="form-control" val-friendly-name="@Resources.LoginName" required />
-      </div>
-    </div>
+    @Html.Partial("EmailInput")
     <div class="form-group">
       <label class="col-md-2 control-label">@Resources.Password</label>
       <div class="col-md-10">
@@ -65,6 +60,7 @@
         <input type="password" ng-model="model.confirmPassword" val-equals="model.password" val-message="'Passwords must match.'" class="form-control" />
       </div>
     </div>
+    <hr />
     @Html.Partial("UserData")
     <div class="form-group">
       <div class="col-md-offset-2 col-md-10">

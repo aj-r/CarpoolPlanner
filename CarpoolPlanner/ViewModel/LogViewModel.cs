@@ -5,7 +5,7 @@ using PagedList;
 
 namespace CarpoolPlanner.ViewModel
 {
-    public class LogViewModel : ViewModelBase
+    public class LogViewModel
     {
         public LogViewModel()
         {

@@ -201,6 +201,7 @@
     <Content Include="Views\Shared\UserData.cshtml" />
     <Content Include="Views\User\Manage.cshtml" />
     <Content Include="Views\Log\Index.cshtml" />
+    <Content Include="Views\Shared\EmailInput.cshtml" />
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>

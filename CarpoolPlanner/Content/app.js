@@ -12,6 +12,7 @@ app.controller('baseCtrl', ['$scope', '$q', '$window', 'AngularNet', 'Validation
   $scope.CommuteMethod = $window.CommuteMethod;
   $scope.UserStatus = $window.UserStatus;
   $scope.model = $window.originalModel;
+  $scope.user = $window.user;
   $scope.encodeURIComponent = $window.encodeURIComponent;
   $scope.trySubmit = function(form, url, modelContainer, modelName, beforesubmit) {
     var scope = this;
@@ -157,7 +158,7 @@ app.controller('tripInstanceCtrl', ['$scope', function($scope) {
     });
   }
 
-  $scope.userTripInstance = $scope.tripInstance.userTripInstances[$scope.model.userId];
+  $scope.userTripInstance = $scope.tripInstance.userTripInstances[$scope.user.id];
 
   $scope.tripInstanceToString = function(ti) {
     var date = moment(ti.date);

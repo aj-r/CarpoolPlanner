@@ -36,24 +36,24 @@ namespace CarpoolPlanner.NotificationService
                         // Send a test notification to the user identified by the specified login name.
                         if (args.Length < 2)
                         {
-                            Console.WriteLine("Test user not specified.");
-                            Console.WriteLine("Usage: CarpoolPlanner.NotificationService.exe --test username");
+                            Console.WriteLine("Test user email not specified.");
+                            Console.WriteLine("Usage: CarpoolPlanner.NotificationService.exe --test email");
                             return;
                         }
-                        string loginName = args[1];
+                        string email = args[1];
                         var manager = NotificationManager.GetInstance();
                         using (var context = ApplicationDbContext.Create())
                         {
-                            var user = context.Users.FirstOrDefault(u => u.LoginName == loginName);
+                            var user = context.Users.FirstOrDefault(u => u.Email == email);
                             if (user == null)
                             {
-                                Console.WriteLine("User '" + loginName + "' does not exist.");
+                                Console.WriteLine("User '" + email + "' does not exist.");
                                 return;
                             }
-                            Console.WriteLine("Sending test notification to " + loginName + "...");
+                            Console.WriteLine("Sending test notification to " + email + "...");
                             manager.SendNotification(user, "test message").Wait();
                             Console.WriteLine("Test notification sent; exiting.");
-                            log.Info("Test notification sent to " + loginName + "; exiting");
+                            log.Info("Test notification sent to " + email + "; exiting");
                         }
 #if DEBUG
                         Console.WriteLine("Press enter to exit.");

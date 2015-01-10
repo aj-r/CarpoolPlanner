@@ -369,7 +369,7 @@ namespace CarpoolPlanner.NotificationService
                     }
                 }
                 // Wait for tasks to finish before disposing the DB context.
-                await Task.WhenAll(tasks.ToArray()).ConfigureAwait(false);
+                await Task.WhenAll(tasks).ConfigureAwait(false);
             }
         }
 

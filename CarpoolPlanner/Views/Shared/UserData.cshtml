@@ -1,9 +1,9 @@
 ﻿@using CarpoolPlanner;
 
 <div class="form-group">
-  <label class="col-md-2 control-label">Name</label>
+  <label class="col-md-2 control-label" title="Your name as it will appear to other users">Name</label>
   <div class="col-md-10">
-    <input type="text" ng-model="model.user.name" class="form-control" />
+    <input type="text" ng-model="model.user.name" class="form-control" required val-friendly-name="Name" />
   </div>
 </div>
 <div class="form-group">
@@ -38,31 +38,13 @@
 </div>
 <div class="form-group animate-show animate-seats"
      ng-hide="model.user.commuteMethod != CommuteMethod.Driver && !model.user.canDriveIfNeeded">
-  <label class="col-md-2 control-label">
+  <label class="col-md-2 control-label" style="margin-top: -8px;">
     @Resources.NumberOfSeats<br />
     <span class="small">(inluding your own)</span>
   </label>
   <div class="col-md-10">
     <input type="number" ng-model="model.user.seats" min="1" val-number val-friendly-name="@Resources.NumberOfSeats"
            class="form-control form-control-small" />
-  </div>
-</div>
-<div class="form-group">
-  <label class="col-md-2 control-label">@Resources.Email</label>
-  <div class="col-md-10">
-    <input type="email" ng-model="model.user.email" ng-model-options="{ allowInvalid: true }" class="form-control" val-friendly-name="@Resources.Email" />
-    <div class="checkbox animate-show" ng-show="model.user.email">
-      <label>
-        <input type="checkbox" ng-model="model.user.emailNotify" />
-        Send notifications via e-mail (not yet implemented)
-      </label>
-    </div>
-    <div class="checkbox animate-show" ng-show="model.user.email" style="margin-bottom: 10px;">
-      <label>
-        <input type="checkbox" ng-model="model.user.emailVisible" />
-        @Resources.VisibleToOtherUsers
-      </label>
-    </div>
   </div>
 </div>
 <div class="form-group">

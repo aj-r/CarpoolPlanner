@@ -34,10 +34,10 @@
       </div>
     </div>
     <div class="form-group">
-      <label class="col-sm-2 control-label">@Resources.LoginName</label>
+      <label class="col-sm-2 control-label">@Resources.Email</label>
       <div class="col-sm-10">
-        <input type="text" ng-model="model.loginNameInput" class="form-control" required="required"
-               val-friendly-name="@Resources.LoginName" />
+        <input type="text" ng-model="model.email" class="form-control" required="required"
+               val-friendly-name="@Resources.Email" />
       </div>
     </div>
     <div class="form-group">
@@ -66,7 +66,7 @@
       <div class="col-sm-offset-2 col-sm-10">
         <cp-message></cp-message>
         <val-summary></val-summary>
-        <div><a ng-href="@Url.Action("Register", "User"){{ model.loginNameInput ? '?loginName=' + encodeURIComponent(model.loginNameInput) : '' }}">Register as a new user</a></div>
+        <div><a ng-href="@Url.Action("Register", "User"){{ model.email ? '?email=' + encodeURIComponent(model.email) : '' }}">Register as a new user</a></div>
       </div>
     </div>
   </form>

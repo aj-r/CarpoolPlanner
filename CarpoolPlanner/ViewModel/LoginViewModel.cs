@@ -9,7 +9,7 @@ namespace CarpoolPlanner.ViewModel
 {
     public class LoginViewModel : ViewModelBase
     {
-        public string LoginNameInput { get; set; }
+        public string Email { get; set; }
 
         public string Password { get; set; }
 

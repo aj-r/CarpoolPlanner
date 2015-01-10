@@ -74,7 +74,7 @@ namespace CarpoolPlanner.NotificationService
                     return "User not found";
                 var manager = NotificationManager.GetInstance();
                 // Notify all admins that a user registered to they can approve/disable the new user.
-                var message = string.Concat("A new user has registered (", user.LoginName, "). Go to https://climbing.pororeplays.com/User/List to approve them.");
+                var message = string.Concat("A new user has registered (", user.Email, "). Go to https://climbing.pororeplays.com/User/List to approve them.");
                 foreach (var admin in context.Users.Where(u => u.IsAdmin && u.Status == UserStatus.Active))
                 {
                     manager.SendNotification(admin, message);

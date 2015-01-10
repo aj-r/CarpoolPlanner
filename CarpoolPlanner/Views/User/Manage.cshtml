@@ -57,10 +57,11 @@
   </script>
 }
 
-<h2>Manage Account - {{ model.loginName }}</h2>
+<h2>Manage Account</h2>
 
 <form name="manageForm" ng-controller="userCtrl" ng-submit="updateUser()" novalidate warn-if-dirty style="margin-top: 20px;" focus-first-invalid>
   <div class="form-horizontal">
+    @Html.Partial("EmailInput")
     @Html.Partial("UserData")
     <div class="form-group">
       <div class="col-md-offset-2 col-md-10">

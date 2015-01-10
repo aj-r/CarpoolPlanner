@@ -28,7 +28,7 @@ namespace CarpoolPlanner
         public static MvcHtmlString JSModel(this HtmlHelper htmlHelper, object model)
         {
             if (model == null)
-                return new MvcHtmlString("{}");
+                return new MvcHtmlString("null");
 
             var serializer = JsonSerializerFactory.Current.GetSerializer();
             string json;

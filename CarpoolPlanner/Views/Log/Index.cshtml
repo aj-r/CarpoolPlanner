@@ -57,7 +57,7 @@
   </div>
   <div class="col-md-1">
     <div>
-      <select ng-model="model.targetUserId" ng-options="user.loginName for user in model.users track by user.id" ng-change="filter()" class="form-control">
+      <select ng-model="model.targetUserId" ng-options="user.name for user in model.users track by user.id" ng-change="filter()" class="form-control">
         <option value="">All</option>
         <option value="0">None</option>
       </select>
@@ -65,7 +65,7 @@
     <h4>User</h4>
   </div>
   <div class="col-md-2">
-    <select ng-model="model.userId" ng-options="logger in model.loggers" ng-change="filter()" class="form-control">
+    <select ng-model="user.id" ng-options="logger in model.loggers" ng-change="filter()" class="form-control">
       <option value="">All</option>
     </select>
     <h4>Logger</h4>
@@ -81,7 +81,7 @@
 <div class="row light-separator" style="padding: 10px 0px;" ng-repeat="log in model.logs">
   <div class="col-md-1">{{ log.date }}</div>
   <div class="col-md-1">{{ log.level }}</div>
-  <div class="col-md-1">{{ log.user.loginName }}</div>
+  <div class="col-md-1">{{ log.user.name }}</div>
   <div class="col-md-2">{{ log.logger }}</div>
   <div class="col-md-1">{{ log.ndc }}</div>
   <div class="col-md-6 preserve-newlines">{{ log.message }}</div>

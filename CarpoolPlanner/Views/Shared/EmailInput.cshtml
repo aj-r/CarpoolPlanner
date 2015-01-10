@@ -1,0 +1,20 @@
+﻿@using CarpoolPlanner;
+
+<div class="form-group">
+  <label class="col-md-2 control-label" title="Your e-mail address. Used for logging in.">@Resources.Email</label>
+  <div class="col-md-10">
+    <input type="email" ng-model="model.user.email" class="form-control" required val-friendly-name="@Resources.Email" />
+    <div class="checkbox">
+      <label>
+        <input type="checkbox" ng-model="model.user.emailNotify" />
+        Send notifications via e-mail (not yet implemented)
+      </label>
+    </div>
+    <div class="checkbox" style="margin-bottom: 10px;">
+      <label>
+        <input type="checkbox" ng-model="model.user.emailVisible" />
+        @Resources.VisibleToOtherUsers
+      </label>
+    </div>
+  </div>
+</div>
