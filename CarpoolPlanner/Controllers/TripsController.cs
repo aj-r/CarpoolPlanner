@@ -183,6 +183,8 @@ namespace CarpoolPlanner.Controllers
             var user = AppUtils.CurrentUser;
             model.Trips = context.Trips.Include(t => t.Recurrences).ToList();
             context.GetUserTrips(user.Id).Include(ut => ut.Recurrences).ToList();
+            foreach (var trip in model.Trips)
+                trip.Recurrences = trip.Recurrences.OrderBy(tr => tr.Start).ToList();
 
             bool save = false;
             // Create UserTrips and UserTripRecurrences if they don't exist for this user.

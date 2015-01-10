@@ -35,6 +35,7 @@ namespace CarpoolPlanner.Model
 
         public int Every { get; set; }
 
+        [Required]
         public DateTime? Start { get; set; }
 
         public DateTime? End { get; set; }
