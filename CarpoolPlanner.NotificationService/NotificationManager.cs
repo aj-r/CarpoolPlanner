@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using System.Configuration;
 using System.Data.Entity;
 using System.Linq;
+using System.Net;
+using System.Net.Mail;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -180,10 +182,11 @@ namespace CarpoolPlanner.NotificationService
         /// <param name="user">The user to whom the notification will be sent.</param>
         /// <param name="message">The message to send</param>
         /// <param name="force">If true, will send the message even if the user's notification settings are all turned off (assuming the user has specified an e-mail or phone number).</param>
-        public async Task SendNotification(User user, string message, bool force = false)
+        public Task SendNotification(User user, string subject, string message, bool force = false)
         {
+            var tasks = new List<Task>(2);
             if (user == null)
-                return;
+                return Task.WhenAll(tasks);
             if (Program.Verbose)
                 Console.WriteLine("Attempting to send notification...");
             bool sendEmail = user.EmailNotify && !string.IsNullOrEmpty(user.Email);
@@ -191,41 +194,18 @@ namespace CarpoolPlanner.NotificationService
             if (force && !sendEmail && !sendSms)
             {
                 // When force-sending, prefer e-mail because it is less intrusive (especially if the user pays for incoming texts)
-                if (!string.IsNullOrEmpty(user.Email))
-                    sendEmail = true;
-                else if (!string.IsNullOrEmpty(user.Phone))
-                    sendSms = true;
+                // Also, e-mail is required.
+                sendEmail = true;
             }
             if (sendEmail)
             {
-                // TODO: send e-mail
+                tasks.Add(SendEmail(user, subject, message));
             }
             if (sendSms)
             {
-                long? messageId;
-                int retryCount = 0;
-                const int maxRetryCount = 20;
-                do
-                {
-                    if (retryCount > 0)
-                    {
-                        const int retryDelay = 10;
-                        log.WarnFormat("Failed to send message to {0}. Retrying in a little while ({1} ms)", retryCount, retryDelay);
-                        await Task.Delay(retryDelay);
-                    }
-                    messageId = await client.SendMessage(message, user.Phone).ConfigureAwait(false);
-                    retryCount++;
-                } while (messageId == null && retryCount < maxRetryCount);
-                if (messageId != null)
-                {
-                    user.LastTextMessageId = messageId;
-                    lastMessageIds.AddOrUpdate(user.Id, messageId, (id, m) => messageId);
-                }
-                else
-                {
-                    log.ErrorFormat("Failed to send message to {0}. Exceeded maximum retry count.", user.Phone);
-                }
+                tasks.Add(SendSMS(user, message));
             }
+            return Task.WhenAll(tasks);
         }
 
         /// <summary>
@@ -236,10 +216,72 @@ namespace CarpoolPlanner.NotificationService
         /// <param name="force">If true, will send the message even if the user's notification settings are all turned off (assuming the user has specified an e-mail or phone number).</param>
         public async Task SendSMS(User user, string message)
         {
-            var messageId = await client.SendMessage(message, user.Phone).ConfigureAwait(false);
+            long? messageId;
+            int retryCount = 0;
+            const int maxRetryCount = 20;
+            do
+            {
+                if (retryCount > 0)
+                {
+                    const int retryDelay = 10;
+                    log.WarnFormat("Failed to send message to {0}. Retrying in a little while ({1} ms)", retryCount, retryDelay);
+                    await Task.Delay(retryDelay);
+                }
+                messageId = await client.SendMessage(message, user.Phone).ConfigureAwait(false);
+                if (messageId != null)
+                {
+                    user.LastTextMessageId = messageId;
+                }
+                retryCount++;
+            } while (messageId == null && retryCount < maxRetryCount);
             if (messageId != null)
             {
-                user.LastTextMessageId = messageId;
+                lastMessageIds.AddOrUpdate(user.Id, messageId, (id, m) => messageId);
+            }
+            else
+            {
+                log.ErrorFormat("Failed to send message to {0}. Exceeded maximum retry count.", user.Phone);
+            }
+        }
+
+        /// <summary>
+        /// Sends a notification message to the specified user.
+        /// </summary>
+        /// <param name="user">The user to whom the notification will be sent.</param>
+        /// <param name="message">The message to send</param>
+        /// <param name="force">If true, will send the message even if the user's notification settings are all turned off (assuming the user has specified an e-mail or phone number).</param>
+        public async Task SendEmail(User user, string subject, string message)
+        {
+            if(user == null)
+                return;
+            var email = user.Email;
+            try
+            {
+                bool enableSsl;
+                string sslSetting = ConfigurationManager.AppSettings["EmailSsl"];
+                if (sslSetting == null || !bool.TryParse(sslSetting, out enableSsl))
+                    enableSsl = false;
+                int port;
+                string portSetting = ConfigurationManager.AppSettings["EmailPort"];
+                if (portSetting == null || !int.TryParse(portSetting, out port))
+                    port = 587;
+
+                SmtpClient smtpClient = new SmtpClient(ConfigurationManager.AppSettings["EmailServer"])
+                {
+                    Credentials = new NetworkCredential(ConfigurationManager.AppSettings["EmailUsername"],
+                        ConfigurationManager.AppSettings["EmailPassword"]),
+                    Port = port,
+                    EnableSsl = enableSsl
+                };
+                await smtpClient.SendMailAsync(
+                    from: ConfigurationManager.AppSettings["EmailAddress"],
+                    recipients: email,
+                    subject: subject,
+                    body: message);
+            }
+            catch (Exception ex)
+            {
+                log.Error(string.Concat("Failed to send e-mail to ", email, ". ", ex.ToString()));
             }
         }
 
@@ -313,7 +355,7 @@ namespace CarpoolPlanner.NotificationService
                                             {
                                                 userTripInstance.Attending = false;
                                                 userTripInstance.NoRoom = true;
-                                                SendNotification(userTripInstance.User, "You cannot attend because there are not enough seats. You have been added to the waiting list.");
+                                                SendNotification(userTripInstance.User, tripInstance.Trip.Name, "You cannot attend because there are not enough seats. You have been added to the waiting list.");
                                                 if (userTripInstance.FinalNotificationTime == null)
                                                     userTripInstance.FinalNotificationTime = DateTime.UtcNow;
                                             }
@@ -416,7 +458,7 @@ namespace CarpoolPlanner.NotificationService
                     bool isDriver = userTripInstance.CommuteMethod == CommuteMethod.Driver;
                     sb.Append("Reply with yes/no. \n");
                     sb.Append("For more options, go to https://climbing.pororeplays.com"); // TODO: don't hard-code the url
-                    SendNotification(userTripInstance.User, sb.ToString());
+                    SendNotification(userTripInstance.User, tripInstance.Trip.Name, sb.ToString());
                     sb.Clear();
                 }
                 // Now periodically attempt to receive messages to get responses.
@@ -492,7 +534,7 @@ namespace CarpoolPlanner.NotificationService
                     sb.AppendFormat(".\nThere are {0} seats and {1} people coming.\n", availableSeats, requiredSeats);
                     sb.Append("\n" + tripInstance.GetStatusReport() + "\n");
                     sb.Append("\nFor more details, go to https://climbing.pororeplays.com"); // TODO: don't hard-code the url
-                    SendNotification(userTripInstance.User, sb.ToString());
+                    SendNotification(userTripInstance.User, tripInstance.Trip.Name, sb.ToString());
                     sb.Clear();
                 }
                 context.SaveChanges();

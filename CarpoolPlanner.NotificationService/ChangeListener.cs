@@ -77,7 +77,7 @@ namespace CarpoolPlanner.NotificationService
                 var message = string.Concat("A new user has registered (", user.Email, "). Go to https://climbing.pororeplays.com/User/List to approve them.");
                 foreach (var admin in context.Users.Where(u => u.IsAdmin && u.Status == UserStatus.Active))
                 {
-                    manager.SendNotification(admin, message);
+                    manager.SendNotification(admin, "New user registered", message);
                 }
             }
             return "Success";

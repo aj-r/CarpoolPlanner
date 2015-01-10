@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
+using System.Net.Mail;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -51,7 +53,7 @@ namespace CarpoolPlanner.NotificationService
                                 return;
                             }
                             Console.WriteLine("Sending test notification to " + email + "...");
-                            manager.SendNotification(user, "test message").Wait();
+                            manager.SendNotification(user, "Test message", "test message").Wait();
                             Console.WriteLine("Test notification sent; exiting.");
                             log.Info("Test notification sent to " + email + "; exiting");
                         }
