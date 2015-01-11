@@ -273,14 +273,20 @@ namespace CarpoolPlanner.NotificationService
                     Port = port,
                     EnableSsl = enableSsl
                 };
+                if (Program.Verbose)
+                    Console.WriteLine("Attempting to send e-mail...");
                 await smtpClient.SendMailAsync(
                     from: ConfigurationManager.AppSettings["EmailAddress"],
                     recipients: email,
                     subject: subject,
                     body: message);
+                if (Program.Verbose)
+                    Console.WriteLine("E-mail sent.");
             }
             catch (Exception ex)
             {
+                if (Program.Verbose)
+                    Console.WriteLine("Failed to send e-mail: " + ex.Message);
                 log.Error(string.Concat("Failed to send e-mail to ", email, ". ", ex.ToString()));
             }
         }
@@ -668,7 +674,10 @@ namespace CarpoolPlanner.NotificationService
                         availableDrivers.RemoveAt(index);
                     }
                     foreach (UserTripInstance driver in removedDrivers)
+                    {
                         driver.CommuteMethod = CommuteMethod.NeedRide;
+                        driver.CanDriveIfNeeded = true;
+                    }
                     availableSeats -= removedDrivers.Count * subGroup.Key;
                     difference = availableSeats - requiredSeats;
                 };
