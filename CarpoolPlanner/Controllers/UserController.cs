@@ -181,15 +181,35 @@ namespace CarpoolPlanner.Controllers
                     return Ng(model);
                 }
                 serverUser.Name = model.User.Name;
-                serverUser.CommuteMethod = model.User.CommuteMethod;
-                serverUser.CanDriveIfNeeded = model.User.CanDriveIfNeeded;
-                serverUser.Seats = model.User.Seats;
                 serverUser.Email = model.User.Email;
                 serverUser.EmailNotify = model.User.EmailNotify;
                 serverUser.EmailVisible = model.User.EmailVisible;
                 serverUser.Phone = model.User.Phone;
                 serverUser.PhoneNotify = model.User.PhoneNotify;
                 serverUser.PhoneVisible = model.User.PhoneVisible;
+                if (serverUser.CommuteMethod != model.User.CommuteMethod || serverUser.CanDriveIfNeeded != model.User.CanDriveIfNeeded
+                    || serverUser.Seats != model.User.Seats)
+                {
+                    // If there are any UserTripInstances that match the current settings, automatically update them
+                    var minDate = DateTime.UtcNow - ApplicationDbContext.TripInstanceRemovalDelay;
+                    var query = context.UserTripInstances.Include(uti => uti.TripInstance).Where(
+                        uti => uti.UserId == serverUser.Id
+                            && uti.FinalNotificationTime == null
+                            && uti.TripInstance.Date > minDate
+                            && uti.CommuteMethod == serverUser.CommuteMethod
+                            && uti.CanDriveIfNeeded == serverUser.CanDriveIfNeeded
+                            && uti.Seats == serverUser.Seats);
+                    foreach (var userTripInstnace in query)
+                    {
+                        userTripInstnace.CommuteMethod = model.User.CommuteMethod;
+                        userTripInstnace.CanDriveIfNeeded = model.User.CanDriveIfNeeded;
+                        userTripInstnace.Seats = model.User.Seats;
+                    }
+                    // Now update the user
+                    serverUser.CommuteMethod = model.User.CommuteMethod;
+                    serverUser.CanDriveIfNeeded = model.User.CanDriveIfNeeded;
+                    serverUser.Seats = model.User.Seats;
+                }
                 context.SaveChanges();
                 model.User = serverUser;
                 AppUtils.UpdateCachedUser(serverUser);

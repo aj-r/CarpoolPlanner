@@ -7,12 +7,15 @@ using System.Web;
 using System.Web.Mvc;
 using CarpoolPlanner.Model;
 using CarpoolPlanner.ViewModel;
+using log4net;
 
 namespace CarpoolPlanner.Controllers
 {
     [Authorize]
     public class HomeController : CarpoolControllerBase
     {
+        private static readonly ILog log = LogManager.GetLogger(typeof(HomeController));
+
         public ActionResult Index()
         {
             using (var context = ApplicationDbContext.Create())
@@ -59,18 +62,29 @@ namespace CarpoolPlanner.Controllers
                         var clientTripInstance = clientTrip.Instances.FirstOrDefault(tr => tr.Id == serverUserTripInstance.TripInstanceId);
                         if (clientTripInstance == null || !clientTripInstance.UserTripInstances.Contains(user.Id))
                             continue;
+                        if (serverUserTripInstance.TripInstance.Date + ApplicationDbContext.TripInstanceRemovalDelay < DateTime.UtcNow)
+                        {
+                            // Trip instance is in the past. Don't allow the user to update it.
+                            log.Warn(string.Concat("User tried to update UserTripInstance from the past (Id: ", serverUserTripInstance.TripInstanceId, 
+                                ", User ID: ", serverUserTripInstance.UserId));
+                            continue;
+                        }
                         var clientUserTripInstance = clientTripInstance.UserTripInstances[user.Id];
-                        if (clientUserTripInstance.Attending == true && (serverUserTripInstance.Attending != true
-                            || serverUserTripInstance.CommuteMethod != clientUserTripInstance.CommuteMethod
+                        if (serverUserTripInstance.CommuteMethod != clientUserTripInstance.CommuteMethod
                             || serverUserTripInstance.CanDriveIfNeeded != clientUserTripInstance.CanDriveIfNeeded
-                            || serverUserTripInstance.Seats != clientUserTripInstance.Seats))
+                            || serverUserTripInstance.Seats != clientUserTripInstance.Seats)
                         {
                             serverUserTripInstance.CommuteMethod = clientUserTripInstance.CommuteMethod;
                             serverUserTripInstance.CanDriveIfNeeded = clientUserTripInstance.CanDriveIfNeeded;
                             serverUserTripInstance.Seats = clientUserTripInstance.Seats;
                             notifyTripInstance = true;
                             save = true;
-                            if (serverUserTripInstance.Attending != true)
+                        }
+                        if (serverUserTripInstance.Attending != clientUserTripInstance.Attending)
+                        {
+                            notifyTripInstance = true;
+                            save = true;
+                            if (clientUserTripInstance.Attending == true)
                             {
                                 // User wants to attend. Make sure there is space.
                                 if (serverUserTripInstance.ConfirmTime == null)
@@ -93,13 +107,11 @@ namespace CarpoolPlanner.Controllers
                                     }
                                 }
                             }
-                        }
-                        else if (clientUserTripInstance.Attending == false && serverUserTripInstance.Attending != false)
-                        {
-                            serverUserTripInstance.Attending = false;
-                            serverUserTripInstance.ConfirmTime = null;
-                            notifyTripInstance = true;
-                            save = true;
+                            else
+                            {
+                                serverUserTripInstance.Attending = clientUserTripInstance.Attending;
+                                serverUserTripInstance.ConfirmTime = null;
+                            }
                         }
                         if (notifyTripInstance)
                         {

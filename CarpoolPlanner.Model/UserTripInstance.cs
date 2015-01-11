@@ -20,7 +20,7 @@ namespace CarpoolPlanner.Model
                 TripInstance = tripInstance,
                 TripId = tripInstance.TripId,
                 CommuteMethod = user.CommuteMethod,
-                CanDriveIfNeeded = user.CanDriveIfNeeded || user.CommuteMethod == CommuteMethod.Driver,
+                CanDriveIfNeeded = user.CanDriveIfNeeded,
                 Seats = user.Seats
             };
         }
