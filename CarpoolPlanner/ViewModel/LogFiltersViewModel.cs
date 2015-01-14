@@ -16,8 +16,8 @@ namespace CarpoolPlanner.ViewModel
         public string Level { get; set; }
         public DateTime? MinDate { get; set; }
         public DateTime? MaxDate { get; set; }
-        public long? TargetUserId { get; set; }
+        public long? UserId { get; set; }
         public string Logger { get; set; }
-        public string MessageFilter { get; set; }
+        public string Message { get; set; }
     }
 }

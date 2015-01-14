@@ -143,9 +143,15 @@ namespace CarpoolPlanner.NotificationService
             }
             else if (interval >= int.MaxValue)
             {
-                // TODO: timer cannot handle intervals of greater than Int32.MaxValue. Handle this case somehow.
+                log.Debug("Interval is too long for timer. Setting extended timer.");
+                SetNextNotificationTime(DateTime.UtcNow.AddMilliseconds(int.MaxValue - 1), id, dictionary, id2 =>
+                    {
+                        log.Debug("Extended timer elapsed.");
+                        SetNextNotificationTime(time, id2, dictionary, action);
+                    });
                 return;
             }
+            log.Debug("Setting timer to go off at " + time.ToString("r"));
             lock (dictionary)
             {
                 Timer timer;
@@ -154,6 +160,7 @@ namespace CarpoolPlanner.NotificationService
                     timer = new Timer();
                     timer.Elapsed += (sender, e) =>
                     {
+                        log.Debug("Timer elapsed");
                         try
                         {
                             timer.Stop();

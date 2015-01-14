@@ -25,6 +25,7 @@ namespace CarpoolPlanner.Controllers
                 int lastPage = (int)Math.Ceiling((double)count / (double)PageSize);
                 model.Logs = context.Logs.OrderBy(log => log.Date).ToPagedList(lastPage, PageSize);
                 model.Loggers = context.Logs.Select(log => log.Logger).Distinct().ToList();
+                model.Users = new [] { new User { Id = 0, Name = "None" } }.Concat(context.Users).ToList();
             }
             return View(model);
         }
@@ -53,16 +54,18 @@ namespace CarpoolPlanner.Controllers
                     query = query.Where(log => log.Date <= filters.MaxDate.Value);
                 if (!string.IsNullOrEmpty(filters.Level))
                     query = query.Where(log => log.Level == filters.Level);
-                if (filters.TargetUserId.HasValue)
+                if (filters.UserId.HasValue)
                 {
                     // 0 means only logs with no user ID
-                    if (filters.TargetUserId == 0)
+                    if (filters.UserId == 0)
                         query = query.Where(log => log.UserId == null);
                     else
-                        query = query.Where(log => log.UserId == filters.TargetUserId);
+                        query = query.Where(log => log.UserId == filters.UserId);
                 }
                 if (!string.IsNullOrEmpty(filters.Logger))
                     query = query.Where(log => log.Logger == filters.Logger);
+                if (!string.IsNullOrEmpty(filters.Message))
+                    query = query.Where(log => log.Message.Contains(filters.Message));
 
                 logs = query.OrderBy(log => log.Date).Include(log => log.User).ToPagedList(filters.Page, PageSize);
             }

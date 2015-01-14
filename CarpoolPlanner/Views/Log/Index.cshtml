@@ -4,11 +4,27 @@
 }
 @section headScripts{
   <script type="text/javascript">
-    app.controller('logCtrl', function($scope) {
+    app.controller('logCtrl', function($scope, AngularNet) {
       $scope.filter = function() {
         var scope = this;
-        // TODO: it would be nice to not have to submit the loggers array each time. Maybe resturcture the model to make this possible.
-        scope.trySubmit(null, '@Url.Action("Filter")', $scope, 'model');
+        scope.model.filters.page = scope.model.logs.pageNumber;
+        return AngularNet.submitModel(scope.model.filters, '@Url.Action("Filter")')
+          .success(function(result) {
+            if (result.model) {
+              scope.model.logs = result.model;
+            }
+          })
+          .error(function(result) {
+            var message;
+            if (result && result.model) {
+              $scope.logs = result.model;
+              message = result.model.message;
+            } else if (typeof (result) == 'string') {
+              message = result;
+              scope.errorHandler(null, message);
+            }
+            console.error('Error from server: ' + message);
+          });
       }
     });
   </script>
@@ -16,74 +32,103 @@
 
 <h2>Logs</h2>
 
-<div class="row light-separator">
-  <div class="col-md-1">
-    <div class="dropdown">
-      <a class="dropdown-toggle" id="minDate" role="button" data-toggle="dropdown" data-target="#" href="#">
-        <div class="input-group">
-          <input type="text" class="form-control" ng-model="model.minDate" ng-change="filter()"
-                 val-datetime="{ format: 'ddd MMM Do YYYY, h:mm a' }" />
-          <span class="input-group-addon"><i class="glyphicon glyphicon-calendar"></i></span>
-        </div>
-      </a>
-      <ul class="dropdown-menu" role="menu">
-        <datetimepicker ng-model="model.minDate" datetimepicker-config="{ dropdownSelector: '#minDate' }"></datetimepicker>
-      </ul>
-      <a class="dropdown-toggle" id="maxDate" role="button" data-toggle="dropdown" data-target="#" href="#">
-        <div class="input-group">
-          <input type="text" class="form-control" ng-model="model.maxDate" ng-change="filter()"
-                 val-datetime="{ format: 'ddd MMM Do YYYY, h:mm a' }" />
-          <span class="input-group-addon"><i class="glyphicon glyphicon-calendar"></i></span>
-        </div>
-      </a>
-      <ul class="dropdown-menu" role="menu">
-        <datetimepicker ng-model="model.maxDate" datetimepicker-config="{ dropdownSelector: '#maxDate' }"></datetimepicker>
-      </ul>
+<div ng-controller="logCtrl">
+  <div class="form-horizontal">
+    <div class="form-group">
+      <label class="col-sm-2 control-label">From</label>
+      <div class="col-sm-10 dropdown">
+        <a class="dropdown-toggle" id="minDate" role="button" data-toggle="dropdown" data-target="#" href="#">
+          <div class="input-group">
+            <input type="text" class="form-control" ng-model="model.filters.minDate" ng-change="filter()"
+                   val-datetime="{ format: 'ddd MMM Do YYYY, h:mm a' }" />
+            <span class="input-group-addon"><i class="glyphicon glyphicon-calendar"></i></span>
+          </div>
+        </a>
+        <ul class="dropdown-menu" role="menu">
+          <datetimepicker ng-model="model.filters.minDate" datetimepicker-config="{ dropdownSelector: '#minDate' }" ng-change="filter()"></datetimepicker>
+        </ul>
+      </div>
     </div>
-    <h4>Date</h4>
-  </div>
-  <div class="col-md-1">
-    <div>
-      <select ng-model="model.level" class="form-control">
-        <option value="">ALL</option>
-        <option>DEBUG</option>
-        <option>INFO</option>
-        <option>WARN</option>
-        <option>ERROR</option>
-        <option>FATAL</option>
-      </select>
+    <div class="form-group">
+      <label class="col-sm-2 control-label">To</label>
+      <div class="col-sm-10 dropdown">
+        <a class="dropdown-toggle" id="maxDate" role="button" data-toggle="dropdown" data-target="#" href="#">
+          <div class="input-group">
+            <input type="text" class="form-control" ng-model="model.filters.maxDate" ng-change="filter()"
+                   val-datetime="{ format: 'ddd MMM Do YYYY, h:mm a' }" />
+            <span class="input-group-addon"><i class="glyphicon glyphicon-calendar"></i></span>
+          </div>
+        </a>
+        <ul class="dropdown-menu" role="menu">
+          <datetimepicker ng-model="model.filters.maxDate" datetimepicker-config="{ dropdownSelector: '#maxDate' }" ng-change="filter()"></datetimepicker>
+        </ul>
+      </div>
     </div>
-    <h4>Level</h4>
-  </div>
-  <div class="col-md-1">
-    <div>
-      <select ng-model="model.targetUserId" ng-options="user.name for user in model.users track by user.id" ng-change="filter()" class="form-control">
-        <option value="">All</option>
-        <option value="0">None</option>
-      </select>
+    <div class="form-group">
+      <label class="col-sm-2 control-label">Level</label>
+      <div class="col-sm-10">
+        <select ng-model="model.filters.level" class="form-control" ng-change="filter()">
+          <option value="">ALL</option>
+          <option>DEBUG</option>
+          <option>INFO</option>
+          <option>WARN</option>
+          <option>ERROR</option>
+          <option>FATAL</option>
+        </select>
+      </div>
     </div>
-    <h4>User</h4>
-  </div>
-  <div class="col-md-2">
-    <select ng-model="user.id" ng-options="logger in model.loggers" ng-change="filter()" class="form-control">
-      <option value="">All</option>
-    </select>
-    <h4>Logger</h4>
-  </div>
-  <div class="col-md-1"><h4>NDC</h4></div>
-  <div class="col-md-6">
-    <div>
-      <input ng-model="model.messageFilter" ng-change="filter()" class="form-control" />
+    <div class="form-group">
+      <label class="col-sm-2 control-label">User</label>
+      <div class="col-sm-10">
+        <select ng-model="model.filters.userId" ng-options="user.id as user.name for user in model.users" ng-change="filter()" class="form-control">
+          <option value="">All</option>
+        </select>
+      </div>
     </div>
-    <h4>Message</h4>
+    <div class="form-group">
+      <label class="col-sm-2 control-label">Logger</label>
+      <div class="col-sm-10">
+        <select ng-model="model.filters.logger" ng-options="logger for logger in model.loggers" ng-change="filter()" class="form-control">
+          <option value="">All</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="col-sm-2 control-label">Message</label>
+      <div class="col-sm-10">
+        <input ng-model="model.filters.message" ng-change="filter()" class="form-control" />
+      </div>
+    </div>
+    <div>{{ model.logs.firstItemOnPage }}-{{ model.logs.lastItemOnPage }} / {{ model.logs.totalItemCount }}</div>
+    <pagination boundary-links="true" ng-model="model.logs.pageNumber" total-items="model.logs.totalItemCount" items-per-page="model.logs.pageSize" ng-change="filter()"
+                previous-text="&lsaquo;" next-text="&rsaquo;" first-text="&laquo;" last-text="&raquo;" max-size="10"></pagination>
+    <div class="row light-separator">
+      <div class="col-md-1">
+        <h4>Date</h4>
+      </div>
+      <div class="col-md-1">
+        <h4>Level</h4>
+      </div>
+      <div class="col-md-1">
+        <h4>User</h4>
+      </div>
+      <div class="col-md-4">
+        <h4>Logger</h4>
+      </div>
+      <div class="col-md-5">
+        <h4>Message</h4>
+      </div>
+    </div>
   </div>
-</div>
-<div class="row light-separator" style="padding: 10px 0px;" ng-repeat="log in model.logs">
-  <div class="col-md-1">{{ log.date }}</div>
-  <div class="col-md-1">{{ log.level }}</div>
-  <div class="col-md-1">{{ log.user.name }}</div>
-  <div class="col-md-2">{{ log.logger }}</div>
-  <div class="col-md-1">{{ log.ndc }}</div>
-  <div class="col-md-6 preserve-newlines">{{ log.message }}</div>
+  <div class="row light-separator" style="padding: 10px 0px;" ng-repeat="log in model.logs.items">
+    <div class="col-md-1">{{ log.date }}</div>
+    <div class="col-md-1">{{ log.level }}</div>
+    <div class="col-md-1">{{ log.user.name }}</div>
+    <div class="col-md-4">{{ log.logger }}</div>
+    <div class="col-md-5 preserve-newlines">{{ log.message }}</div>
+  </div>
+  <pagination boundary-links="true" ng-model="model.logs.pageNumber" total-items="model.logs.totalItemCount" items-per-page="model.logs.pageSize" ng-change="filter()"
+              previous-text="&lsaquo;" next-text="&rsaquo;" first-text="&laquo;" last-text="&raquo;" max-size="10"></pagination>
+  <div>{{ model.logs.firstItemOnPage }}-{{ model.logs.lastItemOnPage }} / {{ model.logs.totalItemCount }}</div>
 </div>
 <!-- TODO: pager -->

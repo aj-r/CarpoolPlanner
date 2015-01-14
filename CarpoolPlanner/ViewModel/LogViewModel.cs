@@ -15,5 +15,6 @@ namespace CarpoolPlanner.ViewModel
         public IPagedList<Log> Logs { get; set; }
         public LogFiltersViewModel Filters { get; set; }
         public List<string> Loggers { get; set; }
+        public List<User> Users { get; set; }
     }
 }

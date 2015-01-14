@@ -210,6 +210,8 @@ namespace CarpoolPlanner.Controllers
                     serverUser.CanDriveIfNeeded = model.User.CanDriveIfNeeded;
                     serverUser.Seats = model.User.Seats;
                 }
+                if (serverUser.Phone == string.Empty)
+                    serverUser.Phone = null;
                 context.SaveChanges();
                 model.User = serverUser;
                 AppUtils.UpdateCachedUser(serverUser);

@@ -22,6 +22,8 @@ namespace CarpoolPlanner.NotificationService
 
         static void Main(string[] args)
         {
+            var time = TimeSpan.FromMilliseconds(int.MaxValue);
+
             XmlConfigurator.Configure();
 
             if (args.Length >= 1)
