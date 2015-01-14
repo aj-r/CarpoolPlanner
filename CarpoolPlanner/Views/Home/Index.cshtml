@@ -154,6 +154,10 @@
                       <b>Passengers:</b>
                       <span ng-repeat="user in passengers"><br />{{ user.name }}</span>
                     </p>
+                    <p class="col-md-3" ng-show="ownRide.length > 0">
+                      <b>Have own ride:</b>
+                      <span ng-repeat="user in ownRide"><br />{{ user.name }}</span>
+                    </p>
                     <p class="col-md-3" ng-show="waitingList.length > 0">
                       <b>Waiting List:</b>
                       <span ng-repeat="user in waitingList"><br />{{ user.name }}</span>

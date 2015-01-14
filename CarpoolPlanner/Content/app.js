@@ -196,6 +196,7 @@ app.controller('tripInstanceCtrl', ['$scope', function($scope) {
     $scope.passengers = [];
     $scope.waitingList = [];
     $scope.unconfirmed = [];
+    $scope.ownRide = [];
     eachUti($scope.tripInstance.userTripInstances, function(uti) {
       // Skip this instance if the user is not attending the trip
       var user = null;
@@ -212,6 +213,8 @@ app.controller('tripInstanceCtrl', ['$scope', function($scope) {
           $scope.drivers.push(user);
         } else if (uti.commuteMethod == $scope.CommuteMethod.NeedRide) {
           $scope.passengers.push(user);
+        } else {
+          $scope.ownRide.push(user);
         }
       } else if (uti.attending == false && uti.noRoom) {
         $scope.waitingList.push(user);

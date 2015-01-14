@@ -66,6 +66,9 @@ namespace CarpoolPlanner.Model
             var passengers = (from uti in UserTripInstances
                               where uti.Attending == true && uti.CommuteMethod == CommuteMethod.NeedRide && uti.User.Status == UserStatus.Active
                               select uti.User.Name ?? uti.User.Email).ToList();
+            var ownRide = (from uti in UserTripInstances
+                           where uti.Attending == true && uti.CommuteMethod == CommuteMethod.HaveRide && uti.User.Status == UserStatus.Active
+                           select uti.User.Name ?? uti.User.Email).ToList();
             var kickedUsers = (from uti in UserTripInstances
                                where uti.Attending == false && uti.NoRoom && uti.User.Status == UserStatus.Active
                                select uti.User.Name ?? uti.User.Email).ToList();
@@ -85,6 +88,14 @@ namespace CarpoolPlanner.Model
             {
                 sb.Append("\nPassengers:\n");
                 foreach (var userName in passengers)
+                {
+                    sb.Append(userName + "\n");
+                }
+            }
+            if (ownRide.Count > 0)
+            {
+                sb.Append("\nHave own ride:\n");
+                foreach (var userName in ownRide)
                 {
                     sb.Append(userName + "\n");
                 }

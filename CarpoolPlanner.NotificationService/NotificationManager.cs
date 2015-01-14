@@ -356,6 +356,8 @@ namespace CarpoolPlanner.NotificationService
                                             message.Date = minDate;
                                         userTripInstance.ConfirmTime = message.Date;
                                     }
+                                    log.Debug(string.Concat("Changed attendance status from '", userTripInstance.Attending,
+                                        "' to 'true' (user:", userTripInstance.User.Email, ", trip: ", tripInstance.Date.ToString("r"), ")"));
                                     userTripInstance.Attending = true;
                                     if (userTripInstance.CommuteMethod == CommuteMethod.NeedRide && !userTripInstance.CanDriveIfNeeded)
                                     {
@@ -385,6 +387,8 @@ namespace CarpoolPlanner.NotificationService
                                 understood = true;
                                 if (userTripInstance.Attending != false)
                                 {
+                                    log.Debug(string.Concat("Changed attendance status from '", userTripInstance.Attending,
+                                        "' to 'false' (user:", userTripInstance.User.Email, ", trip: ", tripInstance.Date.ToString("r"), ")"));
                                     userTripInstance.Attending = false;
                                     userTripInstance.ConfirmTime = null;
                                     statusChanged = true;
@@ -399,12 +403,16 @@ namespace CarpoolPlanner.NotificationService
                                         userTripInstance.CommuteMethod = CommuteMethod.HaveRide;
                                     else
                                         userTripInstance.CommuteMethod = CommuteMethod.NeedRide;
+                                    log.Debug(string.Concat("Changed commute method from 'Driver' to '", userTripInstance.CommuteMethod,
+                                        "' (user:", userTripInstance.User.Email, ", trip: ", tripInstance.Date.ToString("r"), ")"));
                                     userTripInstance.CanDriveIfNeeded = false;
                                     statusChanged = true;
                                 }
                             }
                             if (!understood)
                             {
+                                log.Warn(string.Concat("Didn't understand message '", messageValue,
+                                    "' (user:", userTripInstance.User.Email, ", trip: ", tripInstance.Date.ToString("r"), ")"));
                                 // TODO: don't hard-code the url
                                 SendSMS(userTripInstance.User, "Sorry, I didn't understand that.\nFor more details, see https://climbing.pororeplays.com/Notifications.aspx");
                             }

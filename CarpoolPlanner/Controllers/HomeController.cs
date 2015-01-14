@@ -66,7 +66,7 @@ namespace CarpoolPlanner.Controllers
                         {
                             // Trip instance is in the past. Don't allow the user to update it.
                             log.Warn(string.Concat("User tried to update UserTripInstance from the past (Id: ", serverUserTripInstance.TripInstanceId, 
-                                ", User ID: ", serverUserTripInstance.UserId));
+                                ", User ID: ", serverUserTripInstance.UserId, ")"));
                             continue;
                         }
                         var clientUserTripInstance = clientTripInstance.UserTripInstances[user.Id];
@@ -74,6 +74,7 @@ namespace CarpoolPlanner.Controllers
                             || serverUserTripInstance.CanDriveIfNeeded != clientUserTripInstance.CanDriveIfNeeded
                             || serverUserTripInstance.Seats != clientUserTripInstance.Seats)
                         {
+                            log.Debug(string.Concat("Updated commute method (", serverUserTripInstance.TripInstance.Date.ToString("r"), ")"));
                             serverUserTripInstance.CommuteMethod = clientUserTripInstance.CommuteMethod;
                             serverUserTripInstance.CanDriveIfNeeded = clientUserTripInstance.CanDriveIfNeeded;
                             serverUserTripInstance.Seats = clientUserTripInstance.Seats;
@@ -82,6 +83,8 @@ namespace CarpoolPlanner.Controllers
                         }
                         if (serverUserTripInstance.Attending != clientUserTripInstance.Attending)
                         {
+                            log.Debug(string.Concat("Changed attendance status from '", serverUserTripInstance.Attending,
+                                "' to '", clientUserTripInstance.Attending, "' (", serverUserTripInstance.TripInstance.Date.ToString("r"), ")"));
                             notifyTripInstance = true;
                             save = true;
                             if (clientUserTripInstance.Attending == true)
