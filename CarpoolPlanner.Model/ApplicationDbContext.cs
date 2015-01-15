@@ -157,6 +157,7 @@ namespace CarpoolPlanner.Model
             foreach (var userTripRecurrence in UserTripRecurrences.Include(utr => utr.User).Where(utr => utr.TripRecurrenceId == recurrence.Id))
             {
                 var userTripInstance = UserTripInstance.Create(userTripRecurrence.User, tripInstance);
+                userTripInstance.Attending = userTripRecurrence.Attending ? (bool?)null : true;
                 UserTripInstances.Add(userTripInstance);
             }
             SaveChanges();

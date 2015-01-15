@@ -119,7 +119,7 @@ namespace CarpoolPlanner.Controllers
         }
 
         [HttpPost]
-        public ActionResult CreateTrip(CreateTripViewModel model)
+        public ActionResult CreateTrip(SaveTripViewModel model)
         {
             if (!AppUtils.IsUserAdmin())
             {
@@ -139,13 +139,54 @@ namespace CarpoolPlanner.Controllers
             {
                 context.Trips.Add(model.Trip);
                 context.SaveChanges();
-                model.CreatedTrip = model.Trip;
-                if (EnsureUserTrips(context, model.CreatedTrip, AppUtils.CurrentUser))
+                model.SavedTrip = model.Trip;
+                if (EnsureUserTrips(context, model.SavedTrip, AppUtils.CurrentUser))
                     context.SaveChanges();
             }
             model.Trip = new Trip();
             model.Trip.Recurrences.Add(new TripRecurrence());
             model.SetMessage("Created successfully.", MessageType.Success);
+            return Ng(model);
+        }
+
+        [HttpPost]
+        public ActionResult UpdateTrip(SaveTripViewModel model)
+        {
+            if (!AppUtils.IsUserAdmin())
+            {
+                Response.StatusCode = 403;
+                model.SetMessage("You are not authorized to save trips.", MessageType.Error);
+                log.Warn(model.Message);
+                return Ng(model);
+            }
+            if (model.Trip == null)
+            {
+                Response.StatusCode = 400;
+                model.SetMessage("Trip not specified.", MessageType.Error);
+                log.Warn(model.Message);
+                return Ng(model);
+            }
+            using (var context = ApplicationDbContext.Create())
+            {
+                var serverTrip = context.Trips.Find(model.Trip.Id);
+                if (serverTrip == null)
+                {
+                    Response.StatusCode = 400;
+                    model.SetMessage("Trip not found. It may have been deleted by another user.", MessageType.Error);
+                    log.Warn(model.Message + " Trip ID: " + model.Trip.Id);
+                    return Ng(model);
+                }
+                serverTrip.Location = model.Trip.Location;
+                serverTrip.Name = model.Trip.Name;
+                //serverTrip.Recurrences = model.Trip.Recurrences;
+                serverTrip.Status = model.Trip.Status;
+                context.SaveChanges();
+                model.SavedTrip = serverTrip;
+                if (EnsureUserTrips(context, model.SavedTrip, AppUtils.CurrentUser))
+                    context.SaveChanges();
+            }
+            model.Trip = null;
+            model.SetMessage("Saved successfully.", MessageType.Success);
             return Ng(model);
         }
 

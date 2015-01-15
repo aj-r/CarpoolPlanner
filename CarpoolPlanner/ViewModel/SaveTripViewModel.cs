@@ -6,9 +6,9 @@ using CarpoolPlanner.Model;
 
 namespace CarpoolPlanner.ViewModel
 {
-    public class CreateTripViewModel : ViewModelBase
+    public class SaveTripViewModel : ViewModelBase
     {
         public Trip Trip { get; set; }
-        public Trip CreatedTrip { get; set; }
+        public Trip SavedTrip { get; set; }
     }
 }

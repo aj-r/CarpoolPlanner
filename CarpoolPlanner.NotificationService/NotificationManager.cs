@@ -433,6 +433,7 @@ namespace CarpoolPlanner.NotificationService
                 }
                 // Wait for tasks to finish before disposing the DB context.
                 await Task.WhenAll(tasks).ConfigureAwait(false);
+                log.Debug("Received messages from all users.");
             }
         }
 
@@ -492,7 +493,7 @@ namespace CarpoolPlanner.NotificationService
                         timer.Elapsed += (sender, e) => ReceiveMessages(tripInstanceId);
                         receiveMessageTimers.Add(tripInstanceId, timer);
                     }
-                    timer.Interval = TimeSpan.FromSeconds(30).TotalMilliseconds;
+                    timer.Interval = 30000.0;
                     timer.Start();
                 }
                 context.SaveChanges();
@@ -575,6 +576,7 @@ namespace CarpoolPlanner.NotificationService
                     Timer timer;
                     if (receiveMessageTimers.TryGetValue(oldTripInstanceId, out timer))
                     {
+                        log.Debug(string.Concat("Stopping message receive timer (trip instance: ", oldTripInstanceId, ")"));
                         timer.Stop();
                         receiveMessageTimers.Remove(oldTripInstanceId);
                     }

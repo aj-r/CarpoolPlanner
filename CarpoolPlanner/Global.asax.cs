@@ -58,11 +58,6 @@ namespace CarpoolPlanner
                 if (ex != null)
                 {
                     log.Error(ex.ToString());
-                    while (ex.InnerException != null)
-                    {
-                        ex = ex.InnerException;
-                        log.Error("Inner Exception: " + ex.ToString());
-                    }
                 }
                 else
                 {

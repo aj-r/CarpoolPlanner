@@ -159,7 +159,7 @@
       <DesignTime>True</DesignTime>
     </Compile>
     <Compile Include="HttpRequestExtensions.cs" />
-    <Compile Include="ViewModel\CreateTripViewModel.cs" />
+    <Compile Include="ViewModel\SaveTripViewModel.cs" />
     <Compile Include="ViewModel\CreateUserViewModel.cs" />
     <Compile Include="ViewModel\LogFiltersViewModel.cs" />
     <Compile Include="ViewModel\LogViewModel.cs" />
@@ -203,6 +203,7 @@
     <Content Include="Views\User\Manage.cshtml" />
     <Content Include="Views\Log\Index.cshtml" />
     <Content Include="Views\Shared\EmailInput.cshtml" />
+    <Content Include="TripEditor.html" />
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>

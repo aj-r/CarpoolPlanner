@@ -13,9 +13,10 @@
     @(Html.JSClass<TripRecurrence>())
     var search = $location.search();
     $scope.justRegistered = search.justRegistered == 'true';
+    $scope.editModel = {};
     $scope.saveTrips = function() {
       var scope = this;
-      scope.trySubmit(scope.tripRecurrenceForm, '@Url.Action("Index", "Trips")', $scope.model, 'tripsModel', function() {
+      scope.trySubmit(scope.tripRecurrenceForm, '@Url.Action("Index")', $scope.model, 'tripsModel', function() {
         $scope.model.tripsModel.message = 'Saving...';
         $scope.model.tripsModel.messageType = $scope.MessageType.Info;
         $scope.model.createModel.message = '';
@@ -28,20 +29,50 @@
     };
     $scope.createTrip = function() {
       var form = this.createTripForm;
-      this.trySubmit(form, '@Url.Action("CreateTrip", "Trips")', $scope.model, 'createModel', function() {
+      this.trySubmit(form, '@Url.Action("CreateTrip")', $scope.model, 'createModel', function() {
         $scope.model.createModel.message = 'Creating...';
         $scope.model.createModel.messageType = $scope.MessageType.Info;
         $scope.model.tripsModel.message = '';
       }).success(function(result) {
         if (result.model.messageType === $scope.MessageType.Success) {
           // Add the created trip to the list
-          $scope.model.tripsModel.trips.push(result.model.createdTrip);
+          $scope.model.tripsModel.trips.push(result.model.savedTrip);
           // If the trip was created successfully, treat the create trip like a new form
           // (so pretend it was never submitted, otherwise errors will appear)
           form.$setPristine();
           form.$setUntouched();
         }
-      })
+      });
+    };
+    $scope.editTrip = function(index) {
+      $scope.editModel.trip = angular.copy(this.model.tripsModel.trips[index]);
+      $scope.editModel.originalName = $scope.editModel.trip.name;
+    };
+    $scope.cancelEditTrip = function() {
+      $scope.editModel.trip = null;
+    };
+    $scope.updateTrip = function() {
+      var form = this.editTripForm;
+      this.trySubmit(form, '@Url.Action("UpdateTrip")', $scope, 'editModel', function() {
+        $scope.editModel.message = 'Creating...';
+        $scope.editModel.messageType = $scope.MessageType.Info;
+        $scope.model.tripsModel.message = '';
+        $scope.model.createModel.message = '';
+      }).success(function(result) {
+        if (result.model.messageType === $scope.MessageType.Success) {
+          // Update created trip in the list
+          for(var i = 0; i < $scope.model.tripsModel.trips; i++){
+            if ($scope.model.tripsModel.trips[i].id == result.savedTrip.id){
+              $scope.model.tripsModel.trips[i] = result.savedTrip.id;
+              break;
+            }
+          }
+          // If the trip was created successfully, treat the create trip like a new form
+          // (so pretend it was never submitted, otherwise errors will appear)
+          form.$setPristine();
+          form.$setUntouched();
+        }
+      });
     };
     $scope.deleteTrip = function(index) {
       var scope = this;
@@ -51,7 +82,7 @@
 
       scope.model.tripsModel.message = 'Deleting...';
       scope.model.tripsModel.messageType = $scope.MessageType.Info;
-      $http.delete('@Url.Action("DeleteTrip", "Trips")/' + trip.id).success(function(result) {
+      $http.delete('@Url.Action("DeleteTrip")/' + trip.id).success(function(result) {
         if (result && result.model) {
           scope.model.tripsModel.message = result.model.message;
           scope.model.tripsModel.messageType = result.model.messageType;
@@ -68,13 +99,26 @@
         console.error('Error from server: ' + message);
       });
     };
-    $scope.addTripRecurrence = function(trip) {
-      trip.recurrences.push(new TripRecurrence());
-    };
-    $scope.removeTripRecurrence = function(trip, index) {
-      trip.recurrences.splice(index, 1);
-    };
   });
+
+  app.directive('tripEditor', function() {
+    return {
+      restrict: 'E',
+      scope: {
+        trip: '='
+      },
+      templateUrl: '@Url.Content("~/TripEditor.html")',
+      link: function(scope, elem, attr) {
+        scope.addTripRecurrence = function(trip) {
+          trip.recurrences.push(new TripRecurrence());
+        };
+        scope.removeTripRecurrence = function(trip, index) {
+          trip.recurrences.splice(index, 1);
+        };
+        scope.tripRecurrenceToString = scope.$parent.tripRecurrenceToString;
+      }
+    };
+  })
 </script>
 }
 
@@ -105,7 +149,7 @@
         @if (AppUtils.CurrentUser.IsAdmin)
         {
           <div class="edit-buttons">
-            <a href="javascript:;">Edit</a>
+            <a href="javascript:;" ng-click="editTrip($index)">Edit</a>
             &nbsp;&nbsp;
             <a href="javascript:;" ng-click="deleteTrip($index)">Delete</a>
           </div>
@@ -131,83 +175,25 @@
     </form>
     @if (AppUtils.CurrentUser.IsAdmin)
     {
+      <div ng-show="editModel.trip">
+        <hr />
+        <h2>Edit Carpool - {{ editModel.originalName }}</h2>
+        <form method="post" name="editTripForm" ng-submit="updateTrip()" style="max-width: 700px;" novalidate warn-if-dirty focus-first-invalid>
+          <trip-editor trip="editModel.trip"></trip-editor>
+          <div class="form-group">
+            <input type="submit" value="Save" class="btn btn-default" style="margin-right: 10px;" />
+            <input type="button" value="Cancel" class="btn" ng-click="cancelEditTrip()" />
+          </div>
+          <div class="form-group">
+            <cp-message model="editModel"></cp-message>
+            <val-summary></val-summary>
+          </div>
+        </form>
+      </div>
       <hr />
       <h2>Create New Carpool</h2>
       <form method="post" name="createTripForm" ng-submit="createTrip()" style="max-width: 700px;" novalidate warn-if-dirty focus-first-invalid>
-        <div class="form-horizontal">
-          <div class="form-group">
-            <span class="control-label col-sm-3">Name</span>
-            <div class="col-sm-9">
-              <input type="text" ng-model="model.createModel.trip.name" class="form-control" val-friendly-name="Name" required />
-            </div>
-          </div>
-          <div class="form-group">
-            <span class="control-label col-sm-3">Meeting Location</span>
-            <div class="col-sm-9">
-              <input type="text" ng-model="model.createModel.trip.location" class="form-control" />
-            </div>
-          </div>
-        </div>
-        <div class="form-panel">
-          <h3 style="margin-top:0px;">Recurrence:</h3>
-          <div class="form-horizontal" ng-repeat="tripRecurrence in model.createModel.trip.recurrences">
-            <div><a ng-click="removeTripRecurrence(model.createModel.trip, $index)" href="javascript:;">Delete Recurrence</a></div>
-            <div class="form-group">
-              <span class="control-label col-sm-2">Every</span>
-              <div class="col-sm-2">
-                <input type="number" ng-model="tripRecurrence.every" min="1" class="form-control" val-friendly-name="Every" required />
-              </div>
-              <div class="col-sm-8">
-                <select class="form-control" ng-model="tripRecurrence.type" val-number>
-                  <option value="5">day{{ tripRecurrence.every == 1 ? '' : 's' }}</option>
-                  <option value="4">week{{ tripRecurrence.every == 1 ? '' : 's' }}</option>
-                  <option value="2">month{{ tripRecurrence.every == 1 ? '' : 's' }}</option>
-                  <option value="3">month{{ tripRecurrence.every == 1 ? '' : 's' }} (by day of week)</option>
-                  <option value="0">year{{ tripRecurrence.every == 1 ? '' : 's' }}</option>
-                  <option value="1">year{{ tripRecurrence.every == 1 ? '' : 's' }} (by day of week)</option>
-                </select>
-              </div>
-            </div>
-            <div class="form-group">
-              <span class="control-label col-sm-2">Starting on</span>
-              <div class="col-sm-10">
-                <!-- TODO: use ui-bootstrap datepicker and timepicker and get rid of this component. -->
-                <div class="dropdown">
-                  <a class="dropdown-toggle" id="dropdown1" role="button" data-toggle="dropdown" data-target="#" href="#">
-                    <div class="input-group">
-                      <input type="text" class="form-control" ng-model="tripRecurrence.start" val-friendly-name="Start Date"
-                             val-datetime="{ format: 'ddd MMM Do YYYY, h:mm a' }" required />
-                      <span class="input-group-addon"><i class="glyphicon glyphicon-calendar"></i></span>
-                    </div>
-                  </a>
-                  <ul class="dropdown-menu" role="menu">
-                    <datetimepicker ng-model="tripRecurrence.start" datetimepicker-config="{ dropdownSelector: '#dropdown1' }"></datetimepicker>
-                  </ul>
-                </div>
-              </div>
-            </div>
-            <div class="form-group">
-              <span class="control-label col-sm-2">Ending on</span>
-              <div class="col-sm-10">
-                <div class="dropdown">
-                  <a class="dropdown-toggle" id="dropdown2" role="button" data-toggle="dropdown" data-target="#" href="#">
-                    <div class="input-group">
-                      <input type="text" class="form-control" ng-model="tripRecurrence.end" val-friendly-name="End Date"
-                             val-datetime="{ format: 'ddd MMM Do YYYY, h:mm a' }" />
-                      <span class="input-group-addon"><i class="glyphicon glyphicon-calendar"></i></span>
-                    </div>
-                  </a>
-                  <ul class="dropdown-menu" role="menu">
-                    <datetimepicker ng-model="tripRecurrence.end" datetimepicker-config="{ dropdownSelector: '#dropdown2' }"></datetimepicker>
-                  </ul>
-                </div>
-              </div>
-            </div>
-            <div><b>Preview:</b> {{ tripRecurrenceToString(tripRecurrence) }}</div>
-            <hr />
-          </div>
-          <a ng-click="addTripRecurrence(model.createModel.trip)" href="javascript:;">Add Recurrence</a>
-        </div>
+        <trip-editor trip="model.createModel.trip"></trip-editor>
         <div class="form-group">
           <input type="submit" value="Create" class="btn btn-default" />
         </div>

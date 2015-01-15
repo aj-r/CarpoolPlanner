@@ -24,7 +24,7 @@ namespace CarpoolPlanner.Controllers
                 var count = context.Logs.Count();
                 int lastPage = (int)Math.Ceiling((double)count / (double)PageSize);
                 model.Logs = context.Logs.OrderBy(log => log.Date).ToPagedList(lastPage, PageSize);
-                model.Loggers = context.Logs.Select(log => log.Logger).Distinct().ToList();
+                model.Loggers = context.Logs.Select(log => log.Logger).Distinct().OrderBy(logger => logger).ToList();
                 model.Users = new [] { new User { Id = 0, Name = "None" } }.Concat(context.Users).ToList();
             }
             return View(model);

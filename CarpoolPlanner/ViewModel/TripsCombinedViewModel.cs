@@ -11,13 +11,13 @@ namespace CarpoolPlanner.ViewModel
         public TripsCombinedViewModel()
         {
             TripsModel = new TripsViewModel();
-            CreateModel = new CreateTripViewModel();
+            CreateModel = new SaveTripViewModel();
             CreateModel.Trip = new Trip();
             CreateModel.Trip.Recurrences.Add(new TripRecurrence());
         }
 
         public TripsViewModel TripsModel { get; set; }
 
-        public CreateTripViewModel CreateModel { get; set; }
+        public SaveTripViewModel CreateModel { get; set; }
     }
 }
