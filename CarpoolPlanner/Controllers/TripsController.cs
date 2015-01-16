@@ -182,10 +182,9 @@ namespace CarpoolPlanner.Controllers
                 serverTrip.Name = model.Trip.Name;
                 if (model.Trip.Recurrences == null)
                 {
+                    // TODO: delete related instances too
                     foreach (var recurrence in serverTrip.Recurrences.ToList())
                         context.TripRecurrences.Remove(recurrence);
-                    //serverTrip.Recurrences.Clear();
-                    // TODO: see if this removes from the collection when saving.
                 }
                 else
                 {
@@ -195,6 +194,7 @@ namespace CarpoolPlanner.Controllers
                         if (clientTripRecurrence == null)
                         {
                             // Delete recurrence
+                            // TODO: delete related instances too
                             context.TripRecurrences.Remove(serverTripRecurrence);
                         }
                         else
