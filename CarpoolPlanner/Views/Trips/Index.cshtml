@@ -9,7 +9,7 @@
 @section headScripts{
 <script type="text/javascript">
 
-  var tripCtrl = app.controller('tripCtrl', function($scope, $http, $location) {
+  var tripCtrl = app.controller('tripCtrl', function($scope, $http, $timeout, $location) {
     @(Html.JSClass<TripRecurrence>())
     var search = $location.search();
     $scope.justRegistered = search.justRegistered == 'true';
@@ -45,32 +45,78 @@
       });
     };
     $scope.editTrip = function(index) {
-      $scope.editModel.trip = angular.copy(this.model.tripsModel.trips[index]);
-      $scope.editModel.originalName = $scope.editModel.trip.name;
+      var scope = this;
+      $scope.editModel.message = '';
+      $scope.model.tripsModel.message = '';
+      var trip = scope.model.tripsModel.trips[index];
+      if (trip == null)
+        return;
+      var form = scope.editTripForm;
+      var sameTrip = false;
+      if (form.$dirty && scope.editModel && scope.editModel.trip) {
+        // User is currently editing a trip. Do some checks before discarding unsaved data.
+        if (scope.editModel.trip.id == trip.id) {
+          sameTrip = true;
+        } else {
+          if (!confirm('You are currently editing "' + scope.editModel.trip.name + '". Do you want to discard those edits?'))
+            return;
+          form.$setPristine();
+          form.$setUntouched();
+        }
+      }
+      if (!sameTrip) {
+        $scope.editModel.trip = angular.copy(trip);
+        $scope.editModel.originalName = $scope.editModel.trip.name;
+      }
+      $timeout(function() {
+        // Focus the first field in the form
+        $('#editTripForm input[type=text]').first().focus();
+        // Scroll down to the form
+        var formElem = $("#editTripForm");
+        var offset = formElem.offset();
+        var navHeight = $(".navbar").height()
+        var newTop = offset.top - navHeight;
+        $('html, body').animate({
+          scrollTop: newTop
+        }, 500);
+      }, 1);
     };
     $scope.cancelEditTrip = function() {
+      $scope.model.tripsModel.message = '';
+      var form = this.editTripForm;
       $scope.editModel.trip = null;
+      form.$setPristine();
+      form.$setUntouched();
+      // Scroll back to the top
+      $('html, body').scrollTop(0);
     };
     $scope.updateTrip = function() {
-      var form = this.editTripForm;
-      this.trySubmit(form, '@Url.Action("UpdateTrip")', $scope, 'editModel', function() {
-        $scope.editModel.message = 'Creating...';
+      var scope = this;
+      var form = scope.editTripForm;
+      scope.trySubmit(form, '@Url.Action("UpdateTrip")', $scope, 'editModel', function() {
+        $scope.editModel.message = 'Saving...';
         $scope.editModel.messageType = $scope.MessageType.Info;
         $scope.model.tripsModel.message = '';
         $scope.model.createModel.message = '';
       }).success(function(result) {
-        if (result.model.messageType === $scope.MessageType.Success) {
-          // Update created trip in the list
-          for(var i = 0; i < $scope.model.tripsModel.trips; i++){
-            if ($scope.model.tripsModel.trips[i].id == result.savedTrip.id){
-              $scope.model.tripsModel.trips[i] = result.savedTrip.id;
-              break;
+        if (result && result.model) {
+          scope.model.tripsModel.message = result.model.message;
+          scope.model.tripsModel.messageType = result.model.messageType;
+          if (result.model.messageType === $scope.MessageType.Success) {
+            // Update created trip in the list
+            for (var i = 0; i < $scope.model.tripsModel.trips.length; i++) {
+              if ($scope.model.tripsModel.trips[i].id == result.model.savedTrip.id) {
+                $scope.model.tripsModel.trips[i] = result.model.savedTrip;
+                break;
+              }
             }
+            // If the trip was created successfully, treat the create trip like a new form
+            // (so pretend it was never submitted, otherwise errors will appear)
+            form.$setPristine();
+            form.$setUntouched();
+            // Scroll back to the top
+            $('html, body').scrollTop(0);
           }
-          // If the trip was created successfully, treat the create trip like a new form
-          // (so pretend it was never submitted, otherwise errors will appear)
-          form.$setPristine();
-          form.$setUntouched();
         }
       });
     };
@@ -149,17 +195,16 @@
         @if (AppUtils.CurrentUser.IsAdmin)
         {
           <div class="edit-buttons">
-            <a href="javascript:;" ng-click="editTrip($index)">Edit</a>
-            &nbsp;&nbsp;
-            <a href="javascript:;" ng-click="deleteTrip($index)">Delete</a>
+            <input type="button" value="Edit" ng-click="editTrip($index)" class="btn" style="margin-top: -10px; margin-right: 10px;" />
+            <input type="button" value="Delete" ng-click="deleteTrip($index)" class="btn" style="margin-top: -10px;" />
           </div>
         }
         <div class="indent">
           <div ng-repeat="tripRecurrence in trip.recurrences" ng-init="userTripRecurrence = tripRecurrence.userTripRecurrences[user.id]" class="checkbox">
             <label>
               <input type="checkbox"
-                     ng-model="userTripRecurrence.attending"
-                     ch-hierarchy="attending-{{ trip.id + '.' + tripRecurrence.id }}" />
+               ng-model="userTripRecurrence.attending"
+               ch-hierarchy="attending-{{ trip.id + '.' + tripRecurrence.id }}" />
               {{ tripRecurrenceToString(tripRecurrence) }}
             </label>
           </div>
@@ -177,8 +222,8 @@
     {
       <div ng-show="editModel.trip">
         <hr />
-        <h2>Edit Carpool - {{ editModel.originalName }}</h2>
-        <form method="post" name="editTripForm" ng-submit="updateTrip()" style="max-width: 700px;" novalidate warn-if-dirty focus-first-invalid>
+        <form method="post" name="editTripForm" id="editTripForm" ng-submit="updateTrip()" style="max-width: 700px;" novalidate warn-if-dirty focus-first-invalid>
+          <h2>Edit Carpool - {{ editModel.originalName }}</h2>
           <trip-editor trip="editModel.trip"></trip-editor>
           <div class="form-group">
             <input type="submit" value="Save" class="btn btn-default" style="margin-right: 10px;" />
@@ -191,8 +236,8 @@
         </form>
       </div>
       <hr />
-      <h2>Create New Carpool</h2>
       <form method="post" name="createTripForm" ng-submit="createTrip()" style="max-width: 700px;" novalidate warn-if-dirty focus-first-invalid>
+        <h2>Create New Carpool</h2>
         <trip-editor trip="model.createModel.trip"></trip-editor>
         <div class="form-group">
           <input type="submit" value="Create" class="btn btn-default" />

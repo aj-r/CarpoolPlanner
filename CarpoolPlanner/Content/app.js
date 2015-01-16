@@ -116,7 +116,11 @@ app.controller('baseCtrl', ['$scope', '$q', '$window', 'AngularNet', 'Validation
         s += start.format('dddd');
         break;
       case RecurrenceType.Daily:
-        s += 'Every day';
+        s += 'Every ';
+        if (tr.every > 1) {
+          s += tr.every + $scope.getSuffix(tr.every) + ' ';
+        }
+        s += 'day';
         break;
     }
     s += ' at ' + start.format('h:mm a');

@@ -152,7 +152,8 @@ namespace CarpoolPlanner.Controllers
         [HttpPost]
         public ActionResult UpdateTrip(SaveTripViewModel model)
         {
-            if (!AppUtils.IsUserAdmin())
+            var user = AppUtils.CurrentUser;
+            if (user == null || !user.IsAdmin)
             {
                 Response.StatusCode = 403;
                 model.SetMessage("You are not authorized to save trips.", MessageType.Error);
@@ -168,7 +169,8 @@ namespace CarpoolPlanner.Controllers
             }
             using (var context = ApplicationDbContext.Create())
             {
-                var serverTrip = context.Trips.Find(model.Trip.Id);
+                var serverTrip = context.Trips.Include(t => t.Recurrences).FirstOrDefault(t => t.Id == model.Trip.Id);
+                context.UserTrips.Where(ut => ut.TripId == serverTrip.Id && ut.UserId == user.Id).Include(ut => ut.Recurrences).ToList();
                 if (serverTrip == null)
                 {
                     Response.StatusCode = 400;
@@ -178,11 +180,57 @@ namespace CarpoolPlanner.Controllers
                 }
                 serverTrip.Location = model.Trip.Location;
                 serverTrip.Name = model.Trip.Name;
-                //serverTrip.Recurrences = model.Trip.Recurrences;
+                if (model.Trip.Recurrences == null)
+                {
+                    foreach (var recurrence in serverTrip.Recurrences.ToList())
+                        context.TripRecurrences.Remove(recurrence);
+                    //serverTrip.Recurrences.Clear();
+                    // TODO: see if this removes from the collection when saving.
+                }
+                else
+                {
+                    foreach (var serverTripRecurrence in serverTrip.Recurrences.ToList())
+                    {
+                        var clientTripRecurrence = model.Trip.Recurrences.FirstOrDefault(tr => tr.Id == serverTripRecurrence.Id);
+                        if (clientTripRecurrence == null)
+                        {
+                            // Delete recurrence
+                            context.TripRecurrences.Remove(serverTripRecurrence);
+                        }
+                        else
+                        {
+                            // Modify existing recurrence
+                            serverTripRecurrence.End = clientTripRecurrence.End;
+                            if (serverTripRecurrence.Every != clientTripRecurrence.Every
+                                || serverTripRecurrence.Type != clientTripRecurrence.Type
+                                || serverTripRecurrence.Start != clientTripRecurrence.Start)
+                            {
+                                // Also move the next instance of this recurrence if drivers have not been picked.
+                                var instance = context.GetNextTripInstance(serverTripRecurrence, ApplicationDbContext.TripInstanceRemovalDelay);
+                                serverTripRecurrence.Every = clientTripRecurrence.Every;
+                                serverTripRecurrence.Type = clientTripRecurrence.Type;
+                                serverTripRecurrence.Start = clientTripRecurrence.Start;
+                                if (instance != null && !instance.DriversPicked)
+                                {
+                                    var nextDate = serverTripRecurrence.GetNextInstanceDate(DateTime.UtcNow - ApplicationDbContext.TripInstanceRemovalDelay);
+                                    if (nextDate.HasValue)
+                                        instance.Date = nextDate.Value;
+                                    else
+                                        context.TripInstances.Remove(instance);
+                                }
+                            }
+                        }
+                    }
+                    foreach (var clientTripRecurrence in model.Trip.Recurrences.Where(t1 => serverTrip.Recurrences.All(t2 => t1.Id != t2.Id)))
+                    {
+                        // Create new recurrence
+                        serverTrip.Recurrences.Add(clientTripRecurrence);
+                    }
+                }
                 serverTrip.Status = model.Trip.Status;
                 context.SaveChanges();
                 model.SavedTrip = serverTrip;
-                if (EnsureUserTrips(context, model.SavedTrip, AppUtils.CurrentUser))
+                if (EnsureUserTrips(context, model.SavedTrip, user))
                     context.SaveChanges();
             }
             model.Trip = null;
@@ -212,7 +260,7 @@ namespace CarpoolPlanner.Controllers
                 }
                 else
                 {
-                    model.SetMessage("Trip does not exist. It may have been deleted by another user..", MessageType.Error);
+                    model.SetMessage("Trip does not exist. It may have been deleted by another user.", MessageType.Error);
                 }
             }
             return Ng(model);
