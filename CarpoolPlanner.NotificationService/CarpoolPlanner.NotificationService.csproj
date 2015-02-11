@@ -67,12 +67,6 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="App.config" />
-    <Content Include="App.Debug.config" >
-      <DependentUpon>App.config</DependentUpon>
-    </Content>
-    <Content Include="App.Release.config" >
-      <DependentUpon>App.config</DependentUpon>
-    </Content>
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
@@ -97,16 +91,4 @@
   <Target Name="AfterBuild">
   </Target>
   -->
-  <UsingTask TaskName="TransformXml" AssemblyFile="$(MSBuildExtensionsPath)\Microsoft\VisualStudio\v12.0\Web\Microsoft.Web.Publishing.Tasks.dll" />
-  <Target Name="AfterCompile" Condition="exists('app.$(Configuration).config')">
-    <!-- Generate transformed app config in the intermediate directory -->
-    <TransformXml Source="app.config" Destination="$(IntermediateOutputPath)$(TargetFileName).config" Transform="app.$(Configuration).config" />
-    <!-- Force build process to use the transformed configuration file from now on. -->
-    <ItemGroup>
-      <AppConfigWithTargetPath Remove="app.config" />
-      <AppConfigWithTargetPath Include="$(IntermediateOutputPath)$(TargetFileName).config">
-        <TargetPath>$(TargetFileName).config</TargetPath>
-      </AppConfigWithTargetPath>
-    </ItemGroup>
-  </Target>
 </Project>

@@ -22,8 +22,6 @@ namespace CarpoolPlanner.NotificationService
 
         static void Main(string[] args)
         {
-            var time = TimeSpan.FromMilliseconds(int.MaxValue);
-
             XmlConfigurator.Configure();
 
             if (args.Length >= 1)
@@ -106,7 +104,6 @@ namespace CarpoolPlanner.NotificationService
             log.Error(ex.ToString());
             if (Verbose)
                 Console.Error.WriteLine(ex.ToString());
-            // TODO: notify admin
         }
     }
 }

@@ -60,7 +60,7 @@ namespace CarpoolPlanner.NotificationService
             finalAdvanceNotificationTime = ParseHours(ConfigurationManager.AppSettings["FinalAdvanceNotificationTime"]);
         }
 
-        public void Init()
+        public async void Init()
         {
             const int maxRetryCount = 20;
             using (var context = ApplicationDbContext.Create())
@@ -83,6 +83,9 @@ namespace CarpoolPlanner.NotificationService
                         retryCount++;
                     }
                 } while (!success && retryCount < maxRetryCount);
+                await client.Login();
+                if (Program.Verbose)
+                    Console.WriteLine("Logged in.");
                 do
                 {
                     try
@@ -92,7 +95,7 @@ namespace CarpoolPlanner.NotificationService
                         {
                             var tripInstance = context.GetNextTripInstance(tripRecurrence, ApplicationDbContext.TripInstanceRemovalDelay);
                             if (tripInstance != null)
-                                SetNextNotificationTimes(tripInstance, tripRecurrence.Id);
+                                await SetNextNotificationTimes(tripInstance, tripRecurrence.Id).ConfigureAwait(false);
                         }
                     }
                     catch (Exception ex)
@@ -104,7 +107,7 @@ namespace CarpoolPlanner.NotificationService
             }
         }
 
-        public void SetNextNotificationTimes(TripInstance tripInstance, long tripRecurrenceId)
+        public async Task SetNextNotificationTimes(TripInstance tripInstance, long tripRecurrenceId)
         {
             if (tripInstance == null)
                 return;
@@ -112,28 +115,32 @@ namespace CarpoolPlanner.NotificationService
             var initialTime = tripInstance.Date - initialAdvanceNotificationTime;
             var reminderTime = tripInstance.Date - reminderAdvanceNotificationTime;
             var finalTime = tripInstance.Date - finalAdvanceNotificationTime;
+            // If the initial notification has already been sent, make sure to receive messages before sending further notifications.
+            if (DateTime.UtcNow > initialTime)
+                await ReceiveMessages(tripInstance.Id).ConfigureAwait(false);
+            // If we are past the reminder time, DO NOT send the initial notification; only send the reminder. The users don't want to receive 2 texts at the same time.
             if (DateTime.UtcNow < reminderTime)
-                SetNextNotificationTime(initialTime, tripInstance.Id, initialTimers, SendInitialNotification);
+                await SetNextNotificationTime(initialTime, tripInstance.Id, initialTimers, SendInitialNotification).ConfigureAwait(false);
             // Ask anyone who didn't respond again
-            SetNextNotificationTime(reminderTime, tripInstance.Id, reminderTimers, SendReminderNotification);
+            await SetNextNotificationTime(reminderTime, tripInstance.Id, reminderTimers, SendReminderNotification).ConfigureAwait(false);
             // Tell attendees who is coming & driving
-            SetNextNotificationTime(finalTime, tripInstance.Id, finalTimers, SendFinalNotification);
+            await SetNextNotificationTime(finalTime, tripInstance.Id, finalTimers, SendFinalNotification).ConfigureAwait(false);
             // Clean up
             if (tripRecurrenceId > 0)
             {
-                SetNextNotificationTime(tripInstance.Date + ApplicationDbContext.TripInstanceRemovalDelay, tripRecurrenceId, nextInstanceTimers,
-                    id => LoadNextTripInstance(id, tripInstance.Id));
+                await SetNextNotificationTime(tripInstance.Date + ApplicationDbContext.TripInstanceRemovalDelay, tripRecurrenceId, nextInstanceTimers,
+                    id => { return LoadNextTripInstance(id, tripInstance.Id); });
             }
         }
 
-        private void SetNextNotificationTime(DateTime time, long id, Dictionary<long, Timer> dictionary, Action<long> action)
+        private async Task SetNextNotificationTime(DateTime time, long id, Dictionary<long, Timer> dictionary, Func<long, Task> action)
         {
             var interval = (time - DateTime.UtcNow).TotalMilliseconds;
             if (interval <= 0)
             {
                 try
                 {
-                    action(id);
+                    await action(id).ConfigureAwait(false);
                 }
                 catch (Exception ex)
                 {
@@ -144,21 +151,20 @@ namespace CarpoolPlanner.NotificationService
             else if (interval >= int.MaxValue)
             {
                 log.Debug("Interval is too long for timer. Setting extended timer.");
-                SetNextNotificationTime(DateTime.UtcNow.AddMilliseconds(int.MaxValue - 1), id, dictionary, id2 =>
+                await SetNextNotificationTime(DateTime.UtcNow.AddMilliseconds(int.MaxValue - 1), id, dictionary, id2 =>
                     {
                         log.Debug("Extended timer elapsed.");
-                        SetNextNotificationTime(time, id2, dictionary, action);
-                    });
+                        return SetNextNotificationTime(time, id2, dictionary, action);
+                    }).ConfigureAwait(false);
                 return;
             }
-            log.Debug("Setting timer to go off at " + time.ToString("r"));
             lock (dictionary)
             {
                 Timer timer;
                 if (!dictionary.TryGetValue(id, out timer))
                 {
                     timer = new Timer();
-                    timer.Elapsed += (sender, e) =>
+                    timer.Elapsed += async (sender, e) =>
                     {
                         log.Debug("Timer elapsed");
                         try
@@ -168,7 +174,7 @@ namespace CarpoolPlanner.NotificationService
                             {
                                 dictionary.Remove(id);
                             }
-                            action(id);
+                            await action(id).ConfigureAwait(false);
                         }
                         catch (Exception ex)
                         {
@@ -201,7 +207,7 @@ namespace CarpoolPlanner.NotificationService
             if (force && !sendEmail && !sendSms)
             {
                 // When force-sending, prefer e-mail because it is less intrusive (especially if the user pays for incoming texts)
-                // Also, e-mail is required.
+                // Also, the e-mail field is required, so it is guaranteed to exist, but phone may not.
                 sendEmail = true;
             }
             if (sendEmail)
@@ -232,7 +238,7 @@ namespace CarpoolPlanner.NotificationService
                 {
                     const int retryDelay = 10;
                     log.WarnFormat("Failed to send message to {0}. Retrying in a little while ({1} ms)", retryCount, retryDelay);
-                    await Task.Delay(retryDelay);
+                    await Task.Delay(retryDelay).ConfigureAwait(false);
                 }
                 messageId = await client.SendMessage(message, user.Phone).ConfigureAwait(false);
                 if (messageId != null)
@@ -286,7 +292,7 @@ namespace CarpoolPlanner.NotificationService
                     from: ConfigurationManager.AppSettings["EmailAddress"],
                     recipients: email,
                     subject: subject,
-                    body: message);
+                    body: message).ConfigureAwait(false);
                 if (Program.Verbose)
                     Console.WriteLine("E-mail sent.");
             }
@@ -302,7 +308,7 @@ namespace CarpoolPlanner.NotificationService
         /// Receives and handles SMS messages from the specified user.
         /// </summary>
         /// <param name="user">A user.</param>
-        public async void ReceiveMessages(long tripInstanceId)
+        public async Task ReceiveMessages(long tripInstanceId)
         {
             bool statusChanged = false;
             using (var context = ApplicationDbContext.Create())
@@ -310,116 +316,118 @@ namespace CarpoolPlanner.NotificationService
                 var tripInstance = context.GetTripInstanceById(tripInstanceId);
                 if (tripInstance == null)
                     return;
-                var tasks = new List<Task>(tripInstance.UserTripInstances.Count);
                 foreach (var userTripInstance in tripInstance.UserTripInstances)
                 {
                     if (string.IsNullOrEmpty(userTripInstance.User.Phone))
                         continue;
-                    tasks.Add(Task.Run(async () =>
+                    bool changed = false;
+                    var lastMessageId = lastMessageIds.GetOrAdd(userTripInstance.UserId, (long?)null);
+                    if (Program.Verbose)
+                        Console.WriteLine("Attempting to receive messages (" + userTripInstance.User.Name + ")");
+                    var messages = await client.ReceiveMessages(userTripInstance.User.Phone, lastMessageId).ConfigureAwait(false);
+                    if (messages == null)
                     {
-                        bool changed = false;
-                        var lastMessageId = lastMessageIds.GetOrAdd(userTripInstance.UserId, (long?)null);
-                        var messages = await client.ReceiveMessages(userTripInstance.User.Phone, lastMessageId).ConfigureAwait(false);
-                        if (messages == null)
+                        log.WarnFormat("Failed to receive messages (user {0}; trip instance {1})", userTripInstance.UserId, tripInstanceId);
+                        return;
+                    }
+                    if (Program.Verbose)
+                        Console.WriteLine("Successfully received messages (" + userTripInstance.User.Name + ")");
+                    foreach (var message in messages)
+                    {
+                        userTripInstance.User.LastTextMessageId = message.Id;
+                        lastMessageIds.AddOrUpdate(userTripInstance.UserId, message.Id, (id, m) => message.Id);
+                        changed = true;
+                        if (message.Date <= userTripInstance.InitialNotificationTime - TimeSpan.FromMinutes(2))
                         {
-                            log.WarnFormat("Failed to receive messages (user {0}; trip instance {1})", userTripInstance.UserId, tripInstanceId);
-                            return;
+                            // Message was sent before the 1st notification. Ignore it.
+                            log.WarnFormat("Ignoring message '{0}' with ID {1} from user {2} because it was sent too long ago ({3})",
+                                message.Value, message.Id, userTripInstance.UserId, message.Date.ToString("dd-MMM-yyyy hh:mm:ss 'UTC'"));
+                            continue;
                         }
-                        foreach (var message in messages)
+                        string messageValue = message.Value.ToLower();
+                        // TODO: if the user schedules multiple trip instances at the same time, it is ambiguous which trip they are referring to.
+                        // This is fine for now because there is only one trip, but in the future add a way of disambiguating.
+                        bool understood = false;
+                        if (Regex.IsMatch(messageValue, @"\byes\b"))
                         {
-                            userTripInstance.User.LastTextMessageId = message.Id;
-                            lastMessageIds.AddOrUpdate(userTripInstance.UserId, message.Id, (id, m) => message.Id);
-                            changed = true;
-                            if (message.Date <= userTripInstance.InitialNotificationTime - TimeSpan.FromMinutes(2))
+                            understood = true;
+                            if (userTripInstance.Attending != true)
                             {
-                                // Message was sent before the 1st notification. Ignore it.
-                                log.WarnFormat("Ignoring message '{0}' with ID {1} from user {2} because it was sent too long ago ({3})",
-                                    message.Value, message.Id, userTripInstance.UserId, message.Date.ToString("dd-MMM-yyyy hh:mm:ss 'UTC'"));
-                                continue;
-                            }
-                            string messageValue = message.Value.ToLower();
-                            // TODO: if the user schedules multiple trip instances at the same time, it is ambiguous which trip they are referring to.
-                            // This is fine for now because there is only one trip, but in the future add a way of disambiguating.
-                            bool understood = false;
-                            if (Regex.IsMatch(messageValue, @"\byes\b"))
-                            {
-                                understood = true;
-                                if (userTripInstance.Attending != true)
+                                if (userTripInstance.ConfirmTime == null)
                                 {
-                                    if (userTripInstance.ConfirmTime == null)
+                                    // To prevent people from cheating by sending false message times, limit the message time to be at most 2 minutes ago.
+                                    if (message.Date == default(DateTime))
+                                        message.Date = DateTime.UtcNow;
+                                    var minDate = DateTime.UtcNow - TimeSpan.FromMinutes(2);
+                                    if (message.Date < minDate)
+                                        message.Date = minDate;
+                                    userTripInstance.ConfirmTime = message.Date;
+                                }
+                                log.Debug(string.Concat("Changed attendance status from '", userTripInstance.Attending,
+                                    "' to 'true' (user:", userTripInstance.User.Email, ", trip: ", tripInstance.Date.ToString("r"), ")"));
+                                userTripInstance.Attending = true;
+                                if (userTripInstance.CommuteMethod == CommuteMethod.NeedRide && !userTripInstance.CanDriveIfNeeded)
+                                {
+                                    if (tripInstance.DriversPicked)
                                     {
-                                        // To prevent people from cheating by sending false message times, limit the message time to be at most 2 minutes ago.
-                                        if (message.Date == default(DateTime))
-                                            message.Date = DateTime.UtcNow;
-                                        var minDate = DateTime.UtcNow - TimeSpan.FromMinutes(2);
-                                        if (message.Date < minDate)
-                                            message.Date = minDate;
-                                        userTripInstance.ConfirmTime = message.Date;
-                                    }
-                                    log.Debug(string.Concat("Changed attendance status from '", userTripInstance.Attending,
-                                        "' to 'true' (user:", userTripInstance.User.Email, ", trip: ", tripInstance.Date.ToString("r"), ")"));
-                                    userTripInstance.Attending = true;
-                                    if (userTripInstance.CommuteMethod == CommuteMethod.NeedRide && !userTripInstance.CanDriveIfNeeded)
-                                    {
-                                        if (tripInstance.DriversPicked)
+                                        // Drivers have already been picked. Make sure there is enough room for this user.
+                                        var requiredSeats = tripInstance.GetRequiredSeats();
+                                        var availableSeats = tripInstance.GetMaxAvailableSeats();
+                                        if (requiredSeats > availableSeats)
                                         {
-                                            // Drivers have already been picked. Make sure there is enough room for this user.
-                                            var requiredSeats = tripInstance.GetRequiredSeats();
-                                            var availableSeats = tripInstance.GetMaxAvailableSeats();
-                                            if (requiredSeats > availableSeats)
-                                            {
-                                                userTripInstance.Attending = false;
-                                                userTripInstance.NoRoom = true;
-                                                SendNotification(userTripInstance.User, tripInstance.Trip.Name, "You cannot attend because there are not enough seats. You have been added to the waiting list.");
-                                                if (userTripInstance.FinalNotificationTime == null)
-                                                    userTripInstance.FinalNotificationTime = DateTime.UtcNow;
-                                            }
+                                            userTripInstance.Attending = false;
+                                            userTripInstance.NoRoom = true;
+                                            await SendNotification(userTripInstance.User, tripInstance.Trip.Name, "You cannot attend because there are not enough seats. You have been added to the waiting list.")
+                                                .ConfigureAwait(false);
+                                            if (userTripInstance.FinalNotificationTime == null)
+                                                userTripInstance.FinalNotificationTime = DateTime.UtcNow;
                                         }
                                     }
-                                    if (userTripInstance.Attending == true)
-                                    {
-                                        statusChanged = true;
-                                    }
                                 }
-                            }
-                            else if (Regex.IsMatch(messageValue, @"\bno\b") || messageValue.Contains("not coming"))
-                            {
-                                understood = true;
-                                if (userTripInstance.Attending != false)
+                                if (userTripInstance.Attending == true)
                                 {
-                                    log.Debug(string.Concat("Changed attendance status from '", userTripInstance.Attending,
-                                        "' to 'false' (user:", userTripInstance.User.Email, ", trip: ", tripInstance.Date.ToString("r"), ")"));
-                                    userTripInstance.Attending = false;
-                                    userTripInstance.ConfirmTime = null;
                                     statusChanged = true;
                                 }
-                            }
-                            if (messageValue.Contains("not driving"))
-                            {
-                                understood = true;
-                                if (userTripInstance.CommuteMethod == CommuteMethod.Driver)
-                                {
-                                    if (userTripInstance.User.CommuteMethod == CommuteMethod.HaveRide)
-                                        userTripInstance.CommuteMethod = CommuteMethod.HaveRide;
-                                    else
-                                        userTripInstance.CommuteMethod = CommuteMethod.NeedRide;
-                                    log.Debug(string.Concat("Changed commute method from 'Driver' to '", userTripInstance.CommuteMethod,
-                                        "' (user:", userTripInstance.User.Email, ", trip: ", tripInstance.Date.ToString("r"), ")"));
-                                    userTripInstance.CanDriveIfNeeded = false;
-                                    statusChanged = true;
-                                }
-                            }
-                            if (!understood)
-                            {
-                                log.Warn(string.Concat("Didn't understand message '", messageValue,
-                                    "' (user:", userTripInstance.User.Email, ", trip: ", tripInstance.Date.ToString("r"), ")"));
-                                // TODO: don't hard-code the url
-                                SendSMS(userTripInstance.User, "Sorry, I didn't understand that.\nFor more details, see https://climbing.pororeplays.com/Notifications.aspx");
                             }
                         }
-                        if (changed)
-                            context.SaveChanges();
-                    }));
+                        else if (Regex.IsMatch(messageValue, @"\bno\b") || messageValue.Contains("not coming"))
+                        {
+                            understood = true;
+                            if (userTripInstance.Attending != false)
+                            {
+                                log.Debug(string.Concat("Changed attendance status from '", userTripInstance.Attending,
+                                    "' to 'false' (user:", userTripInstance.User.Email, ", trip: ", tripInstance.Date.ToString("r"), ")"));
+                                userTripInstance.Attending = false;
+                                userTripInstance.ConfirmTime = null;
+                                statusChanged = true;
+                            }
+                        }
+                        if (messageValue.Contains("not driving"))
+                        {
+                            understood = true;
+                            if (userTripInstance.CommuteMethod == CommuteMethod.Driver)
+                            {
+                                if (userTripInstance.User.CommuteMethod == CommuteMethod.HaveRide)
+                                    userTripInstance.CommuteMethod = CommuteMethod.HaveRide;
+                                else
+                                    userTripInstance.CommuteMethod = CommuteMethod.NeedRide;
+                                log.Debug(string.Concat("Changed commute method from 'Driver' to '", userTripInstance.CommuteMethod,
+                                    "' (user:", userTripInstance.User.Email, ", trip: ", tripInstance.Date.ToString("r"), ")"));
+                                userTripInstance.CanDriveIfNeeded = false;
+                                statusChanged = true;
+                            }
+                        }
+                        if (!understood)
+                        {
+                            log.Warn(string.Concat("Didn't understand message '", messageValue,
+                                "' (user:", userTripInstance.User.Email, ", trip: ", tripInstance.Date.ToString("r"), ")"));
+                            // TODO: don't hard-code the url
+                            await SendSMS(userTripInstance.User, "Sorry, I didn't understand that.\nFor more details, see https://climbing.pororeplays.com/Notifications.aspx")
+                                .ConfigureAwait(false);
+                        }
+                    }
+                    if (changed)
+                        context.SaveChanges();
                 }
                 if (tripInstance.DriversPicked)
                 {
@@ -428,26 +436,24 @@ namespace CarpoolPlanner.NotificationService
                         // Send a final notification update
                         // TODO: send a special message that highlights the change, instead of just sending the whole thing again.
                         // But make sure to mention if there are not enough drivers.
-                        SendFinalNotification(tripInstanceId, true);
+                        await SendFinalNotification(tripInstanceId, true).ConfigureAwait(false);
                     }
                 }
-                // Wait for tasks to finish before disposing the DB context.
-                await Task.WhenAll(tasks).ConfigureAwait(false);
                 log.Debug("Received messages from all users.");
             }
         }
 
-        public void SendInitialNotification(long tripInstanceId)
+        public Task SendInitialNotification(long tripInstanceId)
         {
-            SendInitialNotification(tripInstanceId, false);
+            return SendInitialNotification(tripInstanceId, false);
         }
 
-        public void SendReminderNotification(long tripInstanceId)
+        public Task SendReminderNotification(long tripInstanceId)
         {
-            SendInitialNotification(tripInstanceId, true);
+            return SendInitialNotification(tripInstanceId, true);
         }
 
-        public void SendInitialNotification(long tripInstanceId, bool isReminder)
+        public async Task SendInitialNotification(long tripInstanceId, bool isReminder)
         {
             using (var context = ApplicationDbContext.Create())
             {
@@ -480,7 +486,7 @@ namespace CarpoolPlanner.NotificationService
                     bool isDriver = userTripInstance.CommuteMethod == CommuteMethod.Driver;
                     sb.Append("Reply with yes/no. \n");
                     sb.Append("For more options, go to https://climbing.pororeplays.com"); // TODO: don't hard-code the url
-                    SendNotification(userTripInstance.User, tripInstance.Trip.Name, sb.ToString());
+                    await SendNotification(userTripInstance.User, tripInstance.Trip.Name, sb.ToString()).ConfigureAwait(false);
                     sb.Clear();
                 }
                 // Now periodically attempt to receive messages to get responses.
@@ -490,22 +496,22 @@ namespace CarpoolPlanner.NotificationService
                     if (!receiveMessageTimers.TryGetValue(tripInstanceId, out timer))
                     {
                         timer = new Timer();
-                        timer.Elapsed += (sender, e) => ReceiveMessages(tripInstanceId);
+                        timer.Elapsed += async (sender, e) => await ReceiveMessages(tripInstanceId).ConfigureAwait(false);
                         receiveMessageTimers.Add(tripInstanceId, timer);
                     }
-                    timer.Interval = 30000.0;
+                    timer.Interval = 5000.0;
                     timer.Start();
                 }
                 context.SaveChanges();
             }
         }
 
-        public void SendFinalNotification(long tripInstanceId)
+        public Task SendFinalNotification(long tripInstanceId)
         {
-            SendFinalNotification(tripInstanceId, false);
+            return SendFinalNotification(tripInstanceId, false);
         }
 
-        public void SendFinalNotification(long tripInstanceId, bool isUpdate)
+        public async Task SendFinalNotification(long tripInstanceId, bool isUpdate)
         {
             using (var context = ApplicationDbContext.Create())
             {
@@ -556,7 +562,7 @@ namespace CarpoolPlanner.NotificationService
                     sb.AppendFormat(".\nThere are {0} seats and {1} people coming.\n", availableSeats, requiredSeats);
                     sb.Append("\n" + tripInstance.GetStatusReport() + "\n");
                     sb.Append("\nFor more details, go to https://climbing.pororeplays.com"); // TODO: don't hard-code the url
-                    SendNotification(userTripInstance.User, tripInstance.Trip.Name, sb.ToString());
+                    await SendNotification(userTripInstance.User, tripInstance.Trip.Name, sb.ToString()).ConfigureAwait(false);
                     sb.Clear();
                 }
                 context.SaveChanges();
@@ -567,7 +573,7 @@ namespace CarpoolPlanner.NotificationService
             }
         }
 
-        private void LoadNextTripInstance(long tripRecurrenceId, long oldTripInstanceId)
+        private async Task LoadNextTripInstance(long tripRecurrenceId, long oldTripInstanceId)
         {
             using (var context = ApplicationDbContext.Create())
             {
@@ -584,7 +590,7 @@ namespace CarpoolPlanner.NotificationService
                 var tripRecurrence = context.TripRecurrences.Find(tripRecurrenceId);
                 var tripInstance = context.GetNextTripInstance(tripRecurrence, TimeSpan.Zero);
                 if (tripInstance != null)
-                    SetNextNotificationTimes(tripInstance, tripRecurrence.Id);
+                    await SetNextNotificationTimes(tripInstance, tripRecurrence.Id).ConfigureAwait(false);
             }
         }
 

@@ -80,9 +80,7 @@ namespace CarpoolPlanner.Controllers
                                 if (serverUserTripRecurrence.Attending)
                                 {
                                     if (instance.Attending == false)
-                                    {
                                         instance.Attending = null;
-                                    }
                                     // Send a notification to the user in case we are past the notification time.
                                     var client = new NotificationServiceClient();
                                     client.UpdateTripInstance(instance.TripInstanceId, serverUserTripRecurrence.TripRecurrenceId);
