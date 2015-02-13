@@ -52,6 +52,7 @@ namespace CarpoolPlanner.NotificationService
                                 Console.WriteLine("User '" + email + "' does not exist.");
                                 return;
                             }
+                            log.Info("Sending test notification to " + email + "...");
                             Console.WriteLine("Sending test notification to " + email + "...");
                             manager.SendNotification(user, "Test message", "test message").Wait();
                             Console.WriteLine("Test notification sent; exiting.");

@@ -241,6 +241,7 @@ namespace CarpoolPlanner.NotificationService
                     await Task.Delay(retryDelay).ConfigureAwait(false);
                 }
                 messageId = await client.SendMessage(message, user.Phone).ConfigureAwait(false);
+                log.Debug("Message sent.");
                 if (messageId != null)
                 {
                     user.LastTextMessageId = messageId;
