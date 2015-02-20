@@ -241,20 +241,18 @@ namespace CarpoolPlanner.NotificationService
                     await Task.Delay(retryDelay).ConfigureAwait(false);
                 }
                 messageId = await client.SendMessage(message, user.Phone).ConfigureAwait(false);
-                log.Debug("Message sent.");
-                if (messageId != null)
-                {
-                    user.LastTextMessageId = messageId;
-                }
                 retryCount++;
             } while (messageId == null && retryCount < maxRetryCount);
             if (messageId != null)
             {
-                lastMessageIds.AddOrUpdate(user.Id, messageId, (id, m) => messageId);
+                log.Debug("SMS message sent.");
+                if (Program.Verbose)
+                    Console.WriteLine("SMS sent successfully.");
             }
             else
             {
                 log.ErrorFormat("Failed to send message to {0}. Exceeded maximum retry count.", user.Phone);
+                Console.WriteLine("Failed to send SMS to " + user.Phone);
             }
         }
 
@@ -294,14 +292,14 @@ namespace CarpoolPlanner.NotificationService
                     recipients: email,
                     subject: subject,
                     body: message).ConfigureAwait(false);
+                log.Debug("E-mail sent.");
                 if (Program.Verbose)
-                    Console.WriteLine("E-mail sent.");
+                    Console.WriteLine("E-mail sent successfully.");
             }
             catch (Exception ex)
             {
-                if (Program.Verbose)
-                    Console.WriteLine("Failed to send e-mail: " + ex.Message);
                 log.Error(string.Concat("Failed to send e-mail to ", email, ". ", ex.ToString()));
+                Console.WriteLine("Failed to send e-mail: " + ex.Message);
             }
         }
 
