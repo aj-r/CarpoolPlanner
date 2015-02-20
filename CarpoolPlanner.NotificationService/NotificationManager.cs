@@ -430,6 +430,8 @@ namespace CarpoolPlanner.NotificationService
                     if (changed)
                         context.SaveChanges();
                 }
+                if (Program.Verbose)
+                    Console.WriteLine("Received all messages successfully.");
                 if (tripInstance.DriversPicked)
                 {
                     if (statusChanged)
