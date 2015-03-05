@@ -39,7 +39,7 @@ namespace CarpoolPlanner.NotificationService
                         if (args.Length < 2)
                         {
                             Console.WriteLine("Test user email not specified.");
-                            Console.WriteLine("Usage: CarpoolPlanner.NotificationService.exe --test email");
+                            Console.WriteLine("Usage: CarpoolPlanner.NotificationService.exe --test email@example.com");
                             return;
                         }
                         string email = args[1];

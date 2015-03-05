@@ -129,7 +129,7 @@ namespace CarpoolPlanner.Model
                 var expectedDate = recurrence.GetNextInstanceDate(DateTime.UtcNow - delay);
                 if (expectedDate == null)
                     return null;
-                if (expectedDate < DateTime.UtcNow)
+                if (expectedDate < DateTime.UtcNow - delay)
                 {
                     log.Warn("expectedDate is before now. This probably indicates a bug.");
                     return null;
@@ -169,9 +169,9 @@ namespace CarpoolPlanner.Model
         /// </summary>
         /// <param name="recurrence">The TripRecurrence for which to get the next instance.</param>
         /// <returns>The next UserTripInstance.</returns>
-        public UserTripInstance GetNextUserTripInstance(TripRecurrence recurrence, User user)
+        public UserTripInstance GetNextUserTripInstance(TripRecurrence recurrence, User user, TimeSpan delay)
         {
-            var instance = GetNextTripInstance(recurrence, TimeSpan.Zero);
+            var instance = GetNextTripInstance(recurrence, delay);
             if (instance == null)
                 return null;
             // Note: there could be a multithreading issue here if the same user logs in from 2 different clients at once.

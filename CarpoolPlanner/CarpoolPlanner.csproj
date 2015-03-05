@@ -183,6 +183,7 @@
     <Content Include="Content\Site.css" />
     <Content Include="Content\datetimepicker.js" />
     <Content Include="Content\validation-ext.js" />
+    <Content Include="favicon.png" />
     <Content Include="Global.asax" />
     <None Include="Properties\PublishProfiles\Local.pubxml" />
     <Content Include="Web.config" />

@@ -231,7 +231,7 @@ namespace CarpoolPlanner.NotificationService
         {
             long? messageId;
             int retryCount = 0;
-            const int maxRetryCount = 20;
+            const int maxRetryCount = 4;
             do
             {
                 if (retryCount > 0)

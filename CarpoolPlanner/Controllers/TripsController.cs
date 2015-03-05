@@ -74,7 +74,7 @@ namespace CarpoolPlanner.Controllers
                             {
                                 serverUserTripRecurrence.Attending = clientUserTripRecurrence.Attending;
                                 // Ensure the trip instance exists and the attendance status is correct
-                                var instance = context.GetNextUserTripInstance(serverUserTripRecurrence.TripRecurrence, AppUtils.CurrentUser);
+                                var instance = context.GetNextUserTripInstance(serverUserTripRecurrence.TripRecurrence, AppUtils.CurrentUser, TimeSpan.Zero);
                                 if (instance == null)
                                     continue;
                                 if (serverUserTripRecurrence.Attending)
@@ -100,7 +100,7 @@ namespace CarpoolPlanner.Controllers
                         {
                             recurrence.Attending = false;
                             // Change the attendance status of any instances to false (unless they were already confirmed)
-                            var instance = context.GetNextUserTripInstance(recurrence.TripRecurrence, AppUtils.CurrentUser);
+                            var instance = context.GetNextUserTripInstance(recurrence.TripRecurrence, AppUtils.CurrentUser, TimeSpan.Zero);
                             if (instance == null)
                                 continue;
                             if (instance.Attending == null)
