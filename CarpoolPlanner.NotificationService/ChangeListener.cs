@@ -82,5 +82,15 @@ namespace CarpoolPlanner.NotificationService
             }
             return "Success";
         }
+
+        [RestMethod(Name = "/message", ParamCount = 0, ContentType = "application/json")]
+        public string Message(string[] args, string body)
+        {
+            // Receive message
+            if (Program.Verbose)
+                Console.WriteLine("Received message: " + body);
+            // body: ToCountry=CA&ToState=ON&SmsMessageSid=SMa5354e71a76ff872833c37d35e81c26d&NumMedia=0&ToCity=HESPELER&FromZip=&SmsSid=SMa5354e71a76ff872833c37d35e81c26d&FromState=ON&SmsStatus=received&FromCity=KITCHENER+WATERLOO&Body=Yo&FromCountry=CA&To=%2B12268870098&ToZip=&MessageSid=SMa5354e71a76ff872833c37d35e81c26d&AccountSid=AC69898f60f58406b0880a765aefacd480&From=%2B12268683049&ApiVersion=2010-04-01
+            return "<?xml version=\"1.0\" encoding=\"UTF-8\" ?><Response></Response>";
+        }
     }
 }

@@ -14,7 +14,7 @@ using System.Timers;
 using System.Web;
 using CarpoolPlanner.Model;
 using log4net;
-using TextNow.Net;
+using Twilio;
 using Timer = System.Timers.Timer;
 
 namespace CarpoolPlanner.NotificationService
@@ -46,15 +46,14 @@ namespace CarpoolPlanner.NotificationService
         private readonly Dictionary<long, Timer> reminderTimers = new Dictionary<long, Timer>();
         private readonly Dictionary<long, Timer> finalTimers = new Dictionary<long, Timer>();
         private readonly Dictionary<long, Timer> nextInstanceTimers = new Dictionary<long, Timer>();
-        private readonly Dictionary<long, Timer> receiveMessageTimers = new Dictionary<long, Timer>();
         private readonly Dictionary<long, TripInstance> prevTripInstances = new Dictionary<long, TripInstance>();
-        private TextNowClient client;
+        private TwilioRestClient smsClient;
+        private string smsNumber;
 
         private NotificationManager()
         {
-            client = new TextNowClient(ConfigurationManager.AppSettings["TextNowFromName"],
-                ConfigurationManager.AppSettings["TextNowUsername"],
-                ConfigurationManager.AppSettings["TextNowPassword"]);
+            smsClient = new TwilioRestClient(ConfigurationManager.AppSettings["TwilioAccountSid"], ConfigurationManager.AppSettings["TwilioAuthToken"]);
+            smsNumber = ConfigurationManager.AppSettings["TwilioPhoneNumber"];
             initialAdvanceNotificationTime = ParseHours(ConfigurationManager.AppSettings["InitialAdvanceNotificationTime"]);
             reminderAdvanceNotificationTime = ParseHours(ConfigurationManager.AppSettings["ReminderAdvanceNotificationTime"]);
             finalAdvanceNotificationTime = ParseHours(ConfigurationManager.AppSettings["FinalAdvanceNotificationTime"]);
@@ -83,9 +82,6 @@ namespace CarpoolPlanner.NotificationService
                         retryCount++;
                     }
                 } while (!success && retryCount < maxRetryCount);
-                await client.Login();
-                if (Program.Verbose)
-                    Console.WriteLine("Logged in.");
                 do
                 {
                     try
@@ -115,9 +111,6 @@ namespace CarpoolPlanner.NotificationService
             var initialTime = tripInstance.Date - initialAdvanceNotificationTime;
             var reminderTime = tripInstance.Date - reminderAdvanceNotificationTime;
             var finalTime = tripInstance.Date - finalAdvanceNotificationTime;
-            // If the initial notification has already been sent, make sure to receive messages before sending further notifications.
-            if (DateTime.UtcNow > initialTime)
-                await ReceiveMessages(tripInstance.Id).ConfigureAwait(false);
             // If we are past the reminder time, DO NOT send the initial notification; only send the reminder. The users don't want to receive 2 texts at the same time.
             if (DateTime.UtcNow < reminderTime)
                 await SetNextNotificationTime(initialTime, tripInstance.Id, initialTimers, SendInitialNotification).ConfigureAwait(false);
@@ -227,33 +220,35 @@ namespace CarpoolPlanner.NotificationService
         /// <param name="user">The user to whom the notification will be sent.</param>
         /// <param name="message">The message to send</param>
         /// <param name="force">If true, will send the message even if the user's notification settings are all turned off (assuming the user has specified an e-mail or phone number).</param>
-        public async Task SendSMS(User user, string message)
+        public Task<bool> SendSMS(User user, string message)
         {
-            long? messageId;
-            int retryCount = 0;
-            const int maxRetryCount = 4;
-            do
+            var tcs = new TaskCompletionSource<bool>();
+            smsClient.SendSmsMessage(smsNumber, user.Phone, message, m =>
             {
-                if (retryCount > 0)
+                try
                 {
-                    const int retryDelay = 10;
-                    log.WarnFormat("Failed to send message to {0}. Retrying in a little while ({1} ms)", retryCount, retryDelay);
-                    await Task.Delay(retryDelay).ConfigureAwait(false);
+                    // Status should be "queued" at this point. If null, that probably indicates an authentication problem.
+                    // I believe you need to set a callback URL to get the sent/error statuses, and that doesn't work well for local testing (or with Tasks).
+                    if (m.Status != null)
+                    {
+                        log.Debug("SMS message sent.");
+                        if (Program.Verbose)
+                            Console.WriteLine("SMS sent successfully.");
+                        tcs.SetResult(true);
+                    }
+                    else
+                    {
+                        log.ErrorFormat("Failed to send message to {0}.", user.Phone);
+                        Console.WriteLine("Failed to send SMS to " + user.Phone);
+                        tcs.SetResult(false);
+                    }
                 }
-                messageId = await client.SendMessage(message, user.Phone).ConfigureAwait(false);
-                retryCount++;
-            } while (messageId == null && retryCount < maxRetryCount);
-            if (messageId != null)
-            {
-                log.Debug("SMS message sent.");
-                if (Program.Verbose)
-                    Console.WriteLine("SMS sent successfully.");
-            }
-            else
-            {
-                log.ErrorFormat("Failed to send message to {0}. Exceeded maximum retry count.", user.Phone);
-                Console.WriteLine("Failed to send SMS to " + user.Phone);
-            }
+                catch (Exception ex)
+                {
+                    tcs.SetException(ex);
+                }
+            });
+            return tcs.Task;
         }
 
         /// <summary>
@@ -307,7 +302,7 @@ namespace CarpoolPlanner.NotificationService
         /// Receives and handles SMS messages from the specified user.
         /// </summary>
         /// <param name="user">A user.</param>
-        public async Task ReceiveMessages(long tripInstanceId)
+        /*public async Task ReceiveMessages(long tripInstanceId)
         {
             bool statusChanged = false;
             using (var context = ApplicationDbContext.Create())
@@ -323,7 +318,7 @@ namespace CarpoolPlanner.NotificationService
                     var lastMessageId = lastMessageIds.GetOrAdd(userTripInstance.UserId, (long?)null);
                     if (Program.Verbose)
                         Console.WriteLine("Attempting to receive messages (" + userTripInstance.User.Name + ")");
-                    var messages = await client.ReceiveMessages(userTripInstance.User.Phone, lastMessageId).ConfigureAwait(false);
+                    var messages = await smsClient..ReceiveMessages(userTripInstance.User.Phone, lastMessageId).ConfigureAwait(false);
                     if (messages == null)
                     {
                         log.WarnFormat("Failed to receive messages (user {0}; trip instance {1})", userTripInstance.UserId, tripInstanceId);
@@ -440,8 +435,19 @@ namespace CarpoolPlanner.NotificationService
                         await SendFinalNotification(tripInstanceId, true).ConfigureAwait(false);
                     }
                 }
-                log.Debug("Received messages from all users.");
+                //log.Debug("Received messages from all users.");
             }
+        }*/
+
+        /// <summary>
+        /// Receives a message from a user.
+        /// </summary>
+        /// <param name="message">The message body.</param>
+        /// <param name="phone">The phone number from which the message was sent.</param>
+        /// <param name="sentTime">The time (in universal time) when the message was sent.</param>
+        public void ReceiveMessage(string message, string phone, DateTime sentTime)
+        {
+
         }
 
         public Task SendInitialNotification(long tripInstanceId)
@@ -489,19 +495,6 @@ namespace CarpoolPlanner.NotificationService
                     sb.Append("For more options, go to https://climbing.pororeplays.com"); // TODO: don't hard-code the url
                     await SendNotification(userTripInstance.User, tripInstance.Trip.Name, sb.ToString()).ConfigureAwait(false);
                     sb.Clear();
-                }
-                // Now periodically attempt to receive messages to get responses.
-                lock (receiveMessageTimers)
-                {
-                    Timer timer;
-                    if (!receiveMessageTimers.TryGetValue(tripInstanceId, out timer))
-                    {
-                        timer = new Timer();
-                        timer.Elapsed += async (sender, e) => await ReceiveMessages(tripInstanceId).ConfigureAwait(false);
-                        receiveMessageTimers.Add(tripInstanceId, timer);
-                    }
-                    timer.Interval = 5000.0;
-                    timer.Start();
                 }
                 context.SaveChanges();
             }
@@ -578,16 +571,6 @@ namespace CarpoolPlanner.NotificationService
         {
             using (var context = ApplicationDbContext.Create())
             {
-                lock (receiveMessageTimers)
-                {
-                    Timer timer;
-                    if (receiveMessageTimers.TryGetValue(oldTripInstanceId, out timer))
-                    {
-                        log.Debug(string.Concat("Stopping message receive timer (trip instance: ", oldTripInstanceId, ")"));
-                        timer.Stop();
-                        receiveMessageTimers.Remove(oldTripInstanceId);
-                    }
-                }
                 var tripRecurrence = context.TripRecurrences.Find(tripRecurrenceId);
                 var tripInstance = context.GetNextTripInstance(tripRecurrence, TimeSpan.Zero);
                 if (tripInstance != null)

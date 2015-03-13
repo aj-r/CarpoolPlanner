@@ -61,6 +61,8 @@ namespace CarpoolPlanner.Model
                     break;
                 case RecurrenceType.Weekly:
                     date = Start.Value.AddDays(Math.Ceiling((afterDate - Start.Value).TotalDays / 7.0) * 7.0);
+                    var date2 = date.ToLocalTime();
+                    var date3 = Start.Value.ToLocalTime().AddDays(Math.Ceiling((afterDate - Start.Value).TotalDays / 7.0) * 7.0);
                     break;
                 case RecurrenceType.Monthly:
                     date = new DateTime(afterDate.Year, afterDate.Month, Start.Value.Day);

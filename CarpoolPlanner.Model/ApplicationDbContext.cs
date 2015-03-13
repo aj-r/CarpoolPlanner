@@ -187,6 +187,33 @@ namespace CarpoolPlanner.Model
             return userTripInstance;
         }
 
+        public User GetUserByPhoneNumber(string phone)
+        {
+            phone = NormalizePhoneNumber(phone);
+            foreach (var user in Users.Where(u => !string.IsNullOrEmpty(u.Phone)))
+            {
+                var userPhone = NormalizePhoneNumber(user.Phone);
+                if (userPhone == phone)
+                    return user;
+            }
+            return null;
+        }
+
+        private static readonly Regex ignorePhoneChars = new Regex("[^0-9x]", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+        public string NormalizePhoneNumber(string phone)
+        {
+            phone = ignorePhoneChars.Replace(phone, "");
+            var phoneWithoutExtension = phone;
+            var extensionIndex = phone.IndexOf("x");
+            if (extensionIndex != -1)
+                phoneWithoutExtension = phone.Remove(extensionIndex);
+            if (phoneWithoutExtension.Length == 10)
+                phone = "1" + phone; // Assume country code of 1
+            phone = "+" + phone;
+            return phone;
+        }
+
         protected override void OnModelCreating(DbModelBuilder modelBuilder)
         {
             modelBuilder.Types().Configure(c => c.ToTable(GetDbObjectName(c.ClrType.Name)));

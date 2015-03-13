@@ -49,6 +49,9 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\packages\MySql.Data.Entities.6.8.3.0\lib\net45\mysql.data.entity.EF6.dll</HintPath>
     </Reference>
+    <Reference Include="RestSharp">
+      <HintPath>..\packages\RestSharp.105.0.1\lib\net4\RestSharp.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.ComponentModel.DataAnnotations" />
     <Reference Include="System.Configuration" />
@@ -58,6 +61,9 @@
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
+    <Reference Include="Twilio.Api">
+      <HintPath>..\packages\Twilio.3.6.27\lib\3.5\Twilio.Api.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ChangeListener.cs" />
@@ -66,17 +72,15 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="App.config" />
+    <Content Include="App.config">
+      <SubType>Designer</SubType>
+    </Content>
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Rest\Rest.Server\Rest.Server.csproj">
       <Project>{ebd85c4e-3402-4f3e-ab4b-64bfe29909e4}</Project>
       <Name>Rest.Server</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\TextNow.Net\TextNow.Net\TextNow.Net.csproj">
-      <Project>{af0c8b5d-e218-4d28-ad9b-52beec103f7e}</Project>
-      <Name>TextNow.Net</Name>
     </ProjectReference>
     <ProjectReference Include="..\CarpoolPlanner.Model\CarpoolPlanner.Model.csproj">
       <Project>{c609a869-dad8-47e6-8bdf-7519d0966fd6}</Project>

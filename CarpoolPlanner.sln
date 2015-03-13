@@ -5,10 +5,6 @@ VisualStudioVersion = 12.0.30501.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CarpoolPlanner", "CarpoolPlanner\CarpoolPlanner.csproj", "{583E2376-F3E0-457C-89C5-4D54D83D860C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TextNow.Net.Tests", "..\TextNow.Net\TextNow.Net.Tests\TextNow.Net.Tests.csproj", "{A1977C78-60BA-4C3D-B985-A728D3E6F85B}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TextNow.Net", "..\TextNow.Net\TextNow.Net\TextNow.Net.csproj", "{AF0C8B5D-E218-4D28-AD9B-52BEEC103F7E}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CarpoolPlanner.Model", "CarpoolPlanner.Model\CarpoolPlanner.Model.csproj", "{C609A869-DAD8-47E6-8BDF-7519D0966FD6}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CarpoolPlanner.NotificationService", "CarpoolPlanner.NotificationService\CarpoolPlanner.NotificationService.csproj", "{F8FF0D3D-5606-4DB5-9794-5147BCE9774B}"
@@ -21,6 +17,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rest.Client", "..\Rest\Rest
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PasswordFixer", "PasswordFixer\PasswordFixer.csproj", "{0255E4EC-09CC-4CF2-8949-D389F6A8AD1A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ReceiveTest", "ReceiveTest\ReceiveTest.csproj", "{C5DFDDBB-BC1C-49A1-9C78-B146D6F37A48}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -31,14 +29,6 @@ Global
 		{583E2376-F3E0-457C-89C5-4D54D83D860C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{583E2376-F3E0-457C-89C5-4D54D83D860C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{583E2376-F3E0-457C-89C5-4D54D83D860C}.Release|Any CPU.Build.0 = Release|Any CPU
-		{A1977C78-60BA-4C3D-B985-A728D3E6F85B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{A1977C78-60BA-4C3D-B985-A728D3E6F85B}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{A1977C78-60BA-4C3D-B985-A728D3E6F85B}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{A1977C78-60BA-4C3D-B985-A728D3E6F85B}.Release|Any CPU.Build.0 = Release|Any CPU
-		{AF0C8B5D-E218-4D28-AD9B-52BEEC103F7E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{AF0C8B5D-E218-4D28-AD9B-52BEEC103F7E}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{AF0C8B5D-E218-4D28-AD9B-52BEEC103F7E}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{AF0C8B5D-E218-4D28-AD9B-52BEEC103F7E}.Release|Any CPU.Build.0 = Release|Any CPU
 		{C609A869-DAD8-47E6-8BDF-7519D0966FD6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{C609A869-DAD8-47E6-8BDF-7519D0966FD6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C609A869-DAD8-47E6-8BDF-7519D0966FD6}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -63,6 +53,10 @@ Global
 		{0255E4EC-09CC-4CF2-8949-D389F6A8AD1A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0255E4EC-09CC-4CF2-8949-D389F6A8AD1A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0255E4EC-09CC-4CF2-8949-D389F6A8AD1A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C5DFDDBB-BC1C-49A1-9C78-B146D6F37A48}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C5DFDDBB-BC1C-49A1-9C78-B146D6F37A48}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C5DFDDBB-BC1C-49A1-9C78-B146D6F37A48}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C5DFDDBB-BC1C-49A1-9C78-B146D6F37A48}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

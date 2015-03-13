@@ -10,7 +10,6 @@ using System.Threading.Tasks;
 using CarpoolPlanner.Model;
 using log4net;
 using log4net.Config;
-using TextNow.Net;
 
 namespace CarpoolPlanner.NotificationService
 {
