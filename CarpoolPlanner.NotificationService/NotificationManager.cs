@@ -49,11 +49,13 @@ namespace CarpoolPlanner.NotificationService
         private readonly Dictionary<long, TripInstance> prevTripInstances = new Dictionary<long, TripInstance>();
         private TwilioRestClient smsClient;
         private string smsNumber;
+        private string smsCallbackUrl;
 
         private NotificationManager()
         {
             smsClient = new TwilioRestClient(ConfigurationManager.AppSettings["TwilioAccountSid"], ConfigurationManager.AppSettings["TwilioAuthToken"]);
             smsNumber = ConfigurationManager.AppSettings["TwilioPhoneNumber"];
+            smsCallbackUrl = ConfigurationManager.AppSettings["TwilioCallbackUrl"];
             initialAdvanceNotificationTime = ParseHours(ConfigurationManager.AppSettings["InitialAdvanceNotificationTime"]);
             reminderAdvanceNotificationTime = ParseHours(ConfigurationManager.AppSettings["ReminderAdvanceNotificationTime"]);
             finalAdvanceNotificationTime = ParseHours(ConfigurationManager.AppSettings["FinalAdvanceNotificationTime"]);
@@ -223,8 +225,22 @@ namespace CarpoolPlanner.NotificationService
         public Task<bool> SendSMS(User user, string message)
         {
             var tcs = new TaskCompletionSource<bool>();
-            smsClient.SendSmsMessage(smsNumber, user.Phone, message, m =>
+            smsClient.SendSmsMessage(smsNumber, user.Phone, message, smsCallbackUrl, m =>
             {
+                if (m == null)
+                {
+                    log.Warn("Twilio returned a null message.");
+                    if (Program.Verbose)
+                        Console.WriteLine("Warning: Twilio returned a null message.");
+                    return;
+                }
+                if (tcs == null)
+                {
+                    log.Warn("Task completion source is null.");
+                    if (Program.Verbose)
+                        Console.WriteLine("Warning: Task completion source is null.");
+                    return;
+                }
                 try
                 {
                     // Status should be "queued" at this point. If null, that probably indicates an authentication problem.
@@ -238,7 +254,7 @@ namespace CarpoolPlanner.NotificationService
                     }
                     else
                     {
-                        log.ErrorFormat("Failed to send message to {0}.", user.Phone);
+                        log.ErrorFormat("Failed to send SMS to " + user.Phone);
                         Console.WriteLine("Failed to send SMS to " + user.Phone);
                         tcs.SetResult(false);
                     }
@@ -299,155 +315,120 @@ namespace CarpoolPlanner.NotificationService
         }
 
         /// <summary>
-        /// Receives and handles SMS messages from the specified user.
-        /// </summary>
-        /// <param name="user">A user.</param>
-        /*public async Task ReceiveMessages(long tripInstanceId)
-        {
-            bool statusChanged = false;
-            using (var context = ApplicationDbContext.Create())
-            {
-                var tripInstance = context.GetTripInstanceById(tripInstanceId);
-                if (tripInstance == null)
-                    return;
-                foreach (var userTripInstance in tripInstance.UserTripInstances)
-                {
-                    if (string.IsNullOrEmpty(userTripInstance.User.Phone))
-                        continue;
-                    bool changed = false;
-                    var lastMessageId = lastMessageIds.GetOrAdd(userTripInstance.UserId, (long?)null);
-                    if (Program.Verbose)
-                        Console.WriteLine("Attempting to receive messages (" + userTripInstance.User.Name + ")");
-                    var messages = await smsClient..ReceiveMessages(userTripInstance.User.Phone, lastMessageId).ConfigureAwait(false);
-                    if (messages == null)
-                    {
-                        log.WarnFormat("Failed to receive messages (user {0}; trip instance {1})", userTripInstance.UserId, tripInstanceId);
-                        return;
-                    }
-                    if (Program.Verbose)
-                        Console.WriteLine("Successfully received messages (" + userTripInstance.User.Name + ")");
-                    foreach (var message in messages)
-                    {
-                        userTripInstance.User.LastTextMessageId = message.Id;
-                        lastMessageIds.AddOrUpdate(userTripInstance.UserId, message.Id, (id, m) => message.Id);
-                        changed = true;
-                        if (message.Date <= userTripInstance.InitialNotificationTime - TimeSpan.FromMinutes(2))
-                        {
-                            // Message was sent before the 1st notification. Ignore it.
-                            log.WarnFormat("Ignoring message '{0}' with ID {1} from user {2} because it was sent too long ago ({3})",
-                                message.Value, message.Id, userTripInstance.UserId, message.Date.ToString("dd-MMM-yyyy hh:mm:ss 'UTC'"));
-                            continue;
-                        }
-                        string messageValue = message.Value.ToLower();
-                        // TODO: if the user schedules multiple trip instances at the same time, it is ambiguous which trip they are referring to.
-                        // This is fine for now because there is only one trip, but in the future add a way of disambiguating.
-                        bool understood = false;
-                        if (Regex.IsMatch(messageValue, @"\byes\b"))
-                        {
-                            understood = true;
-                            if (userTripInstance.Attending != true)
-                            {
-                                if (userTripInstance.ConfirmTime == null)
-                                {
-                                    // To prevent people from cheating by sending false message times, limit the message time to be at most 2 minutes ago.
-                                    if (message.Date == default(DateTime))
-                                        message.Date = DateTime.UtcNow;
-                                    var minDate = DateTime.UtcNow - TimeSpan.FromMinutes(2);
-                                    if (message.Date < minDate)
-                                        message.Date = minDate;
-                                    userTripInstance.ConfirmTime = message.Date;
-                                }
-                                log.Debug(string.Concat("Changed attendance status from '", userTripInstance.Attending,
-                                    "' to 'true' (user:", userTripInstance.User.Email, ", trip: ", tripInstance.Date.ToString("r"), ")"));
-                                userTripInstance.Attending = true;
-                                if (userTripInstance.CommuteMethod == CommuteMethod.NeedRide && !userTripInstance.CanDriveIfNeeded)
-                                {
-                                    if (tripInstance.DriversPicked)
-                                    {
-                                        // Drivers have already been picked. Make sure there is enough room for this user.
-                                        var requiredSeats = tripInstance.GetRequiredSeats();
-                                        var availableSeats = tripInstance.GetMaxAvailableSeats();
-                                        if (requiredSeats > availableSeats)
-                                        {
-                                            userTripInstance.Attending = false;
-                                            userTripInstance.NoRoom = true;
-                                            await SendNotification(userTripInstance.User, tripInstance.Trip.Name, "You cannot attend because there are not enough seats. You have been added to the waiting list.")
-                                                .ConfigureAwait(false);
-                                            if (userTripInstance.FinalNotificationTime == null)
-                                                userTripInstance.FinalNotificationTime = DateTime.UtcNow;
-                                        }
-                                    }
-                                }
-                                if (userTripInstance.Attending == true)
-                                {
-                                    statusChanged = true;
-                                }
-                            }
-                        }
-                        else if (Regex.IsMatch(messageValue, @"\bno\b") || messageValue.Contains("not coming"))
-                        {
-                            understood = true;
-                            if (userTripInstance.Attending != false)
-                            {
-                                log.Debug(string.Concat("Changed attendance status from '", userTripInstance.Attending,
-                                    "' to 'false' (user:", userTripInstance.User.Email, ", trip: ", tripInstance.Date.ToString("r"), ")"));
-                                userTripInstance.Attending = false;
-                                userTripInstance.ConfirmTime = null;
-                                statusChanged = true;
-                            }
-                        }
-                        if (messageValue.Contains("not driving"))
-                        {
-                            understood = true;
-                            if (userTripInstance.CommuteMethod == CommuteMethod.Driver)
-                            {
-                                if (userTripInstance.User.CommuteMethod == CommuteMethod.HaveRide)
-                                    userTripInstance.CommuteMethod = CommuteMethod.HaveRide;
-                                else
-                                    userTripInstance.CommuteMethod = CommuteMethod.NeedRide;
-                                log.Debug(string.Concat("Changed commute method from 'Driver' to '", userTripInstance.CommuteMethod,
-                                    "' (user:", userTripInstance.User.Email, ", trip: ", tripInstance.Date.ToString("r"), ")"));
-                                userTripInstance.CanDriveIfNeeded = false;
-                                statusChanged = true;
-                            }
-                        }
-                        if (!understood)
-                        {
-                            log.Warn(string.Concat("Didn't understand message '", messageValue,
-                                "' (user:", userTripInstance.User.Email, ", trip: ", tripInstance.Date.ToString("r"), ")"));
-                            // TODO: don't hard-code the url
-                            await SendSMS(userTripInstance.User, "Sorry, I didn't understand that.\nFor more details, see https://climbing.pororeplays.com/Notifications.aspx")
-                                .ConfigureAwait(false);
-                        }
-                    }
-                    if (changed)
-                        context.SaveChanges();
-                }
-                if (Program.Verbose)
-                    Console.WriteLine("Received all messages successfully.");
-                if (tripInstance.DriversPicked)
-                {
-                    if (statusChanged)
-                    {
-                        // Send a final notification update
-                        // TODO: send a special message that highlights the change, instead of just sending the whole thing again.
-                        // But make sure to mention if there are not enough drivers.
-                        await SendFinalNotification(tripInstanceId, true).ConfigureAwait(false);
-                    }
-                }
-                //log.Debug("Received messages from all users.");
-            }
-        }*/
-
-        /// <summary>
         /// Receives a message from a user.
         /// </summary>
         /// <param name="message">The message body.</param>
         /// <param name="phone">The phone number from which the message was sent.</param>
         /// <param name="sentTime">The time (in universal time) when the message was sent.</param>
-        public void ReceiveMessage(string message, string phone, DateTime sentTime)
+        public async Task ReceiveSMS(string message, string phone, DateTime sentTime)
         {
+            if (sentTime < DateTime.UtcNow - initialAdvanceNotificationTime || message == null || phone == null)
+                return; // Message was sent too long ago
 
+            using (var context = ApplicationDbContext.Create())
+            {
+                var user = context.GetUserByPhoneNumber(phone);
+                if (user == null)
+                    return;
+
+                // Infer which UserTripInstance the message applies to.
+                // This works assuming the user is not registered for overlapping trip instances.
+                var minDate = DateTime.UtcNow - ApplicationDbContext.TripInstanceRemovalDelay;
+                var userTripInstance = context.UserTripInstances.Where(uti => uti.UserId == user.Id && uti.UserTrip.Attending
+                    && uti.InitialNotificationTime != null && uti.TripInstance.Date > minDate).Include(uti => uti.TripInstance).FirstOrDefault();
+                if (userTripInstance == null)
+                    return;
+                var tripInstance = userTripInstance.TripInstance;
+                message = message.ToLowerInvariant();
+                bool understood = false;
+                bool statusChanged = false;
+                string reply = null;
+                if (Regex.IsMatch(message, @"\byes\b"))
+                {
+                    understood = true;
+                    if (userTripInstance.Attending != true)
+                    {
+                        if (userTripInstance.ConfirmTime == null)
+                        {
+                            // To prevent people from cheating by sending false message times, limit the message time to be at most 2 minutes ago.
+                            var minSentTime = DateTime.UtcNow - TimeSpan.FromMinutes(2);
+                            if (sentTime < minSentTime)
+                                sentTime = minSentTime;
+                            userTripInstance.ConfirmTime = sentTime;
+                        }
+                        log.Debug(string.Concat("Changed attendance status from '", userTripInstance.Attending,
+                            "' to 'true' (user:", userTripInstance.User.Email, ", trip time: ", tripInstance.Date.ToString("r"), ")"));
+                        userTripInstance.Attending = true;
+                        if (userTripInstance.CommuteMethod == CommuteMethod.NeedRide && !userTripInstance.CanDriveIfNeeded)
+                        {
+                            if (tripInstance.DriversPicked)
+                            {
+                                // Drivers have already been picked. Make sure there is enough room for this user.
+                                var requiredSeats = tripInstance.GetRequiredSeats();
+                                var availableSeats = tripInstance.GetMaxAvailableSeats();
+                                if (requiredSeats > availableSeats)
+                                {
+                                    userTripInstance.Attending = false;
+                                    userTripInstance.NoRoom = true;
+                                    if (userTripInstance.FinalNotificationTime == null)
+                                        userTripInstance.FinalNotificationTime = DateTime.UtcNow;
+                                    reply = "You cannot attend because there are not enough seats. You have been added to the waiting list.";
+                                }
+                            }
+                        }
+                        if (userTripInstance.Attending == true)
+                        {
+                            statusChanged = true;
+                        }
+                    }
+                }
+                else if (Regex.IsMatch(message, @"\bno\b") || message.Contains("not coming"))
+                {
+                    understood = true;
+                    if (userTripInstance.Attending != false)
+                    {
+                        log.Debug(string.Concat("Changed attendance status from '", userTripInstance.Attending,
+                            "' to 'false' (user:", userTripInstance.User.Email, ", trip: ", tripInstance.Date.ToString("r"), ")"));
+                        userTripInstance.Attending = false;
+                        userTripInstance.ConfirmTime = null;
+                        statusChanged = true;
+                    }
+                }
+                if (Regex.IsMatch(message, @"\bnot driving\b"))
+                {
+                    understood = true;
+                    if (userTripInstance.CommuteMethod == CommuteMethod.Driver)
+                    {
+                        if (userTripInstance.User.CommuteMethod == CommuteMethod.HaveRide)
+                            userTripInstance.CommuteMethod = CommuteMethod.HaveRide;
+                        else
+                            userTripInstance.CommuteMethod = CommuteMethod.NeedRide;
+                        log.Debug(string.Concat("Changed commute method from 'Driver' to '", userTripInstance.CommuteMethod,
+                            "' (user:", userTripInstance.User.Email, ", trip: ", tripInstance.Date.ToString("r"), ")"));
+                        userTripInstance.CanDriveIfNeeded = false;
+                        statusChanged = true;
+                    }
+                }
+                if (!understood)
+                {
+                    log.Warn(string.Concat("Didn't understand message '", message, "' (user:", userTripInstance.User.Email, ")"));
+                    // TODO: don't hard-code the url
+                    reply = "Sorry, I didn't understand that.\nFor more details, see https://climbing.pororeplays.com/Notifications.aspx";
+                }
+                if (!string.IsNullOrEmpty(reply))
+                {
+                    // Note: since this method is usually called from a Twilio receive callback, we could just send the reply in TwiML.
+                    // However, this does not work well for trial accounts, so just send the message separately.
+                    await SendSMS(user, reply).ConfigureAwait(false);
+                }
+                if (statusChanged && tripInstance.DriversPicked)
+                {
+                    // Send a final notification update
+                    // TODO: send a special message that highlights the change, instead of just sending the whole thing again.
+                    // But make sure to mention if there are not enough drivers.
+                    await SendFinalNotification(tripInstance.Id, true).ConfigureAwait(false);
+                }
+            }
         }
 
         public Task SendInitialNotification(long tripInstanceId)

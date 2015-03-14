@@ -203,6 +203,8 @@ namespace CarpoolPlanner.Model
 
         public string NormalizePhoneNumber(string phone)
         {
+            if (phone == null)
+                return null;
             phone = ignorePhoneChars.Replace(phone, "");
             var phoneWithoutExtension = phone;
             var extensionIndex = phone.IndexOf("x");

@@ -6,13 +6,17 @@ using System.Net;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Web;
 using CarpoolPlanner.Model;
+using log4net;
 using Rest.Server;
 
 namespace CarpoolPlanner.NotificationService
 {
     public class ChangeListener : RestServer
     {
+        private static readonly ILog log = LogManager.GetLogger(typeof(ChangeListener));
+
         public ChangeListener()
             : base(23122) // Note that this port should NOT be opened on the server because it is only used for inter-process communication.
         { }
@@ -83,14 +87,42 @@ namespace CarpoolPlanner.NotificationService
             return "Success";
         }
 
-        [RestMethod(Name = "/message", ParamCount = 0, ContentType = "application/json")]
-        public string Message(string[] args, string body)
+        [RestMethod(Name = "/receive-message", ParamCount = 0, ContentType = "application/json")]
+        public string ReceiveMessage(string[] args, string body)
         {
             // Receive message
             if (Program.Verbose)
                 Console.WriteLine("Received message: " + body);
-            // body: ToCountry=CA&ToState=ON&SmsMessageSid=SMa5354e71a76ff872833c37d35e81c26d&NumMedia=0&ToCity=HESPELER&FromZip=&SmsSid=SMa5354e71a76ff872833c37d35e81c26d&FromState=ON&SmsStatus=received&FromCity=KITCHENER+WATERLOO&Body=Yo&FromCountry=CA&To=%2B12268870098&ToZip=&MessageSid=SMa5354e71a76ff872833c37d35e81c26d&AccountSid=AC69898f60f58406b0880a765aefacd480&From=%2B12268683049&ApiVersion=2010-04-01
+            var postData = HttpUtility.ParseQueryString(body);
+            if (string.Equals(postData["SmsStatus"], "received", StringComparison.InvariantCultureIgnoreCase))
+            {
+                var from = postData["From"];
+                var message = postData["Body"];
+                var manager = NotificationManager.GetInstance();
+                // Assume that the message was sent right now. If this assumption is not accurate enough,
+                // we can send a request to the Twilio API to get the message details, which contain the sent time.
+                manager.ReceiveSMS(message, from, DateTime.UtcNow);
+            }
+            // The Twilio server is expecting us to return some TwiML, so give it some.
             return "<?xml version=\"1.0\" encoding=\"UTF-8\" ?><Response></Response>";
+        }
+
+        [RestMethod(Name = "/sent-message", ParamCount = 0, ContentType = "application/json")]
+        public string SentMessage(string[] args, string body)
+        {
+            // A message was sent. Get the status.
+            if (Program.Verbose)
+                Console.WriteLine("Got message status: " + body);
+            var postData = HttpUtility.ParseQueryString(body);
+            if (string.Equals(postData["SmsStatus"], "failed", StringComparison.InvariantCultureIgnoreCase))
+            {
+                log.Error("Failed to send SMS (SmsSid: " + postData["SmsSid"] + ")");
+            }
+            else
+            {
+                log.Debug("Successfully sent SMS (SmsSid: " + postData["SmsSid"] + ")");
+            }
+            return string.Empty;
         }
     }
 }
