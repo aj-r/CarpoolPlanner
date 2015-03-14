@@ -23,6 +23,7 @@ namespace CarpoolPlanner.NotificationService
     public class NotificationManager
     {
         private static readonly ILog log = LogManager.GetLogger(typeof(NotificationManager));
+        private static readonly TimeSpan sendNotificationTimeout = TimeSpan.FromSeconds(5);
         private static readonly object instanceLock = new object();
         private static NotificationManager instance;
 
@@ -218,7 +219,7 @@ namespace CarpoolPlanner.NotificationService
             }
             return Task.WhenAll(tasks);
         }
-
+        
         /// <summary>
         /// Sends a notification message to the specified user.
         /// </summary>
@@ -227,21 +228,53 @@ namespace CarpoolPlanner.NotificationService
         /// <param name="force">If true, will send the message even if the user's notification settings are all turned off (assuming the user has specified an e-mail or phone number).</param>
         public Task<bool> SendSMS(User user, string message)
         {
-            var tcs = new TaskCompletionSource<bool>();
-            smsClient.SendSmsMessage(smsNumber, user.Phone, message, smsCallbackUrl, m =>
+            return SendSMS(user, message, CancellationToken.None);
+        }
+
+        /// <summary>
+        /// Sends a notification message to the specified user.
+        /// </summary>
+        /// <param name="user">The user to whom the notification will be sent.</param>
+        /// <param name="message">The message to send</param>
+        /// <param name="force">If true, will send the message even if the user's notification settings are all turned off (assuming the user has specified an e-mail or phone number).</param>
+        /// <param name="token"></param>
+        public Task<bool> SendSMS(User user, string message, CancellationToken token)
+        {
+            if (user == null)
             {
+                log.Warn("User is null. This probably indicates a bug.");
+                return Task.FromResult(false);
+            }
+            var phone = ApplicationDbContext.NormalizePhoneNumber(user.Phone);
+            if (phone == null)
+            {
+                log.Warn("Normalized phone is null. This probably indicates a bug.");
+                return Task.FromResult(false);
+            }
+
+            // Set a timeout
+            var tcs = new TaskCompletionSource<bool>();
+            var cts = CancellationTokenSource.CreateLinkedTokenSource(token);
+            cts.CancelAfter((int)sendNotificationTimeout.TotalMilliseconds);
+            cts.Token.Register(() =>
+            {
+                if (!tcs.TrySetResult(false))
+                    return;
+                var logMessage = "Timed out while sending SMS to " + phone;
+                log.ErrorFormat(logMessage);
+                Console.WriteLine(logMessage);
+            }, false);
+
+            // Send the message
+            smsClient.SendSmsMessage(smsNumber, phone, message, smsCallbackUrl, m =>
+            {
+                // Log the result and mark the task as completed
                 if (m == null)
                 {
                     log.Warn("Twilio returned a null message.");
                     if (Program.Verbose)
                         Console.WriteLine("Warning: Twilio returned a null message.");
-                    return;
-                }
-                if (tcs == null)
-                {
-                    log.Warn("Task completion source is null.");
-                    if (Program.Verbose)
-                        Console.WriteLine("Warning: Task completion source is null.");
+                    tcs.TrySetResult(false);
                     return;
                 }
                 try
@@ -253,18 +286,19 @@ namespace CarpoolPlanner.NotificationService
                         log.Debug("SMS message sent.");
                         if (Program.Verbose)
                             Console.WriteLine("SMS sent successfully.");
-                        tcs.SetResult(true);
+                        tcs.TrySetResult(true);
                     }
                     else
                     {
-                        log.ErrorFormat("Failed to send SMS to " + user.Phone);
-                        Console.WriteLine("Failed to send SMS to " + user.Phone);
-                        tcs.SetResult(false);
+                        log.ErrorFormat("Failed to send SMS to " + phone);
+                        Console.WriteLine("Failed to send SMS to " + phone);
+                        tcs.TrySetResult(false);
                     }
                 }
                 catch (Exception ex)
                 {
-                    tcs.SetException(ex);
+                    log.Error("Error sending SMS to " + phone + ": " + ex);
+                    tcs.TrySetResult(false);
                 }
             });
             return tcs.Task;
@@ -465,30 +499,39 @@ namespace CarpoolPlanner.NotificationService
                 var sb = new StringBuilder(250);
                 foreach (var userTripInstance in tripInstance.UserTripInstances.Where(uti => uti.Attending == null && uti.User.Status == UserStatus.Active))
                 {
-                    if (isReminder)
+                    try
                     {
-                        if (userTripInstance.ReminderNotificationTime != null)
-                            continue; // Notification was already sent
-                        userTripInstance.ReminderNotificationTime = DateTime.UtcNow;
-                        if (userTripInstance.InitialNotificationTime == null)
+                        if (isReminder)
+                        {
+                            if (userTripInstance.ReminderNotificationTime != null)
+                                continue; // Notification was already sent
+                            userTripInstance.ReminderNotificationTime = DateTime.UtcNow;
+                            if (userTripInstance.InitialNotificationTime == null)
+                                userTripInstance.InitialNotificationTime = DateTime.UtcNow;
+                        }
+                        else
+                        {
+                            if (userTripInstance.InitialNotificationTime != null)
+                                continue; // Notification was already sent
                             userTripInstance.InitialNotificationTime = DateTime.UtcNow;
+                        }
+                        sb.Append("Are you coming to ");
+                        sb.Append(tripInstance.Trip.Name);
+                        sb.Append(" at ");
+                        sb.Append(localDate.ToString("h:mm tt"));
+                        sb.Append("?\n");
+                        bool isDriver = userTripInstance.CommuteMethod == CommuteMethod.Driver;
+                        sb.Append("Reply with yes/no. \n");
+                        sb.Append("For more options, go to https://climbing.pororeplays.com"); // TODO: don't hard-code the url
+                        await SendNotification(userTripInstance.User, tripInstance.Trip.Name, sb.ToString()).ConfigureAwait(false);
+                        sb.Clear();
                     }
-                    else
+                    catch (Exception ex)
                     {
-                        if (userTripInstance.InitialNotificationTime != null)
-                            continue; // Notification was already sent
-                        userTripInstance.InitialNotificationTime = DateTime.UtcNow;
+                        var message = string.Concat("Error sending initial notification to ", userTripInstance.User, ": ", ex.ToString());
+                        log.Error(message);
+                        Console.WriteLine(message);
                     }
-                    sb.Append("Are you coming to ");
-                    sb.Append(tripInstance.Trip.Name);
-                    sb.Append(" at ");
-                    sb.Append(localDate.ToString("h:mm tt"));
-                    sb.Append("?\n");
-                    bool isDriver = userTripInstance.CommuteMethod == CommuteMethod.Driver;
-                    sb.Append("Reply with yes/no. \n");
-                    sb.Append("For more options, go to https://climbing.pororeplays.com"); // TODO: don't hard-code the url
-                    await SendNotification(userTripInstance.User, tripInstance.Trip.Name, sb.ToString()).ConfigureAwait(false);
-                    sb.Clear();
                 }
                 context.SaveChanges();
             }
@@ -517,41 +560,50 @@ namespace CarpoolPlanner.NotificationService
                 var sb = new StringBuilder(125);
                 foreach (var userTripInstance in utisToNotify)
                 {
-                    if (isUpdate)
+                    try
                     {
-                        sb.Append("UPDATE: ");
-                        if (userTripInstance.FinalNotificationTime == null)
+                        if (isUpdate)
+                        {
+                            sb.Append("UPDATE: ");
+                            if (userTripInstance.FinalNotificationTime == null)
+                                userTripInstance.FinalNotificationTime = DateTime.UtcNow;
+                        }
+                        else
+                        {
+                            if (userTripInstance.FinalNotificationTime != null)
+                                continue; // Notification was already sent
                             userTripInstance.FinalNotificationTime = DateTime.UtcNow;
-                    }
-                    else
-                    {
-                        if (userTripInstance.FinalNotificationTime != null)
-                            continue; // Notification was already sent
-                        userTripInstance.FinalNotificationTime = DateTime.UtcNow;
-                    }
+                        }
 
-                    if (userTripInstance.CommuteMethod == CommuteMethod.Driver)
-                    {
-                        sb.Append("You are driving for ");
+                        if (userTripInstance.CommuteMethod == CommuteMethod.Driver)
+                        {
+                            sb.Append("You are driving for ");
+                        }
+                        else if (userTripInstance.Attending == true)
+                        {
+                            sb.Append("You are attending ");
+                            if (userTripInstance.User.CommuteMethod == CommuteMethod.Driver)
+                                sb.Append("(but not driving for) ");
+                        }
+                        else if (userTripInstance.NoRoom)
+                        {
+                            sb.Append("There are NOT enough seats for you to attend ");
+                        }
+                        sb.Append(tripInstance.Trip.Name);
+                        sb.Append(" at ");
+                        sb.Append(tripInstance.Date.ToLocalTime().ToString("h:mm tt"));
+                        sb.AppendFormat(".\nThere are {0} seats and {1} people coming.\n", availableSeats, requiredSeats);
+                        sb.Append("\n" + tripInstance.GetStatusReport() + "\n");
+                        sb.Append("\nFor more details, go to https://climbing.pororeplays.com"); // TODO: don't hard-code the url
+                        await SendNotification(userTripInstance.User, tripInstance.Trip.Name, sb.ToString()).ConfigureAwait(false);
+                        sb.Clear();
                     }
-                    else if (userTripInstance.Attending == true)
+                    catch (Exception ex)
                     {
-                        sb.Append("You are attending ");
-                        if (userTripInstance.User.CommuteMethod == CommuteMethod.Driver)
-                            sb.Append("(but not driving for) ");
+                        var message = string.Concat("Error sending final notification to ", userTripInstance.User, ": ", ex.ToString());
+                        log.Error(message);
+                        Console.WriteLine(message);
                     }
-                    else if (userTripInstance.NoRoom)
-                    {
-                        sb.Append("There are NOT enough seats for you to attend ");
-                    }
-                    sb.Append(tripInstance.Trip.Name);
-                    sb.Append(" at ");
-                    sb.Append(tripInstance.Date.ToLocalTime().ToString("h:mm tt"));
-                    sb.AppendFormat(".\nThere are {0} seats and {1} people coming.\n", availableSeats, requiredSeats);
-                    sb.Append("\n" + tripInstance.GetStatusReport() + "\n");
-                    sb.Append("\nFor more details, go to https://climbing.pororeplays.com"); // TODO: don't hard-code the url
-                    await SendNotification(userTripInstance.User, tripInstance.Trip.Name, sb.ToString()).ConfigureAwait(false);
-                    sb.Clear();
                 }
                 context.SaveChanges();
                 lock (prevTripInstances)

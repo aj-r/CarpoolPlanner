@@ -201,7 +201,7 @@ namespace CarpoolPlanner.Model
 
         private static readonly Regex ignorePhoneChars = new Regex("[^0-9x]", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
-        public string NormalizePhoneNumber(string phone)
+        public static string NormalizePhoneNumber(string phone)
         {
             if (phone == null)
                 return null;

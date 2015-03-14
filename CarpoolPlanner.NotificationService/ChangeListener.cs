@@ -19,7 +19,7 @@ namespace CarpoolPlanner.NotificationService
         private static readonly ILog log = LogManager.GetLogger(typeof(ChangeListener));
 
         public ChangeListener()
-            : base(23122) // Note that this port should NOT be opened on the server because it is only used for inter-process communication.
+            : base(23122)
         { }
 
         [RestMethod(Name = "/update-ti", ParamCount = 2)]
