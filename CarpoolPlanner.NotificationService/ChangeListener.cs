@@ -92,8 +92,6 @@ namespace CarpoolPlanner.NotificationService
         public string ReceiveMessage(string[] args, string body)
         {
             // Receive message
-            if (Program.Verbose)
-                Console.WriteLine("Received message: " + body);
             var postData = HttpUtility.ParseQueryString(body);
             string reply = null;
             if (string.Equals(postData["SmsStatus"], "received", StringComparison.InvariantCultureIgnoreCase))

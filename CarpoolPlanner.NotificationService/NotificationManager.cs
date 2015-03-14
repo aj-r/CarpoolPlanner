@@ -363,7 +363,10 @@ namespace CarpoolPlanner.NotificationService
             string reply = null;
 
             if (sentTime < DateTime.UtcNow - initialAdvanceNotificationTime || message == null || phone == null)
+            {
+                log.Warn("Received message that was sent too long ago. Ignoring message. Phone #: " + phone);
                 return reply; // Message was sent too long ago
+            }
 
             using (var context = ApplicationDbContext.Create())
             {
@@ -382,10 +385,22 @@ namespace CarpoolPlanner.NotificationService
                 // Infer which UserTripInstance the message applies to.
                 // This works assuming the user is not registered for overlapping trip instances.
                 var minDate = DateTime.UtcNow - ApplicationDbContext.TripInstanceRemovalDelay;
-                var userTripInstance = context.UserTripInstances.Where(uti => uti.UserId == user.Id && uti.UserTrip.Attending
-                    && uti.InitialNotificationTime != null && uti.TripInstance.Date > minDate).Include(uti => uti.TripInstance).FirstOrDefault();
-                if (userTripInstance == null)
+                var maxDate = DateTime.UtcNow + initialAdvanceNotificationTime;
+                var userTripInstances = context.UserTripInstances.Where(uti => uti.UserId == user.Id && uti.UserTrip.Attending
+                    && uti.TripInstance.Date > minDate && uti.TripInstance.Date < maxDate)
+                    .Include(uti => uti.TripInstance)
+                    .ToList();
+                if (userTripInstances.Count == 0)
+                {
+                    log.Warn("No trip instance for the current message.");
                     return reply;
+                }
+                if (userTripInstances.Count > 1)
+                {
+                    log.Warn("Ambiguous trip instance for the current message.");
+                }
+
+                var userTripInstance = userTripInstances.First();
 
                 if (Program.Verbose)
                     Console.WriteLine("Trip instance initial notification time: " + userTripInstance.InitialNotificationTime);
@@ -501,20 +516,12 @@ namespace CarpoolPlanner.NotificationService
                 {
                     try
                     {
-                        if (isReminder)
+                        if ((isReminder && userTripInstance.ReminderNotificationTime != null)
+                            || (!isReminder && userTripInstance.InitialNotificationTime != null))
                         {
-                            if (userTripInstance.ReminderNotificationTime != null)
-                                continue; // Notification was already sent
-                            userTripInstance.ReminderNotificationTime = DateTime.UtcNow;
-                            if (userTripInstance.InitialNotificationTime == null)
-                                userTripInstance.InitialNotificationTime = DateTime.UtcNow;
+                            continue; // Notification was already sent
                         }
-                        else
-                        {
-                            if (userTripInstance.InitialNotificationTime != null)
-                                continue; // Notification was already sent
-                            userTripInstance.InitialNotificationTime = DateTime.UtcNow;
-                        }
+
                         sb.Append("Are you coming to ");
                         sb.Append(tripInstance.Trip.Name);
                         sb.Append(" at ");
@@ -525,6 +532,13 @@ namespace CarpoolPlanner.NotificationService
                         sb.Append("For more options, go to https://climbing.pororeplays.com"); // TODO: don't hard-code the url
                         await SendNotification(userTripInstance.User, tripInstance.Trip.Name, sb.ToString()).ConfigureAwait(false);
                         sb.Clear();
+
+                        if (isReminder)
+                            userTripInstance.ReminderNotificationTime = DateTime.UtcNow;
+                        if (userTripInstance.InitialNotificationTime == null)
+                            userTripInstance.InitialNotificationTime = DateTime.UtcNow;
+                        // Save changes after every message (instead of after all messages have been sent) in case some messages take a long time to send.
+                        context.SaveChanges();
                     }
                     catch (Exception ex)
                     {
@@ -534,6 +548,8 @@ namespace CarpoolPlanner.NotificationService
                     }
                 }
                 context.SaveChanges();
+                if (Program.Verbose)
+                    Console.WriteLine("Sent all initial notifications");
             }
         }
 
@@ -544,72 +560,82 @@ namespace CarpoolPlanner.NotificationService
 
         public async Task SendFinalNotification(long tripInstanceId, bool isUpdate)
         {
-            using (var context = ApplicationDbContext.Create())
+            try
             {
-                var tripInstance = context.GetTripInstanceById(tripInstanceId);
-                if (tripInstance == null)
-                    return;
-                PickDrivers(tripInstance);
-                var availableSeats = tripInstance.GetAvailableSeats();
-                var requiredSeats = tripInstance.GetRequiredSeats();
-                context.SaveChanges();
-                var utisToNotify = from uti in tripInstance.UserTripInstances
-                                   where (uti.Attending == true || uti.NoRoom)
-                                     && uti.User.Status == UserStatus.Active
-                                   select uti;
-                var sb = new StringBuilder(125);
-                foreach (var userTripInstance in utisToNotify)
+                using (var context = ApplicationDbContext.Create())
                 {
-                    try
+                    var tripInstance = context.GetTripInstanceById(tripInstanceId);
+                    if (tripInstance == null)
+                        return;
+                    PickDrivers(tripInstance);
+                    log.Debug("Drivers picked");
+                    var availableSeats = tripInstance.GetAvailableSeats();
+                    var requiredSeats = tripInstance.GetRequiredSeats();
+                    context.SaveChanges();
+                    var utisToNotify = from uti in tripInstance.UserTripInstances
+                                       where (uti.Attending == true || uti.NoRoom)
+                                         && uti.User.Status == UserStatus.Active
+                                       select uti;
+                    var sb = new StringBuilder(125);
+                    foreach (var userTripInstance in utisToNotify)
                     {
-                        if (isUpdate)
+                        try
                         {
-                            sb.Append("UPDATE: ");
-                            if (userTripInstance.FinalNotificationTime == null)
+                            log.Debug("Sending final notification to user: " + userTripInstance.User.Email);
+                            if (isUpdate)
+                            {
+                                sb.Append("UPDATE: ");
+                                if (userTripInstance.FinalNotificationTime == null)
+                                    userTripInstance.FinalNotificationTime = DateTime.UtcNow;
+                            }
+                            else
+                            {
+                                if (userTripInstance.FinalNotificationTime != null)
+                                    continue; // Notification was already sent
                                 userTripInstance.FinalNotificationTime = DateTime.UtcNow;
-                        }
-                        else
-                        {
-                            if (userTripInstance.FinalNotificationTime != null)
-                                continue; // Notification was already sent
-                            userTripInstance.FinalNotificationTime = DateTime.UtcNow;
-                        }
+                            }
 
-                        if (userTripInstance.CommuteMethod == CommuteMethod.Driver)
-                        {
-                            sb.Append("You are driving for ");
+                            if (userTripInstance.CommuteMethod == CommuteMethod.Driver)
+                            {
+                                sb.Append("You are driving for ");
+                            }
+                            else if (userTripInstance.Attending == true)
+                            {
+                                sb.Append("You are attending ");
+                                if (userTripInstance.User.CommuteMethod == CommuteMethod.Driver)
+                                    sb.Append("(but not driving for) ");
+                            }
+                            else if (userTripInstance.NoRoom)
+                            {
+                                sb.Append("There are NOT enough seats for you to attend ");
+                            }
+                            sb.Append(tripInstance.Trip.Name);
+                            sb.Append(" at ");
+                            sb.Append(tripInstance.Date.ToLocalTime().ToString("h:mm tt"));
+                            sb.AppendFormat(".\nThere are {0} seats and {1} people coming.\n", availableSeats, requiredSeats);
+                            sb.Append("\n" + tripInstance.GetStatusReport() + "\n");
+                            sb.Append("\nFor more details, go to https://climbing.pororeplays.com"); // TODO: don't hard-code the url
+                            await SendNotification(userTripInstance.User, tripInstance.Trip.Name, sb.ToString()).ConfigureAwait(false);
+                            sb.Clear();
                         }
-                        else if (userTripInstance.Attending == true)
+                        catch (Exception ex)
                         {
-                            sb.Append("You are attending ");
-                            if (userTripInstance.User.CommuteMethod == CommuteMethod.Driver)
-                                sb.Append("(but not driving for) ");
+                            var logMessage = string.Concat("Error sending final notification to ", userTripInstance.User, ": ", ex.ToString());
+                            log.Error(logMessage);
+                            Console.WriteLine(logMessage);
                         }
-                        else if (userTripInstance.NoRoom)
-                        {
-                            sb.Append("There are NOT enough seats for you to attend ");
-                        }
-                        sb.Append(tripInstance.Trip.Name);
-                        sb.Append(" at ");
-                        sb.Append(tripInstance.Date.ToLocalTime().ToString("h:mm tt"));
-                        sb.AppendFormat(".\nThere are {0} seats and {1} people coming.\n", availableSeats, requiredSeats);
-                        sb.Append("\n" + tripInstance.GetStatusReport() + "\n");
-                        sb.Append("\nFor more details, go to https://climbing.pororeplays.com"); // TODO: don't hard-code the url
-                        await SendNotification(userTripInstance.User, tripInstance.Trip.Name, sb.ToString()).ConfigureAwait(false);
-                        sb.Clear();
                     }
-                    catch (Exception ex)
+                    context.SaveChanges();
+                    lock (prevTripInstances)
                     {
-                        var message = string.Concat("Error sending final notification to ", userTripInstance.User, ": ", ex.ToString());
-                        log.Error(message);
-                        Console.WriteLine(message);
+                        prevTripInstances[tripInstanceId] = tripInstance;
                     }
                 }
-                context.SaveChanges();
-                lock (prevTripInstances)
-                {
-                    prevTripInstances[tripInstanceId] = tripInstance;
-                }
+            }
+            catch (Exception ex)
+            {
+                log.Error("Error sending final notification: " + ex.ToString());
+                Console.WriteLine("Error sending final notification: " + ex.Message);
             }
         }
 
