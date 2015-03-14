@@ -158,7 +158,7 @@ app.controller('tripInstanceCtrl', ['$scope', function($scope) {
         }
       });
       if (!skipInstance)
-        a(uti);
+        return a(uti);
     });
   }
 
@@ -191,6 +191,17 @@ app.controller('tripInstanceCtrl', ['$scope', function($scope) {
         required++;
     });
     return required;
+  };
+  $scope.getUti = function(userId) {
+    var result = null;
+    eachUti($scope.tripInstance.userTripInstances, function(uti) {
+      if (uti.userId == userId)
+      {
+        result = uti;
+        return true;
+      }
+    });
+    return result;
   };
   function updateSeats() {
     $scope.availableSeats = $scope.getAvailableSeats();

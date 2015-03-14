@@ -148,23 +148,51 @@
                   <div style="margin-top: 10px;">
                     <p class="col-md-3" ng-show="drivers.length > 0">
                       <b>Drivers:</b>
-                      <span ng-repeat="user in drivers"><br />{{ user.name }}</span>
+                      <span ng-repeat="user in drivers" ng-init="uti = getUti(user.id)">
+                        <br />
+                        {{ user.name }}
+                        <img src="~/Content/sedan2.png" />
+                      </span>
                     </p>
                     <p class="col-md-3" ng-show="passengers.length > 0">
                       <b>Passengers:</b>
-                      <span ng-repeat="user in passengers"><br />{{ user.name }}</span>
+                      <span ng-repeat="user in passengers" ng-init="uti = getUti(user.id)">
+                        <br />
+                        {{ user.name }}
+                        <img src="~/Content/sedan2.png"
+                             ng-show="uti.commuteMethod == CommuteMethod.Driver || uti.canDriveIfNeeded"
+                             ng-class="{ 'faded': uti.commuteMethod != CommuteMethod.Driver }" />
+                      </span>
                     </p>
                     <p class="col-md-3" ng-show="ownRide.length > 0">
                       <b>Have own ride:</b>
-                      <span ng-repeat="user in ownRide"><br />{{ user.name }}</span>
+                      <span ng-repeat="user in ownRide" ng-init="uti = getUti(user.id)">
+                        <br />
+                        {{ user.name }}
+                        <img src="~/Content/sedan2.png"
+                             ng-show="uti.commuteMethod == CommuteMethod.Driver || uti.canDriveIfNeeded"
+                             ng-class="{ 'faded': uti.commuteMethod != CommuteMethod.Driver }" />
+                      </span>
                     </p>
                     <p class="col-md-3" ng-show="waitingList.length > 0">
                       <b>Waiting List:</b>
-                      <span ng-repeat="user in waitingList"><br />{{ user.name }}</span>
+                      <span ng-repeat="user in waitingList" ng-init="uti = getUti(user.id)">
+                        <br />
+                        {{ user.name }}
+                        <img src="~/Content/sedan2.png"
+                             ng-show="uti.commuteMethod == CommuteMethod.Driver || uti.canDriveIfNeeded"
+                             ng-class="{ 'faded': uti.commuteMethod != CommuteMethod.Driver }" />
+                      </span>
                     </p>
                     <p class="col-md-3" ng-show="unconfirmed.length > 0">
                       <b>Unconfirmed:</b>
-                      <span ng-repeat="user in unconfirmed"><br />{{ user.name }}</span>
+                      <span ng-repeat="user in unconfirmed" ng-init="uti = getUti(user.id)">
+                        <br />
+                        {{ user.name }}
+                        <img src="~/Content/sedan2.png"
+                             ng-show="uti.commuteMethod == CommuteMethod.Driver || uti.canDriveIfNeeded"
+                             ng-class="{ 'faded': uti.commuteMethod != CommuteMethod.Driver }" />
+                      </span>
                     </p>
                   </div>
                 </div>

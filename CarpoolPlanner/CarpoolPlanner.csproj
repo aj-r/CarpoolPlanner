@@ -180,6 +180,7 @@
     <Content Include="Content\app.js" />
     <Content Include="Content\datetimepicker.css" />
     <Content Include="Content\angular.net.js" />
+    <Content Include="Content\sedan2.png" />
     <Content Include="Content\Site.css" />
     <Content Include="Content\datetimepicker.js" />
     <Content Include="Content\validation-ext.js" />
