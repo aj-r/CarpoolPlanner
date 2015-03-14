@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Web;
+using System.Xml.Linq;
 using CarpoolPlanner.Model;
 using log4net;
 using Rest.Server;
@@ -94,6 +95,7 @@ namespace CarpoolPlanner.NotificationService
             if (Program.Verbose)
                 Console.WriteLine("Received message: " + body);
             var postData = HttpUtility.ParseQueryString(body);
+            string reply = null;
             if (string.Equals(postData["SmsStatus"], "received", StringComparison.InvariantCultureIgnoreCase))
             {
                 var from = postData["From"];
@@ -101,10 +103,20 @@ namespace CarpoolPlanner.NotificationService
                 var manager = NotificationManager.GetInstance();
                 // Assume that the message was sent right now. If this assumption is not accurate enough,
                 // we can send a request to the Twilio API to get the message details, which contain the sent time.
-                manager.ReceiveSMS(message, from, DateTime.UtcNow);
+                reply = manager.ReceiveSMS(message, from, DateTime.UtcNow);
             }
-            // The Twilio server is expecting us to return some TwiML, so give it some.
-            return "<?xml version=\"1.0\" encoding=\"UTF-8\" ?><Response></Response>";
+            // The Twilio server is expecting us to return some TwiML, so give it some. Include the reply if there is one.
+            var response = new XElement("Response");
+            if (!string.IsNullOrEmpty(reply))
+                response.Add(new XElement("Sms", reply));
+            var doc = new XDocument(new XDeclaration("1.0", "UTF-8", "yes"), response);
+            var responseXml = doc.ToString();
+            if (Program.Verbose)
+            {
+                Console.WriteLine("Sending reply:");
+                Console.WriteLine(responseXml);
+            }
+            return responseXml;
         }
 
         [RestMethod(Name = "/sent-message", ParamCount = 0)]

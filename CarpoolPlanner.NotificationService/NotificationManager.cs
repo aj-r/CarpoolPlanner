@@ -323,10 +323,13 @@ namespace CarpoolPlanner.NotificationService
         /// <param name="message">The message body.</param>
         /// <param name="phone">The phone number from which the message was sent.</param>
         /// <param name="sentTime">The time (in universal time) when the message was sent.</param>
-        public async Task ReceiveSMS(string message, string phone, DateTime sentTime)
+        /// <returns>The reply to send.</returns>
+        public string ReceiveSMS(string message, string phone, DateTime sentTime)
         {
+            string reply = null;
+
             if (sentTime < DateTime.UtcNow - initialAdvanceNotificationTime || message == null || phone == null)
-                return; // Message was sent too long ago
+                return reply; // Message was sent too long ago
 
             using (var context = ApplicationDbContext.Create())
             {
@@ -336,7 +339,7 @@ namespace CarpoolPlanner.NotificationService
                     log.Warn("No user found with phone number: " + phone);
                     if (Program.Verbose)
                         Console.WriteLine("Warning: No user found with phone number: " + phone);
-                    return;
+                    return reply;
                 }
 
                 if (Program.Verbose)
@@ -348,7 +351,7 @@ namespace CarpoolPlanner.NotificationService
                 var userTripInstance = context.UserTripInstances.Where(uti => uti.UserId == user.Id && uti.UserTrip.Attending
                     && uti.InitialNotificationTime != null && uti.TripInstance.Date > minDate).Include(uti => uti.TripInstance).FirstOrDefault();
                 if (userTripInstance == null)
-                    return;
+                    return reply;
 
                 if (Program.Verbose)
                     Console.WriteLine("Trip instance initial notification time: " + userTripInstance.InitialNotificationTime);
@@ -357,7 +360,6 @@ namespace CarpoolPlanner.NotificationService
                 message = message.ToLowerInvariant();
                 bool understood = false;
                 bool statusChanged = false;
-                string reply = null;
                 if (Regex.IsMatch(message, @"\byes\b"))
                 {
                     understood = true;
@@ -431,20 +433,15 @@ namespace CarpoolPlanner.NotificationService
                     reply = "Sorry, I didn't understand that.\nFor more details, see https://climbing.pororeplays.com/Notifications.aspx";
                 }
                 context.SaveChanges();
-                if (!string.IsNullOrEmpty(reply))
-                {
-                    // Note: since this method is usually called from a Twilio receive callback, we could just send the reply in TwiML.
-                    // However, this does not work well for trial accounts, so just send the message separately.
-                    await SendSMS(user, reply).ConfigureAwait(false);
-                }
                 if (statusChanged && tripInstance.DriversPicked)
                 {
                     // Send a final notification update
                     // TODO: send a special message that highlights the change, instead of just sending the whole thing again.
                     // But make sure to mention if there are not enough drivers.
-                    await SendFinalNotification(tripInstance.Id, true).ConfigureAwait(false);
+                    SendFinalNotification(tripInstance.Id, true);
                 }
             }
+            return reply;
         }
 
         public Task SendInitialNotification(long tripInstanceId)

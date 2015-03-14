@@ -22,7 +22,7 @@ namespace CarpoolPlanner.NotificationService
         static void Main(string[] args)
         {
             XmlConfigurator.Configure();
-
+            
             if (args.Length >= 1)
             {
                 switch (args[0])
