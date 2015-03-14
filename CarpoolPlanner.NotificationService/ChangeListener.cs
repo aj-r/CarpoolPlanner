@@ -110,7 +110,7 @@ namespace CarpoolPlanner.NotificationService
         [RestMethod(Name = "/sent-message", ParamCount = 0, ContentType = "application/json")]
         public string SentMessage(string[] args, string body)
         {
-            // A message was sent. Get the status.
+            // A message was sent. Get the status (just for logging purposes right now).
             if (Program.Verbose)
                 Console.WriteLine("Got message status: " + body);
             var postData = HttpUtility.ParseQueryString(body);

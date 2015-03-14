@@ -59,6 +59,9 @@ namespace CarpoolPlanner.NotificationService
             initialAdvanceNotificationTime = ParseHours(ConfigurationManager.AppSettings["InitialAdvanceNotificationTime"]);
             reminderAdvanceNotificationTime = ParseHours(ConfigurationManager.AppSettings["ReminderAdvanceNotificationTime"]);
             finalAdvanceNotificationTime = ParseHours(ConfigurationManager.AppSettings["FinalAdvanceNotificationTime"]);
+
+            // TODO: figure out how to add root CAs to mono's trusted list, and remove this line.
+            ServicePointManager.CertificatePolicy = new AllowAllCertPolicy();
         }
 
         public async void Init()
@@ -329,7 +332,15 @@ namespace CarpoolPlanner.NotificationService
             {
                 var user = context.GetUserByPhoneNumber(phone);
                 if (user == null)
+                {
+                    log.Warn("No user found with phone number: " + phone);
+                    if (Program.Verbose)
+                        Console.WriteLine("Warning: No user found with phone number: " + phone);
                     return;
+                }
+
+                if (Program.Verbose)
+                    Console.WriteLine("Received message from user: " + user.Email + ". Message: " + message);
 
                 // Infer which UserTripInstance the message applies to.
                 // This works assuming the user is not registered for overlapping trip instances.
@@ -338,6 +349,10 @@ namespace CarpoolPlanner.NotificationService
                     && uti.InitialNotificationTime != null && uti.TripInstance.Date > minDate).Include(uti => uti.TripInstance).FirstOrDefault();
                 if (userTripInstance == null)
                     return;
+
+                if (Program.Verbose)
+                    Console.WriteLine("Trip instance initial notification time: " + userTripInstance.InitialNotificationTime);
+
                 var tripInstance = userTripInstance.TripInstance;
                 message = message.ToLowerInvariant();
                 bool understood = false;
@@ -415,6 +430,7 @@ namespace CarpoolPlanner.NotificationService
                     // TODO: don't hard-code the url
                     reply = "Sorry, I didn't understand that.\nFor more details, see https://climbing.pororeplays.com/Notifications.aspx";
                 }
+                context.SaveChanges();
                 if (!string.IsNullOrEmpty(reply))
                 {
                     // Note: since this method is usually called from a Twilio receive callback, we could just send the reply in TwiML.
@@ -684,5 +700,17 @@ namespace CarpoolPlanner.NotificationService
                 return TimeSpan.Zero;
             return TimeSpan.FromHours(hours);
         }
+    }
+
+    public class AllowAllCertPolicy : ICertificatePolicy
+    {
+        #region ICertificatePolicy Members
+
+        public bool CheckValidationResult(ServicePoint srvPoint, System.Security.Cryptography.X509Certificates.X509Certificate certificate, WebRequest request, int certificateProblem)
+        {
+            return true;
+        }
+
+        #endregion
     }
 }
