@@ -21,7 +21,7 @@ namespace CarpoolPlanner.NotificationService
             : base(23122) // Note that this port should NOT be opened on the server because it is only used for inter-process communication.
         { }
 
-        [RestMethod(Name = "/update-ti", ParamCount = 2, ContentType = "application/json")]
+        [RestMethod(Name = "/update-ti", ParamCount = 2)]
         public string UpdateTripInstance(string[] args)
         {
             if (Program.Verbose)
@@ -41,7 +41,7 @@ namespace CarpoolPlanner.NotificationService
             return "Success";
         }
 
-        [RestMethod(Name = "/notify-ti", ParamCount = 1, ContentType = "application/json")]
+        [RestMethod(Name = "/notify-ti", ParamCount = 1)]
         public string NotifyTripInstance(string[] args)
         {
             if (Program.Verbose)
@@ -64,7 +64,7 @@ namespace CarpoolPlanner.NotificationService
             return "Success";
         }
 
-        [RestMethod(Name = "/user-register", ParamCount = 1, ContentType = "application/json")]
+        [RestMethod(Name = "/user-register", ParamCount = 1)]
         public string UserRegister(string[] args)
         {
             if (Program.Verbose)
@@ -87,7 +87,7 @@ namespace CarpoolPlanner.NotificationService
             return "Success";
         }
 
-        [RestMethod(Name = "/receive-message", ParamCount = 0, ContentType = "application/json")]
+        [RestMethod(Name = "/receive-message", ParamCount = 0, ContentType = "application/xml")]
         public string ReceiveMessage(string[] args, string body)
         {
             // Receive message
@@ -107,7 +107,7 @@ namespace CarpoolPlanner.NotificationService
             return "<?xml version=\"1.0\" encoding=\"UTF-8\" ?><Response></Response>";
         }
 
-        [RestMethod(Name = "/sent-message", ParamCount = 0, ContentType = "application/json")]
+        [RestMethod(Name = "/sent-message", ParamCount = 0)]
         public string SentMessage(string[] args, string body)
         {
             // A message was sent. Get the status (just for logging purposes right now).
