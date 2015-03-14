@@ -10,6 +10,7 @@ using System.Web;
 using System.Xml.Linq;
 using CarpoolPlanner.Model;
 using log4net;
+using Rest.Common;
 using Rest.Server;
 
 namespace CarpoolPlanner.NotificationService
@@ -133,6 +134,12 @@ namespace CarpoolPlanner.NotificationService
                 log.Debug("Successfully sent SMS (SmsSid: " + postData["SmsSid"] + ")");
             }
             return string.Empty;
+        }
+
+        protected override void OnRequestError(RequestErrorEventArgs e)
+        {
+            log.Error(e.Exception != null ? e.Exception.ToString() : "Unspecified error occurred while handling a request.");
+            base.OnRequestError(e);
         }
     }
 }

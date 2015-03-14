@@ -79,6 +79,10 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\Rest\Rest.Common\Rest.Common.csproj">
+      <Project>{2874d6f8-b93e-4a7b-aecc-21786a0205a7}</Project>
+      <Name>Rest.Common</Name>
+    </ProjectReference>
     <ProjectReference Include="..\..\Rest\Rest.Server\Rest.Server.csproj">
       <Project>{ebd85c4e-3402-4f3e-ab4b-64bfe29909e4}</Project>
       <Name>Rest.Server</Name>
