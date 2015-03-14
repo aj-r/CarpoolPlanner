@@ -9,8 +9,12 @@ using log4net;
 
 namespace CarpoolPlanner
 {
+    /// <summary>
+    /// A client used for communication with the notification service.
+    /// </summary>
     public class NotificationServiceClient
     {
+        private const string baseUrl = "http://localhost:23122";
         private static readonly ILog log = LogManager.GetLogger(typeof(NotificationServiceClient));
 
         /// <summary>
@@ -33,7 +37,7 @@ namespace CarpoolPlanner
         {
             try
             {
-                var uri = string.Concat("http://localhost:23122/update-ti/", tripInstanceId, "/", tripRecurrenceId);
+                var uri = string.Concat(baseUrl, "/update-ti/", tripInstanceId, "/", tripRecurrenceId);
                 var request = (HttpWebRequest)WebRequest.Create(uri);
                 SendRequestAsync(request);
             }
@@ -51,7 +55,7 @@ namespace CarpoolPlanner
         {
             try
             {
-                var uri = string.Concat("http://localhost:23122/notify-ti/", tripInstanceId);
+                var uri = string.Concat(baseUrl, "/notify-ti/", tripInstanceId);
                 var request = (HttpWebRequest)WebRequest.Create(uri);
                 SendRequestAsync(request);
             }
@@ -69,7 +73,7 @@ namespace CarpoolPlanner
         {
             try
             {
-                var uri = string.Concat("http://localhost:23122/user-register/", userId);
+                var uri = string.Concat(baseUrl, "/user-register/", userId);
                 var request = (HttpWebRequest)WebRequest.Create(uri);
                 SendRequestAsync(request);
             }

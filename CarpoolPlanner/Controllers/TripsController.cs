@@ -167,6 +167,7 @@ namespace CarpoolPlanner.Controllers
             }
             using (var context = ApplicationDbContext.Create())
             {
+                var changedIds = new List<Tuple<long, long>>();
                 var serverTrip = context.Trips.Include(t => t.Recurrences).FirstOrDefault(t => t.Id == model.Trip.Id);
                 context.UserTrips.Where(ut => ut.TripId == serverTrip.Id && ut.UserId == user.Id).Include(ut => ut.Recurrences).ToList();
                 if (serverTrip == null)
@@ -180,9 +181,13 @@ namespace CarpoolPlanner.Controllers
                 serverTrip.Name = model.Trip.Name;
                 if (model.Trip.Recurrences == null)
                 {
-                    // TODO: delete related instances too
                     foreach (var recurrence in serverTrip.Recurrences.ToList())
+                    {
+                        var instance = context.GetNextTripInstance(recurrence, ApplicationDbContext.TripInstanceRemovalDelay);
+                        if (instance != null && !instance.DriversPicked)
+                            context.TripInstances.Remove(instance);
                         context.TripRecurrences.Remove(recurrence);
+                    }
                 }
                 else
                 {
@@ -191,8 +196,10 @@ namespace CarpoolPlanner.Controllers
                         var clientTripRecurrence = model.Trip.Recurrences.FirstOrDefault(tr => tr.Id == serverTripRecurrence.Id);
                         if (clientTripRecurrence == null)
                         {
-                            // Delete recurrence
-                            // TODO: delete related instances too
+                            // Delete recurrence and the next instance
+                            var instance = context.GetNextTripInstance(serverTripRecurrence, ApplicationDbContext.TripInstanceRemovalDelay);
+                            if (instance != null && !instance.DriversPicked)
+                                context.TripInstances.Remove(instance);
                             context.TripRecurrences.Remove(serverTripRecurrence);
                         }
                         else
@@ -212,9 +219,14 @@ namespace CarpoolPlanner.Controllers
                                 {
                                     var nextDate = serverTripRecurrence.GetNextInstanceDate(DateTime.UtcNow - ApplicationDbContext.TripInstanceRemovalDelay);
                                     if (nextDate.HasValue)
+                                    {
                                         instance.Date = nextDate.Value;
+                                        changedIds.Add(new Tuple<long,long>(instance.Id, serverTripRecurrence.Id));
+                                    }
                                     else
+                                    {
                                         context.TripInstances.Remove(instance);
+                                    }
                                 }
                             }
                         }
@@ -230,6 +242,11 @@ namespace CarpoolPlanner.Controllers
                 model.SavedTrip = serverTrip;
                 if (EnsureUserTrips(context, model.SavedTrip, user))
                     context.SaveChanges();
+
+                // Tell the notification service to update the notification times
+                var client = new NotificationServiceClient();
+                foreach (var ids in changedIds)
+                    client.UpdateTripInstance(ids.Item1, ids.Item2);
             }
             model.Trip = null;
             model.SetMessage("Saved successfully.", MessageType.Success);
