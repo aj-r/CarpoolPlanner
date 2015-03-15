@@ -124,19 +124,19 @@
     <value>Available Carpools</value>
   </data>
   <data name="CanDriveIfNeeded" xml:space="preserve">
-    <value>I am willing to drive on days we need more drivers</value>
-  </data>
-  <data name="CanDriveIfNeededInstance" xml:space="preserve">
-    <value>I am willing to drive if we need more drivers</value>
+    <value>Can drive if needed</value>
   </data>
   <data name="Driver" xml:space="preserve">
-    <value>I am a driver</value>
+    <value>Driver</value>
   </data>
   <data name="Email" xml:space="preserve">
     <value>E-mail</value>
   </data>
   <data name="HaveRide" xml:space="preserve">
     <value>I will have my own ride</value>
+  </data>
+  <data name="IAmADriver" xml:space="preserve">
+    <value>I am a driver</value>
   </data>
   <data name="InvalidUsernameOrPassword" xml:space="preserve">
     <value>Invalid username or password.</value>
@@ -176,5 +176,11 @@
   </data>
   <data name="VisibleToOtherUsers" xml:space="preserve">
     <value>Visible to other users</value>
+  </data>
+  <data name="WillingToDrive" xml:space="preserve">
+    <value>I am willing to drive on days we need more drivers</value>
+  </data>
+  <data name="WillingToDriveInstance" xml:space="preserve">
+    <value>I am willing to drive if we need more drivers</value>
   </data>
 </root>

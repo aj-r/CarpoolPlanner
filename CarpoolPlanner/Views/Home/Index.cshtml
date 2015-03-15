@@ -105,7 +105,7 @@
                           <label>
                             <input type="radio" ng-model="userTripInstance.commuteMethod" ng-value="CommuteMethod.Driver"
                                    ng-disabled="userTripInstance.attending == false" />
-                            @Resources.Driver
+                            @Resources.IAmADriver
                             <br />
                           </label>
                           <br />
@@ -120,7 +120,7 @@
                           <label>
                             <input type="checkbox" ng-model="userTripInstance.canDriveIfNeeded"
                                    ng-disabled="userTripInstance.attending == false" />
-                            @Resources.CanDriveIfNeededInstance
+                            @Resources.WillingToDriveInstance
                           </label>
                         </div>
                       </div>
@@ -151,7 +151,9 @@
                       <span ng-repeat="user in drivers" ng-init="uti = getUti(user.id)">
                         <br />
                         {{ user.name }}
-                        <img src="~/Content/sedan2.png" />
+                        <img src="~/Content/sedan2.png"
+                             style="margin-left: 3px;"
+                             ng-attr-title="{{ '@Resources.Driver (' + uti.seats + ' seats)' }}" />
                       </span>
                     </p>
                     <p class="col-md-3" ng-show="passengers.length > 0">
@@ -160,8 +162,9 @@
                         <br />
                         {{ user.name }}
                         <img src="~/Content/sedan2.png"
-                             ng-show="uti.commuteMethod == CommuteMethod.Driver || uti.canDriveIfNeeded"
-                             ng-class="{ 'faded': uti.commuteMethod != CommuteMethod.Driver }" />
+                             style="margin-left: 3px;"
+                             class="faded"
+                             ng-attr-title="{{ '@Resources.CanDriveIfNeeded (' + uti.seats + ' seats)' }}" />
                       </span>
                     </p>
                     <p class="col-md-3" ng-show="ownRide.length > 0">
@@ -170,28 +173,30 @@
                         <br />
                         {{ user.name }}
                         <img src="~/Content/sedan2.png"
-                             ng-show="uti.commuteMethod == CommuteMethod.Driver || uti.canDriveIfNeeded"
-                             ng-class="{ 'faded': uti.commuteMethod != CommuteMethod.Driver }" />
+                             style="margin-left: 3px;"
+                             ng-show="uti.canDriveIfNeeded"
+                             class="faded"
+                             ng-attr-title="{{ '@Resources.CanDriveIfNeeded (' + uti.seats + ' seats)' }}" />
                       </span>
                     </p>
                     <p class="col-md-3" ng-show="waitingList.length > 0">
                       <b>Waiting List:</b>
-                      <span ng-repeat="user in waitingList" ng-init="uti = getUti(user.id)">
+                      <span ng-repeat="user in waitingList">
                         <br />
                         {{ user.name }}
-                        <img src="~/Content/sedan2.png"
-                             ng-show="uti.commuteMethod == CommuteMethod.Driver || uti.canDriveIfNeeded"
-                             ng-class="{ 'faded': uti.commuteMethod != CommuteMethod.Driver }" />
                       </span>
                     </p>
                     <p class="col-md-3" ng-show="unconfirmed.length > 0">
                       <b>Unconfirmed:</b>
+                      <!-- TODO: make this into a directive -->
                       <span ng-repeat="user in unconfirmed" ng-init="uti = getUti(user.id)">
                         <br />
                         {{ user.name }}
                         <img src="~/Content/sedan2.png"
+                             style="margin-left: 3px;"
                              ng-show="uti.commuteMethod == CommuteMethod.Driver || uti.canDriveIfNeeded"
-                             ng-class="{ 'faded': uti.commuteMethod != CommuteMethod.Driver }" />
+                             ng-class="{ 'faded': uti.commuteMethod != CommuteMethod.Driver }"
+                             ng-attr-title="{{ (uti.commuteMethod == CommuteMethod.Driver ? '@Resources.Driver' : '@Resources.CanDriveIfNeeded') + ' (' + uti.seats + ' seats)' }}" />
                       </span>
                     </p>
                   </div>
