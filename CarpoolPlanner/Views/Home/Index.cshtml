@@ -74,7 +74,7 @@
       <div ng-show="model.trips.length > 0">
         <div>Select the days that you can come this week.</div>
         <form method="post" name="tripInstanceForm" ng-submit="saveUserTrips()" novalidate warn-if-dirty focus-first-invalid>
-          <input type="submit" value="Save all changes" class="btn btn-default" style="margin-top: 15px;" />
+          <input type="submit" value="Save all changes" class="btn btn-primary" style="margin-top: 15px;" ng-disabled="tripInstanceForm.$pristine" />
           <div style="margin-top: 15px;">
             <cp-message></cp-message>
             <val-sumary></val-sumary>
@@ -163,6 +163,7 @@
                         {{ user.name }}
                         <img src="~/Content/sedan2.png"
                              style="margin-left: 3px;"
+                             ng-show="uti.canDriveIfNeeded"
                              class="faded"
                              ng-attr-title="{{ '@Resources.CanDriveIfNeeded (' + uti.seats + ' seats)' }}" />
                       </span>
@@ -204,7 +205,7 @@
               </accordion-group>
             </div>
           </accordion>
-          <input type="submit" value="Save all changes" class="btn btn-default" />
+          <input type="submit" value="Save all changes" class="btn btn-primary" ng-disabled="tripInstanceForm.$pristine" />
         </form>
       </div>
       <div ng-show="model.trips.length === 0">

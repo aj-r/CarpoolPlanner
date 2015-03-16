@@ -195,8 +195,8 @@
         @if (AppUtils.CurrentUser.IsAdmin)
         {
           <div class="edit-buttons">
-            <input type="button" value="Edit" ng-click="editTrip($index)" class="btn" style="margin-top: -10px; margin-right: 10px;" />
-            <input type="button" value="Delete" ng-click="deleteTrip($index)" class="btn" style="margin-top: -10px;" />
+            <input type="button" value="Edit" ng-click="editTrip($index)" class="btn btn-default" style="margin-top: -10px; margin-right: 10px;" />
+            <input type="button" value="Delete" ng-click="deleteTrip($index)" class="btn btn-default" style="margin-top: -10px;" />
           </div>
         }
         <div class="indent">
@@ -211,7 +211,7 @@
         </div>
       </div>
       <div class="form-group">
-        <input type="submit" value="@Resources.Save" ng-show="model.tripsModel.trips.length > 0" class="btn btn-default" />
+        <input type="submit" value="@Resources.Save" ng-show="model.tripsModel.trips.length > 0" ng-disabled="tripRecurrenceForm.$pristine" class="btn btn-primary" />
       </div>
       <div ng-show="model.tripsModel.trips.length === 0">There are currently no carpools. An administrator can create new carpools.</div>
       <div class="form-group">
@@ -226,8 +226,8 @@
           <h2>Edit Carpool - {{ editModel.originalName }}</h2>
           <trip-editor trip="editModel.trip"></trip-editor>
           <div class="form-group">
-            <input type="submit" value="Save" class="btn btn-default" style="margin-right: 10px;" />
-            <input type="button" value="Cancel" class="btn" ng-click="cancelEditTrip()" />
+            <button type="submit" class="btn btn-primary" style="margin-right: 10px;">Save {{ editModel.trip.name }}</button>
+            <input type="button" value="Cancel" class="btn btn-default" ng-click="cancelEditTrip()" />
           </div>
           <div class="form-group">
             <cp-message model="editModel"></cp-message>
@@ -240,7 +240,7 @@
         <h2>Create New Carpool</h2>
         <trip-editor trip="model.createModel.trip"></trip-editor>
         <div class="form-group">
-          <input type="submit" value="Create" class="btn btn-default" />
+          <input type="submit" value="Create" class="btn btn-primary" />
         </div>
         <div class="form-group">
           <cp-message model="model.createModel"></cp-message>

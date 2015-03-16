@@ -65,7 +65,7 @@
     @Html.Partial("UserData")
     <div class="form-group">
       <div class="col-md-offset-2 col-md-10">
-        <input type="button" ng-click="updateUserWithChecks()" value="@Resources.Save" class="btn btn-default" />
+        <input type="button" ng-click="updateUserWithChecks()" value="@Resources.Save" class="btn btn-primary" ng-disabled="manageForm.$pristine" />
       </div>
     </div>
     <div class="form-group">
@@ -102,7 +102,7 @@
     </div>
     <div class="form-group">
       <div class="col-md-offset-2 col-md-10">
-        <input type="submit" value="Change Password" class="btn btn-default" />
+        <input type="submit" value="Change Password" class="btn btn-primary" />
       </div>
     </div>
     <div class="form-group">
