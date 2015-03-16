@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Web;
 using CarpoolPlanner.Model;
+using NodaTime;
+using NodaTime.TimeZones;
 
 namespace CarpoolPlanner.ViewModel
 {

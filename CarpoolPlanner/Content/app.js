@@ -136,6 +136,14 @@ app.controller('baseCtrl', ['$scope', '$q', '$window', 'AngularNet', 'Validation
       model.messageType = $scope.MessageType.Error;
     }
   };
+
+  $scope.getTimeZoneOffset = function(timeZoneName) {
+    if (!this.timeZones)
+      return '';
+    var currentTimeZone = this.timeZones[timeZoneName];
+    return currentTimeZone ? currentTimeZone.offset : '';
+  };
+
 }]);
 
 app.controller('tripInstanceCtrl', ['$scope', function($scope) {
@@ -461,3 +469,9 @@ app.directive('focusFirstEmpty', ['$document', function($document) {
     }
   };
 }]);
+
+app.filter('friendlyName', function() {
+  return function(input) {
+    return input ? input.replace(/_/g, ' ') : input;
+  };
+});

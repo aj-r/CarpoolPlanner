@@ -34,7 +34,15 @@ body {
     max-width: 280px;
   }
 
+  select {
+    max-width: 280px;
+  }
+
   .input-group input {
+    max-width: inherit;
+  }
+
+  .input-group select {
     max-width: inherit;
   }
 }

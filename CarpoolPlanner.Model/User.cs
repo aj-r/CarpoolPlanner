@@ -132,6 +132,8 @@ namespace CarpoolPlanner.Model
             }
         }
 
+        public string TimeZone { get; set; }
+
         public bool IsAdmin { get; set; }
 
         public ICollection<UserTrip> UserTrips { get; private set; }

@@ -171,6 +171,9 @@
   <data name="Seats" xml:space="preserve">
     <value>Seats</value>
   </data>
+  <data name="TimeZone" xml:space="preserve">
+    <value>Time zone</value>
+  </data>
   <data name="UpcomingCarpools" xml:space="preserve">
     <value>Upcoming Carpools</value>
   </data>

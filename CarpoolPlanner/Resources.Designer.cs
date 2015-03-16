@@ -223,6 +223,15 @@ namespace CarpoolPlanner {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Time zone.
+        /// </summary>
+        public static string TimeZone {
+            get {
+                return ResourceManager.GetString("TimeZone", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Upcoming Carpools.
         /// </summary>
         public static string UpcomingCarpools {

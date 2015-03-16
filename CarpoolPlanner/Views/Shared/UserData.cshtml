@@ -66,3 +66,14 @@
     </div>
   </div>
 </div>
+<div class="form-group">
+  <label class="col-md-2 control-label">@Resources.TimeZone</label>
+  <div class="col-md-10">
+    <select ng-model="model.user.timeZone"
+            ng-options="name as (name | friendlyName) for (name, tz) in timeZones"
+            data-val-friendly-name="@Resources.TimeZone"
+            class="form-control"
+            style="float: left;"></select>
+    <div style="float: left; margin:7px 0 0 6px;">UTC{{ getTimeZoneOffset(model.user.timeZone) }}</div>
+  </div>
+</div>
