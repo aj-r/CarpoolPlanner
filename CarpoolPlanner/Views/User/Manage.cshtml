@@ -7,7 +7,12 @@
 }
 @section headScripts{
   <script type="text/javascript">
-    app.controller('userCtrl', function($scope) {
+    app.controller('userCtrl', function($scope, $http) {
+
+      $http.get('@Url.Action("Index", "TimeZones")').success(function(data) {
+        $scope.timeZones = data;
+      });
+
       $scope.updateUserWithChecks = function() {
         var scope = this;
         if (scope.manageForm.$valid) {
@@ -38,6 +43,7 @@
         });
       };
     });
+
     app.controller('passwordCtrl', function($scope) {
       $scope.setPassword = function() {
         this.trySubmit(this.passwordForm, '@Url.Action("SetPassword", "User")', $scope, 'passwordModel', function() {
@@ -54,7 +60,7 @@
         });
       };
     });
-  </script>
+</script>
 }
 
 <h2>Manage Account</h2>

@@ -4,6 +4,9 @@ using System.ComponentModel.DataAnnotations;
 using System.Data.Entity;
 using System.Linq;
 using System.Web;
+using Newtonsoft.Json;
+using NodaTime;
+using NodaTime.TimeZones;
 
 namespace CarpoolPlanner.Model
 {
@@ -32,6 +35,14 @@ namespace CarpoolPlanner.Model
         public string Location { get; set; }
 
         public TripStatus Status { get; set; }
+
+        public string TimeZone { get; set; }
+
+        [JsonIgnore]
+        public DateTimeZone DateTimeZone
+        {
+            get { return TimeZone != null ? TzdbDateTimeZoneSource.Default.ForId(TimeZone) : null; }
+        }
 
         public IList<TripRecurrence> Recurrences { get; set; }
 

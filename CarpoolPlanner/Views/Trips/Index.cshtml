@@ -11,6 +11,11 @@
 
   var tripCtrl = app.controller('tripCtrl', function($scope, $http, $timeout, $location) {
     @(Html.JSClass<TripRecurrence>())
+
+    $http.get('@Url.Action("Index", "TimeZones")').success(function(data) {
+      $scope.timeZones = data;
+    });
+
     var search = $location.search();
     $scope.justRegistered = search.justRegistered == 'true';
     $scope.editModel = {};

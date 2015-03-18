@@ -124,9 +124,11 @@ namespace CarpoolPlanner.Model
         {
             if (recurrence == null)
                 return null;
+            var trip = Trips.Find(recurrence.TripId);
+            var timeZone = trip.DateTimeZone;
             lock (tripInstanceCreationLock)
             {
-                var expectedDate = recurrence.GetNextInstanceDate(DateTime.UtcNow - delay);
+                var expectedDate = recurrence.GetNextInstanceDate(DateTime.UtcNow - delay, timeZone);
                 if (expectedDate == null)
                     return null;
                 if (expectedDate < DateTime.UtcNow - delay)
@@ -137,7 +139,7 @@ namespace CarpoolPlanner.Model
                 var instance = TripInstances.FirstOrDefault(ti => ti.TripId == recurrence.TripId && ti.Date == expectedDate);
                 while (instance != null && instance.Skip)
                 {
-                    expectedDate = recurrence.GetNextInstanceDate(expectedDate.Value);
+                    expectedDate = recurrence.GetNextInstanceDate(expectedDate.Value, timeZone);
                     if (expectedDate == null)
                         return null;
                     instance = TripInstances.FirstOrDefault(ti => ti.TripId == recurrence.TripId && ti.Date == expectedDate);

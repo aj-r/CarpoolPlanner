@@ -12,7 +12,7 @@ namespace CarpoolPlanner.ViewModel
         {
             TripsModel = new TripsViewModel();
             CreateModel = new SaveTripViewModel();
-            CreateModel.Trip = new Trip();
+            CreateModel.Trip = new Trip { TimeZone = AppUtils.CurrentUser.TimeZone };
             CreateModel.Trip.Recurrences.Add(new TripRecurrence());
         }
 

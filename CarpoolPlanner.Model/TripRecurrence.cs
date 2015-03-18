@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Web;
 using Newtonsoft.Json;
+using NodaTime;
 
 namespace CarpoolPlanner.Model
 {
@@ -49,40 +50,61 @@ namespace CarpoolPlanner.Model
         /// </summary>
         /// <param name="afterDate">A DateTime.</param>
         /// <returns>A DateTime.</returns>
-        public DateTime? GetNextInstanceDate(DateTime afterDate)
+        public DateTime? GetNextInstanceDate(DateTime afterDate, DateTimeZone tripTimeZone)
         {
             if (Start == null)
                 return null;
-            DateTime date;
+            if (End != null && afterDate > End.Value)
+                return null;
+            if (afterDate < Start.Value)
+                return Start.Value;
+            var localStartDateTime = Instant.FromDateTimeUtc(Start.Value).InZone(tripTimeZone).LocalDateTime;
+            var localAfterDateTime = Instant.FromDateTimeUtc(afterDate).InZone(tripTimeZone).LocalDateTime;
+            LocalDate date;
             switch (Type)
             {
                 case RecurrenceType.Daily:
-                    date = Start.Value.AddDays(Math.Ceiling((afterDate - Start.Value).TotalDays));
+                    date = localAfterDateTime.Date;
+                    if (localStartDateTime.TimeOfDay < localAfterDateTime.TimeOfDay)
+                        date += Period.FromDays(1);
                     break;
                 case RecurrenceType.Weekly:
-                    date = Start.Value.AddDays(Math.Ceiling((afterDate - Start.Value).TotalDays / 7.0) * 7.0);
-                    var date2 = date.ToLocalTime();
-                    var date3 = Start.Value.ToLocalTime().AddDays(Math.Ceiling((afterDate - Start.Value).TotalDays / 7.0) * 7.0);
+                    date = localAfterDateTime.Date;
+                    if (date.DayOfWeek != localStartDateTime.DayOfWeek || localStartDateTime.TimeOfDay < localAfterDateTime.TimeOfDay)
+                        date = date.Next((IsoDayOfWeek)localStartDateTime.Date.DayOfWeek);
                     break;
                 case RecurrenceType.Monthly:
-                    date = new DateTime(afterDate.Year, afterDate.Month, Start.Value.Day);
-                    if (date < afterDate)
-                        date = date.AddMonths(1);
+                {
+                    int day = localStartDateTime.Day;
+                    var daysInMonth = localAfterDateTime.Calendar.GetDaysInMonth(localAfterDateTime.Year, localAfterDateTime.Month);
+                    if (day > daysInMonth)
+                        day = 1;
+                    date = new LocalDate(localAfterDateTime.Year, localAfterDateTime.Month, day);
+                    if (date < localAfterDateTime.Date || (date == localAfterDateTime.Date && localStartDateTime.TimeOfDay < localAfterDateTime.TimeOfDay))
+                        date = date.PlusMonths(1);
                     break;
+                }
                 case RecurrenceType.Yearly:
-                    date = new DateTime(afterDate.Year, Start.Value.Month, Start.Value.Day);
-                    if (date < afterDate)
-                        date = date.AddMonths(1);
+                {
+                    int day = localStartDateTime.Day;
+                    var daysInMonth = localAfterDateTime.Calendar.GetDaysInMonth(localAfterDateTime.Year, localAfterDateTime.Month);
+                    if (day > daysInMonth)
+                        day = 1;
+                    date = new LocalDate(localAfterDateTime.Year, localStartDateTime.Month, day);
+                    if (date < localAfterDateTime.Date || (date == localAfterDateTime.Date && localStartDateTime.TimeOfDay < localAfterDateTime.TimeOfDay))
+                        date = date.PlusYears(1);
                     break;
+                }
                 case RecurrenceType.MonthlyByDayOfWeek:
                 case RecurrenceType.YearlyByDayOfWeek:
-                    date = Start.Value;
-                    while (date < afterDate && (!End.HasValue || date <= End.Value))
+                    // TODO: convert to noda time
+                    date = localStartDateTime.Date;
+                    while (date < localAfterDateTime.Date)
                     {
-                        var week = (date.Day - 1) / 7;
+                        var week = (date.WeekOfWeekYear - 1) / 7;// TODO: this is wrong
                         var dayOfWeek = (int)date.DayOfWeek;
-                        var firstOfMonth = date.AddDays(DateTime.DaysInMonth(date.Year, date.Month) - date.Day + 1);
-                        firstOfMonth = firstOfMonth.AddMonths((Type == RecurrenceType.MonthlyByDayOfWeek ? Every : 12 * Every) - 1);
+                        var firstOfMonth = date.PlusDays(DateTime.DaysInMonth(date.Year, date.Month) - date.Day + 1);
+                        firstOfMonth = firstOfMonth.PlusMonths((Type == RecurrenceType.MonthlyByDayOfWeek ? Every : 12 * Every) - 1);
                         var firstOfMonthDayOfWeek = (int)firstOfMonth.DayOfWeek;
                         var diff = dayOfWeek - firstOfMonthDayOfWeek;
                         if (diff < 0)
@@ -90,16 +112,17 @@ namespace CarpoolPlanner.Model
                         int dayOfMonth = 7 * week + diff;
                         // Note that dayOfMonth could be larger than the number of days in the month, pushing the date to the next month.
                         // This will cause weird things, so hopefully nobody does it :P
-                        date = firstOfMonth.AddDays(dayOfMonth); // Note that dayOfMonth is 0-based, not 1-based like DateTime.Day
+                        date = firstOfMonth.PlusMonths(dayOfMonth); // Note that dayOfMonth is 0-based, not 1-based like DateTime.Day
                         break;
                     }
                     break;
                 default:
                     return null;
             }
-            if (End.HasValue && date > End.Value)
+            var dateTime = date.At(localStartDateTime.TimeOfDay).InUtc().ToDateTimeUtc();
+            if (End != null && dateTime > End.Value)
                 return null;
-            return date;
+            return dateTime;
         }
     }
 }

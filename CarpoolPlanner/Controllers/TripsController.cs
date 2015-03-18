@@ -141,7 +141,7 @@ namespace CarpoolPlanner.Controllers
                 if (EnsureUserTrips(context, model.SavedTrip, AppUtils.CurrentUser))
                     context.SaveChanges();
             }
-            model.Trip = new Trip();
+            model.Trip = new Trip { TimeZone = AppUtils.CurrentUser.TimeZone };
             model.Trip.Recurrences.Add(new TripRecurrence());
             model.SetMessage("Created successfully.", MessageType.Success);
             return Ng(model);
@@ -179,6 +179,7 @@ namespace CarpoolPlanner.Controllers
                 }
                 serverTrip.Location = model.Trip.Location;
                 serverTrip.Name = model.Trip.Name;
+                serverTrip.TimeZone = model.Trip.TimeZone;
                 if (model.Trip.Recurrences == null)
                 {
                     foreach (var recurrence in serverTrip.Recurrences.ToList())
@@ -217,7 +218,7 @@ namespace CarpoolPlanner.Controllers
                                 serverTripRecurrence.Start = clientTripRecurrence.Start;
                                 if (instance != null && !instance.DriversPicked)
                                 {
-                                    var nextDate = serverTripRecurrence.GetNextInstanceDate(DateTime.UtcNow - ApplicationDbContext.TripInstanceRemovalDelay);
+                                    var nextDate = serverTripRecurrence.GetNextInstanceDate(DateTime.UtcNow - ApplicationDbContext.TripInstanceRemovalDelay, serverTrip.DateTimeZone);
                                     if (nextDate.HasValue)
                                     {
                                         instance.Date = nextDate.Value;
