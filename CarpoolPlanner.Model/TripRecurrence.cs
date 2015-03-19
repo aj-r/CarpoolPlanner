@@ -60,18 +60,18 @@ namespace CarpoolPlanner.Model
                 return Start.Value;
             var localStartDateTime = Instant.FromDateTimeUtc(Start.Value).InZone(tripTimeZone).LocalDateTime;
             var localAfterDateTime = Instant.FromDateTimeUtc(afterDate).InZone(tripTimeZone).LocalDateTime;
-            LocalDate date;
+            LocalDateTime dateTime;
             switch (Type)
             {
                 case RecurrenceType.Daily:
-                    date = localAfterDateTime.Date;
-                    if (localStartDateTime.TimeOfDay < localAfterDateTime.TimeOfDay)
-                        date += Period.FromDays(1);
+                    dateTime = localAfterDateTime.Date.At(localStartDateTime.TimeOfDay);
+                    if (dateTime < localAfterDateTime)
+                        dateTime += Period.FromDays(1);
                     break;
                 case RecurrenceType.Weekly:
-                    date = localAfterDateTime.Date;
-                    if (date.DayOfWeek != localStartDateTime.DayOfWeek || localStartDateTime.TimeOfDay < localAfterDateTime.TimeOfDay)
-                        date = date.Next((IsoDayOfWeek)localStartDateTime.Date.DayOfWeek);
+                    dateTime = localAfterDateTime.Date.At(localStartDateTime.TimeOfDay);
+                    if (dateTime.DayOfWeek != localStartDateTime.DayOfWeek || dateTime < localAfterDateTime)
+                        dateTime = dateTime.Next((IsoDayOfWeek)localStartDateTime.Date.DayOfWeek);
                     break;
                 case RecurrenceType.Monthly:
                 {
@@ -79,50 +79,62 @@ namespace CarpoolPlanner.Model
                     var daysInMonth = localAfterDateTime.Calendar.GetDaysInMonth(localAfterDateTime.Year, localAfterDateTime.Month);
                     if (day > daysInMonth)
                         day = 1;
-                    date = new LocalDate(localAfterDateTime.Year, localAfterDateTime.Month, day);
-                    if (date < localAfterDateTime.Date || (date == localAfterDateTime.Date && localStartDateTime.TimeOfDay < localAfterDateTime.TimeOfDay))
-                        date = date.PlusMonths(1);
+                    dateTime = new LocalDate(localAfterDateTime.Year, localAfterDateTime.Month, day).At(localStartDateTime.TimeOfDay);
+                    if (dateTime < localAfterDateTime)
+                        dateTime = dateTime.PlusMonths(1);
+
+                    daysInMonth = dateTime.Calendar.GetDaysInMonth(dateTime.Year, dateTime.Month);
+                    if (day > daysInMonth)
+                        dateTime = new LocalDate(dateTime.Year, dateTime.Month, 1).PlusMonths(1).At(localStartDateTime.TimeOfDay);
+
                     break;
                 }
                 case RecurrenceType.Yearly:
                 {
                     int day = localStartDateTime.Day;
-                    var daysInMonth = localAfterDateTime.Calendar.GetDaysInMonth(localAfterDateTime.Year, localAfterDateTime.Month);
+                    int month = localStartDateTime.Month;
+                    var daysInMonth = localAfterDateTime.Calendar.GetDaysInMonth(localAfterDateTime.Year, month);
                     if (day > daysInMonth)
+                    {
                         day = 1;
-                    date = new LocalDate(localAfterDateTime.Year, localStartDateTime.Month, day);
-                    if (date < localAfterDateTime.Date || (date == localAfterDateTime.Date && localStartDateTime.TimeOfDay < localAfterDateTime.TimeOfDay))
-                        date = date.PlusYears(1);
+                        month = (month < 12 ? month + 1 : 1);
+                    }
+                    dateTime = new LocalDate(localAfterDateTime.Year, month, day).At(localStartDateTime.TimeOfDay);
+                    if (dateTime < localAfterDateTime)
+                        dateTime = dateTime.PlusYears(1);
                     break;
                 }
                 case RecurrenceType.MonthlyByDayOfWeek:
                 case RecurrenceType.YearlyByDayOfWeek:
-                    // TODO: convert to noda time
-                    date = localStartDateTime.Date;
-                    while (date < localAfterDateTime.Date)
+                {
+                    var zeroBasedWeek = (localStartDateTime.Day - 1) / 7;
+                    var dayOfWeek = (int)localStartDateTime.DayOfWeek;
+
+                    var month = Type == RecurrenceType.MonthlyByDayOfWeek ? localAfterDateTime.Month : localStartDateTime.Month;
+                    var year = localAfterDateTime.Year;
+                    var firstOfMonth = new LocalDate(year, month, 1);
+
+                    do
                     {
-                        var week = (date.WeekOfWeekYear - 1) / 7;// TODO: this is wrong
-                        var dayOfWeek = (int)date.DayOfWeek;
-                        var firstOfMonth = date.PlusDays(DateTime.DaysInMonth(date.Year, date.Month) - date.Day + 1);
-                        firstOfMonth = firstOfMonth.PlusMonths((Type == RecurrenceType.MonthlyByDayOfWeek ? Every : 12 * Every) - 1);
-                        var firstOfMonthDayOfWeek = (int)firstOfMonth.DayOfWeek;
-                        var diff = dayOfWeek - firstOfMonthDayOfWeek;
+                        var diff = dayOfWeek - firstOfMonth.DayOfWeek;
                         if (diff < 0)
                             diff += 7;
-                        int dayOfMonth = 7 * week + diff;
-                        // Note that dayOfMonth could be larger than the number of days in the month, pushing the date to the next month.
-                        // This will cause weird things, so hopefully nobody does it :P
-                        date = firstOfMonth.PlusMonths(dayOfMonth); // Note that dayOfMonth is 0-based, not 1-based like DateTime.Day
-                        break;
-                    }
+                        dateTime = firstOfMonth.PlusDays(7 * zeroBasedWeek + diff).At(localStartDateTime.TimeOfDay);
+                        if (Type == RecurrenceType.MonthlyByDayOfWeek)
+                            firstOfMonth = firstOfMonth.PlusMonths(1);
+                        else
+                            firstOfMonth = firstOfMonth.PlusYears(1);
+
+                    } while (dateTime < localAfterDateTime);
                     break;
+                }
                 default:
                     return null;
             }
-            var dateTime = date.At(localStartDateTime.TimeOfDay).InUtc().ToDateTimeUtc();
-            if (End != null && dateTime > End.Value)
+            var dateTimeUtc = dateTime.InZoneLeniently(tripTimeZone).ToDateTimeUtc();
+            if (End != null && dateTimeUtc > End.Value)
                 return null;
-            return dateTime;
+            return dateTimeUtc;
         }
     }
 }

@@ -62,7 +62,7 @@ namespace CarpoolPlanner.Tests.Model
             };
             var date = tr.GetNextInstanceDate(new DateTime(2015, 2, 23, 12, 0, 1, DateTimeKind.Utc),
                 TzdbDateTimeZoneSource.Default.ForId("America/New_York"));
-            Assert.AreEqual(new DateTime(2015, 2, 30, 12, 0, 0, DateTimeKind.Utc), date);
+            Assert.AreEqual(new DateTime(2015, 3, 2, 12, 0, 0, DateTimeKind.Utc), date);
         }
 
         [Test]
@@ -80,7 +80,7 @@ namespace CarpoolPlanner.Tests.Model
         }
 
         [Test]
-        public void NextInstanceDateTest_Monthly_NonExistentDate()
+        public void NextInstanceDateTest_Monthly_NonExistentDate1()
         {
             var tr = new TripRecurrence
             {
@@ -95,21 +95,36 @@ namespace CarpoolPlanner.Tests.Model
         }
 
         [Test]
+        public void NextInstanceDateTest_Monthly_NonExistentDate2()
+        {
+            var tr = new TripRecurrence
+            {
+                Start = new DateTime(2014, 12, 31, 12, 0, 0, DateTimeKind.Utc),
+                Every = 1,
+                Type = RecurrenceType.Monthly
+            };
+            var date = tr.GetNextInstanceDate(new DateTime(2015, 1, 31, 12, 0, 1, DateTimeKind.Utc),
+                DateTimeZone.Utc);
+            // Non-existent day of month. It should take the first day of the next month.
+            Assert.AreEqual(new DateTime(2015, 3, 1, 12, 0, 0, DateTimeKind.Utc), date);
+        }
+
+        [Test]
         public void NextInstanceDateTest_Monthly_TimeZone()
         {
             var tr = new TripRecurrence
             {
-                Start = new DateTime(2015, 2, 23, 12, 0, 0, DateTimeKind.Utc),
+                Start = new DateTime(2015, 1, 23, 12, 0, 0, DateTimeKind.Utc),
                 Every = 1,
                 Type = RecurrenceType.Monthly
             };
-            var date = tr.GetNextInstanceDate(new DateTime(2015, 2, 23, 12, 0, 1, DateTimeKind.Utc),
+            var date = tr.GetNextInstanceDate(new DateTime(2015, 2, 3, 12, 0, 1, DateTimeKind.Utc),
                 TzdbDateTimeZoneSource.Default.ForId("America/New_York"));
-            Assert.AreEqual(new DateTime(2015, 2, 30, 12, 0, 0, DateTimeKind.Utc), date);
+            Assert.AreEqual(new DateTime(2015, 2, 23, 12, 0, 0, DateTimeKind.Utc), date);
         }
 
         [Test]
-        public void NextInstanceDateTest_Yearly()
+        public void NextInstanceDateTest_Yearly1()
         {
             var tr = new TripRecurrence
             {
@@ -118,6 +133,20 @@ namespace CarpoolPlanner.Tests.Model
                 Type = RecurrenceType.Yearly
             };
             var date = tr.GetNextInstanceDate(new DateTime(2014, 2, 23, 12, 0, 1, DateTimeKind.Utc),
+                DateTimeZone.Utc);
+            Assert.AreEqual(new DateTime(2015, 1, 31, 23, 0, 0, DateTimeKind.Utc), date);
+        }
+
+        [Test]
+        public void NextInstanceDateTest_Yearly2()
+        {
+            var tr = new TripRecurrence
+            {
+                Start = new DateTime(2010, 1, 31, 23, 0, 0, DateTimeKind.Utc),
+                Every = 1,
+                Type = RecurrenceType.Yearly
+            };
+            var date = tr.GetNextInstanceDate(new DateTime(2014, 1, 31, 23, 0, 1, DateTimeKind.Utc),
                 DateTimeZone.Utc);
             Assert.AreEqual(new DateTime(2015, 1, 31, 23, 0, 0, DateTimeKind.Utc), date);
         }
@@ -160,7 +189,7 @@ namespace CarpoolPlanner.Tests.Model
                 Every = 1,
                 Type = RecurrenceType.MonthlyByDayOfWeek
             };
-            var date = tr.GetNextInstanceDate(new DateTime(2014, 6, 16, 13, 1, 0, DateTimeKind.Utc),
+            var date = tr.GetNextInstanceDate(new DateTime(2015, 6, 16, 13, 1, 0, DateTimeKind.Utc),
                 DateTimeZone.Utc);
             Assert.AreEqual(new DateTime(2015, 6, 21, 13, 0, 0, DateTimeKind.Utc), date);
         }
@@ -174,9 +203,23 @@ namespace CarpoolPlanner.Tests.Model
                 Every = 1,
                 Type = RecurrenceType.MonthlyByDayOfWeek
             };
-            var date = tr.GetNextInstanceDate(new DateTime(2014, 6, 21, 13, 1, 0, DateTimeKind.Utc),
+            var date = tr.GetNextInstanceDate(new DateTime(2015, 6, 21, 13, 1, 0, DateTimeKind.Utc),
                 DateTimeZone.Utc);
             Assert.AreEqual(new DateTime(2015, 7, 19, 13, 0, 0, DateTimeKind.Utc), date);
+        }
+
+        [Test]
+        public void NextInstanceDateTest_MonthlyByDayOfWeek3()
+        {
+            var tr = new TripRecurrence
+            {
+                Start = new DateTime(2015, 1, 29, 13, 0, 0, DateTimeKind.Utc), // 5th Thursday
+                Every = 1,
+                Type = RecurrenceType.MonthlyByDayOfWeek
+            };
+            var date = tr.GetNextInstanceDate(new DateTime(2015, 4, 2, 13, 1, 0, DateTimeKind.Utc),
+                DateTimeZone.Utc);
+            Assert.AreEqual(new DateTime(2015, 4, 30, 13, 0, 0, DateTimeKind.Utc), date);
         }
 
         [Test]
@@ -188,7 +231,7 @@ namespace CarpoolPlanner.Tests.Model
                 Every = 1,
                 Type = RecurrenceType.MonthlyByDayOfWeek
             };
-            var date = tr.GetNextInstanceDate(new DateTime(2014, 5, 16, 13, 1, 0, DateTimeKind.Utc),
+            var date = tr.GetNextInstanceDate(new DateTime(2015, 5, 16, 13, 1, 0, DateTimeKind.Utc),
                 DateTimeZone.Utc);
             // Non-existent day. Do the 1st Tuesday of next month.
             Assert.AreEqual(new DateTime(2015, 6, 2, 13, 0, 0, DateTimeKind.Utc), date);
@@ -203,7 +246,7 @@ namespace CarpoolPlanner.Tests.Model
                 Every = 1,
                 Type = RecurrenceType.MonthlyByDayOfWeek
             };
-            var date = tr.GetNextInstanceDate(new DateTime(2014, 6, 16, 13, 1, 0, DateTimeKind.Utc),
+            var date = tr.GetNextInstanceDate(new DateTime(2015, 6, 16, 13, 1, 0, DateTimeKind.Utc),
                 TzdbDateTimeZoneSource.Default.ForId("America/New_York"));
             Assert.AreEqual(new DateTime(2015, 6, 21, 13, 0, 0, DateTimeKind.Utc), date);
         }
@@ -217,7 +260,7 @@ namespace CarpoolPlanner.Tests.Model
                 Every = 1,
                 Type = RecurrenceType.YearlyByDayOfWeek
             };
-            var date = tr.GetNextInstanceDate(new DateTime(2014, 6, 16, 13, 1, 0, DateTimeKind.Utc),
+            var date = tr.GetNextInstanceDate(new DateTime(2015, 6, 16, 13, 1, 0, DateTimeKind.Utc),
                 DateTimeZone.Utc);
             Assert.AreEqual(new DateTime(2016, 3, 20, 13, 0, 0, DateTimeKind.Utc), date);
         }
@@ -246,7 +289,7 @@ namespace CarpoolPlanner.Tests.Model
                 Every = 1,
                 Type = RecurrenceType.YearlyByDayOfWeek
             };
-            var date = tr.GetNextInstanceDate(new DateTime(2014, 6, 16, 13, 1, 0, DateTimeKind.Utc),
+            var date = tr.GetNextInstanceDate(new DateTime(2015, 6, 16, 13, 1, 0, DateTimeKind.Utc),
                 TzdbDateTimeZoneSource.Default.ForId("America/New_York"));
             Assert.AreEqual(new DateTime(2016, 3, 20, 13, 0, 0, DateTimeKind.Utc), date);
         }
@@ -295,7 +338,7 @@ namespace CarpoolPlanner.Tests.Model
             };
             var date = tr.GetNextInstanceDate(new DateTime(2015, 3, 7, 13, 0, 0, DateTimeKind.Utc),
                 TzdbDateTimeZoneSource.Default.ForId("America/New_York"));
-            Assert.AreEqual(new DateTime(2015, 3, 8, 6, 0, 0, DateTimeKind.Utc), date);
+            Assert.AreEqual(new DateTime(2015, 3, 8, 7, 0, 0, DateTimeKind.Utc), date);
         }
 
         [Test]
