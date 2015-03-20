@@ -28,6 +28,16 @@ If there are not enough seats for all users who wish to attend, then the app
 will only allow those who confirmed the earliest to come, and the others will
 be added to a waiting list in case another driver decides to attend.
 
+# Compatibility
+
+This app theoretically works on Windows as well as any OS that supports mono.
+So far it has only been tested on Windows/IIS and
+ubuntu/nginx/fastcgi-mono-server4.
+
+Twilio is the only supported SMS API at the moment, so you need to have a
+Twilio account to use this. Alternatively, if you want to write some code to
+support other APIs, feel free to submit a pull request.
+
 # Developers
 
 Have a look at the [wiki](https://github.com/aj-r/CarpoolPlanner/wiki) if you want
