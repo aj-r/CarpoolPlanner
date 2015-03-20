@@ -13,12 +13,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rest.Server", "..\Rest\Rest
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rest.Common", "..\Rest\Rest.Common\Rest.Common.csproj", "{2874D6F8-B93E-4A7B-AECC-21786A0205A7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rest.Client", "..\Rest\Rest.Client\Rest.Client.csproj", "{B7C62D48-66A9-488B-9E40-44C0629212FB}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PasswordFixer", "PasswordFixer\PasswordFixer.csproj", "{0255E4EC-09CC-4CF2-8949-D389F6A8AD1A}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ReceiveTest", "ReceiveTest\ReceiveTest.csproj", "{C5DFDDBB-BC1C-49A1-9C78-B146D6F37A48}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CarpoolPlanner.Tests", "CarpoolPlanner.Tests\CarpoolPlanner.Tests.csproj", "{307FC37A-11DC-4266-81E9-61BB80D7DC5D}"
 EndProject
 Global
@@ -47,18 +41,6 @@ Global
 		{2874D6F8-B93E-4A7B-AECC-21786A0205A7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2874D6F8-B93E-4A7B-AECC-21786A0205A7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2874D6F8-B93E-4A7B-AECC-21786A0205A7}.Release|Any CPU.Build.0 = Release|Any CPU
-		{B7C62D48-66A9-488B-9E40-44C0629212FB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{B7C62D48-66A9-488B-9E40-44C0629212FB}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{B7C62D48-66A9-488B-9E40-44C0629212FB}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{B7C62D48-66A9-488B-9E40-44C0629212FB}.Release|Any CPU.Build.0 = Release|Any CPU
-		{0255E4EC-09CC-4CF2-8949-D389F6A8AD1A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{0255E4EC-09CC-4CF2-8949-D389F6A8AD1A}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{0255E4EC-09CC-4CF2-8949-D389F6A8AD1A}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{0255E4EC-09CC-4CF2-8949-D389F6A8AD1A}.Release|Any CPU.Build.0 = Release|Any CPU
-		{C5DFDDBB-BC1C-49A1-9C78-B146D6F37A48}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{C5DFDDBB-BC1C-49A1-9C78-B146D6F37A48}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{C5DFDDBB-BC1C-49A1-9C78-B146D6F37A48}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{C5DFDDBB-BC1C-49A1-9C78-B146D6F37A48}.Release|Any CPU.Build.0 = Release|Any CPU
 		{307FC37A-11DC-4266-81E9-61BB80D7DC5D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{307FC37A-11DC-4266-81E9-61BB80D7DC5D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{307FC37A-11DC-4266-81E9-61BB80D7DC5D}.Release|Any CPU.ActiveCfg = Release|Any CPU
