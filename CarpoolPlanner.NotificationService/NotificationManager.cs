@@ -111,7 +111,7 @@ namespace CarpoolPlanner.NotificationService
 
         public async Task SetNextNotificationTimes(TripInstance tripInstance, long tripRecurrenceId)
         {
-            if (tripInstance == null)
+            if (tripInstance == null || tripInstance.Date + ApplicationDbContext.TripInstanceRemovalDelay < DateTime.UtcNow)
                 return;
             // Ask people if they are coming
             var initialTime = tripInstance.Date - initialAdvanceNotificationTime;
