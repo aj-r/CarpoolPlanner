@@ -14,6 +14,7 @@ using System.Timers;
 using System.Web;
 using CarpoolPlanner.Model;
 using log4net;
+using NodaTime;
 using Twilio;
 using Timer = System.Timers.Timer;
 
@@ -194,11 +195,12 @@ namespace CarpoolPlanner.NotificationService
         /// <param name="user">The user to whom the notification will be sent.</param>
         /// <param name="message">The message to send</param>
         /// <param name="force">If true, will send the message even if the user's notification settings are all turned off (assuming the user has specified an e-mail or phone number).</param>
-        public Task SendNotification(User user, string subject, string message, bool force = false)
+        public async Task<bool> SendNotification(User user, string subject, string message, bool force = false)
         {
-            var tasks = new List<Task>(2);
+            var tasks = new List<Task<bool>>(2);
             if (user == null)
-                return Task.WhenAll(tasks);
+                return false;
+            log.Debug("Attempting to send notification to " + user.Email + "(phone: " + user.Phone + ")");
             if (Program.Verbose)
                 Console.WriteLine("Attempting to send notification...");
             bool sendEmail = user.EmailNotify && !string.IsNullOrEmpty(user.Email);
@@ -217,7 +219,11 @@ namespace CarpoolPlanner.NotificationService
             {
                 tasks.Add(SendSMS(user, message));
             }
-            return Task.WhenAll(tasks);
+            var results = await Task.WhenAll(tasks).ConfigureAwait(false);
+            var success = results.All(r => r);
+            if (!success)
+                log.Error("Failed to send notification.");
+            return success;
         }
         
         /// <summary>
@@ -310,10 +316,10 @@ namespace CarpoolPlanner.NotificationService
         /// <param name="user">The user to whom the notification will be sent.</param>
         /// <param name="message">The message to send</param>
         /// <param name="force">If true, will send the message even if the user's notification settings are all turned off (assuming the user has specified an e-mail or phone number).</param>
-        public async Task SendEmail(User user, string subject, string message)
+        public async Task<bool> SendEmail(User user, string subject, string message)
         {
-            if(user == null)
-                return;
+            if (user == null)
+                return false;
             var email = user.Email;
             try
             {
@@ -333,6 +339,7 @@ namespace CarpoolPlanner.NotificationService
                     Port = port,
                     EnableSsl = enableSsl
                 };
+                log.Debug("Attempting to send e-mail...");
                 if (Program.Verbose)
                     Console.WriteLine("Attempting to send e-mail...");
                 await smtpClient.SendMailAsync(
@@ -343,11 +350,13 @@ namespace CarpoolPlanner.NotificationService
                 log.Debug("E-mail sent.");
                 if (Program.Verbose)
                     Console.WriteLine("E-mail sent successfully.");
+                return true;
             }
             catch (Exception ex)
             {
                 log.Error(string.Concat("Failed to send e-mail to ", email, ". ", ex.ToString()));
                 Console.WriteLine("Failed to send e-mail: " + ex.Message);
+                return false;
             }
         }
 
@@ -510,7 +519,7 @@ namespace CarpoolPlanner.NotificationService
                 var tripInstance = context.GetTripInstanceById(tripInstanceId);
                 if (tripInstance == null)
                     return;
-                var localDate = tripInstance.Date.ToLocalTime();
+                var zonedDateTime = Instant.FromDateTimeUtc(tripInstance.Date).InZone(tripInstance.Trip.DateTimeZone);
                 var sb = new StringBuilder(250);
                 foreach (var userTripInstance in tripInstance.UserTripInstances.Where(uti => uti.Attending == null && uti.User.Status == UserStatus.Active))
                 {
@@ -525,7 +534,7 @@ namespace CarpoolPlanner.NotificationService
                         sb.Append("Are you coming to ");
                         sb.Append(tripInstance.Trip.Name);
                         sb.Append(" at ");
-                        sb.Append(localDate.ToString("h:mm tt"));
+                        sb.Append(zonedDateTime.ToString("h:mm tt", null));
                         sb.Append("?\n");
                         bool isDriver = userTripInstance.CommuteMethod == CommuteMethod.Driver;
                         sb.Append("Reply with yes/no. \n");
@@ -548,6 +557,7 @@ namespace CarpoolPlanner.NotificationService
                     }
                 }
                 context.SaveChanges();
+                log.Debug("Sent all initial notifications");
                 if (Program.Verbose)
                     Console.WriteLine("Sent all initial notifications");
             }
