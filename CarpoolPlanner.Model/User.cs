@@ -111,9 +111,6 @@ namespace CarpoolPlanner.Model
 
         public CommuteMethod CommuteMethod { get; set; }
 
-        [JsonIgnore]
-        public long? LastTextMessageId { get; set; }
-
         /// <summary>
         /// Indicates that the user can drive other people if necessary, but would prefer not to. Does not apply if CommuteMethod is Driver.
         /// </summary>

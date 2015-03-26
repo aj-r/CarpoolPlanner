@@ -53,9 +53,16 @@ namespace CarpoolPlanner.NotificationService
                             }
                             log.Info("Sending test notification to " + email + "...");
                             Console.WriteLine("Sending test notification to " + email + "...");
-                            manager.SendNotification(user, "Test message", "test message").Wait();
-                            Console.WriteLine("Test notification sent; exiting.");
-                            log.Info("Test notification sent to " + email + "; exiting");
+                            if (manager.SendNotification(user, "Test message", "test message").Result)
+                            {
+                                Console.WriteLine("Test notification sent; exiting.");
+                                log.Info("Test notification sent to " + email + "; exiting");
+                            }
+                            else
+                            {
+                                Console.WriteLine("Failed to send test notification; exiting.");
+                                log.Info("Failed to send test notification to " + email + "; exiting");
+                            }
                         }
 #if DEBUG
                         Console.WriteLine("Press enter to exit.");
@@ -99,11 +106,8 @@ namespace CarpoolPlanner.NotificationService
 
         public static void HandleException(Exception ex)
         {
-            while (ex.InnerException != null)
-                ex = ex.InnerException;
             log.Error(ex.ToString());
-            if (Verbose)
-                Console.Error.WriteLine(ex.ToString());
+            Console.Error.WriteLine(ex.ToString());
         }
     }
 }

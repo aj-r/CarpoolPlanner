@@ -132,7 +132,6 @@ namespace CarpoolPlanner.Controllers
             // Override any bad data the client may have sent.
             model.User.IsAdmin = false;
             model.User.Status = UserStatus.Unapproved;
-            model.User.LastTextMessageId = null;
             using (var context = ApplicationDbContext.Create())
             {
                 if (context.Users.Any(u => u.Email == model.User.Email))

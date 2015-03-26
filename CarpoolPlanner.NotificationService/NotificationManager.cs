@@ -28,8 +28,6 @@ namespace CarpoolPlanner.NotificationService
         private static readonly object instanceLock = new object();
         private static NotificationManager instance;
 
-        private static ConcurrentDictionary<long, long?> lastMessageIds = new ConcurrentDictionary<long, long?>();
-
         public static NotificationManager GetInstance()
         {
             if (instance != null)
@@ -48,7 +46,6 @@ namespace CarpoolPlanner.NotificationService
         private readonly Dictionary<long, Timer> reminderTimers = new Dictionary<long, Timer>();
         private readonly Dictionary<long, Timer> finalTimers = new Dictionary<long, Timer>();
         private readonly Dictionary<long, Timer> nextInstanceTimers = new Dictionary<long, Timer>();
-        private readonly Dictionary<long, TripInstance> prevTripInstances = new Dictionary<long, TripInstance>();
         private TwilioRestClient smsClient;
         private string smsNumber;
         private string smsCallbackUrl;
@@ -73,22 +70,6 @@ namespace CarpoolPlanner.NotificationService
             {
                 int retryCount = 0;
                 bool success = false;
-                do
-                {
-                    try
-                    {
-                        foreach (var user in context.Users)
-                        {
-                            lastMessageIds.AddOrUpdate(user.Id, user.LastTextMessageId, (id, m) => m);
-                        }
-                        success = true;
-                    }
-                    catch (Exception ex)
-                    {
-                        Program.HandleException(ex);
-                        retryCount++;
-                    }
-                } while (!success && retryCount < maxRetryCount);
                 do
                 {
                     try
@@ -197,10 +178,12 @@ namespace CarpoolPlanner.NotificationService
         /// <param name="force">If true, will send the message even if the user's notification settings are all turned off (assuming the user has specified an e-mail or phone number).</param>
         public async Task<bool> SendNotification(User user, string subject, string message, bool force = false)
         {
+            if (message == null)
+                return true;
             var tasks = new List<Task<bool>>(2);
             if (user == null)
                 return false;
-            log.Debug("Attempting to send notification to " + user.Email + "(phone: " + user.Phone + ")");
+            log.Debug("Attempting to send notification to " + user.Email + " (phone: " + user.Phone + ", message length: " + message.Length + ")");
             if (Program.Verbose)
                 Console.WriteLine("Attempting to send notification...");
             bool sendEmail = user.EmailNotify && !string.IsNullOrEmpty(user.Email);
@@ -502,25 +485,36 @@ namespace CarpoolPlanner.NotificationService
             return reply;
         }
 
-        public Task SendInitialNotification(long tripInstanceId)
+        public Task<bool> SendInitialNotification(long tripInstanceId)
         {
             return SendInitialNotification(tripInstanceId, false);
         }
 
-        public Task SendReminderNotification(long tripInstanceId)
+        public Task<bool> SendReminderNotification(long tripInstanceId)
         {
             return SendInitialNotification(tripInstanceId, true);
         }
 
-        public async Task SendInitialNotification(long tripInstanceId, bool isReminder)
+        public async Task<bool> SendInitialNotification(long tripInstanceId, bool isReminder)
         {
             using (var context = ApplicationDbContext.Create())
             {
                 var tripInstance = context.GetTripInstanceById(tripInstanceId);
                 if (tripInstance == null)
-                    return;
+                    return true;
                 var zonedDateTime = Instant.FromDateTimeUtc(tripInstance.Date).InZone(tripInstance.Trip.DateTimeZone);
                 var sb = new StringBuilder(250);
+                if (log.IsDebugEnabled)
+                {
+                    var nonNullCount = tripInstance.UserTripInstances.Count(uti => uti.Attending != null);
+                    var inactiveCount = tripInstance.UserTripInstances.Count(uti => uti.User.Status != UserStatus.Active);
+                    log.Debug("Sending initial notification (up to " + tripInstance.UserTripInstances.Count + " users."
+                        + " (" + nonNullCount + " already responded; " + inactiveCount + " are inactive)");
+
+                    var totalUtiCount = context.UserTripInstances.Where(uti => uti.TripInstanceId == tripInstance.Id);
+                    log.Debug("Total UTI count: " + totalUtiCount);
+                }
+                var allSuccessful = true;
                 foreach (var userTripInstance in tripInstance.UserTripInstances.Where(uti => uti.Attending == null && uti.User.Status == UserStatus.Active))
                 {
                     try
@@ -528,6 +522,7 @@ namespace CarpoolPlanner.NotificationService
                         if ((isReminder && userTripInstance.ReminderNotificationTime != null)
                             || (!isReminder && userTripInstance.InitialNotificationTime != null))
                         {
+                            log.Debug("Skipping sending initial notification to " + userTripInstance.User.Email + ". This user has already been notified.");
                             continue; // Notification was already sent
                         }
 
@@ -539,36 +534,45 @@ namespace CarpoolPlanner.NotificationService
                         bool isDriver = userTripInstance.CommuteMethod == CommuteMethod.Driver;
                         sb.Append("Reply with yes/no. \n");
                         sb.Append("For more options, go to https://climbing.pororeplays.com"); // TODO: don't hard-code the url
-                        await SendNotification(userTripInstance.User, tripInstance.Trip.Name, sb.ToString()).ConfigureAwait(false);
+                        bool success = await SendNotification(userTripInstance.User, tripInstance.Trip.Name, sb.ToString()).ConfigureAwait(false);
                         sb.Clear();
 
-                        if (isReminder)
-                            userTripInstance.ReminderNotificationTime = DateTime.UtcNow;
-                        if (userTripInstance.InitialNotificationTime == null)
-                            userTripInstance.InitialNotificationTime = DateTime.UtcNow;
-                        // Save changes after every message (instead of after all messages have been sent) in case some messages take a long time to send.
-                        context.SaveChanges();
+                        if (success)
+                        {
+                            if (isReminder)
+                                userTripInstance.ReminderNotificationTime = DateTime.UtcNow;
+                            if (userTripInstance.InitialNotificationTime == null)
+                                userTripInstance.InitialNotificationTime = DateTime.UtcNow;
+                            // Save changes after every message (instead of after all messages have been sent) in case some messages take a long time to send.
+                            context.SaveChanges();
+                        }
+                        else
+                        {
+                            allSuccessful = false;
+                        }
                     }
                     catch (Exception ex)
                     {
                         var message = string.Concat("Error sending initial notification to ", userTripInstance.User, ": ", ex.ToString());
                         log.Error(message);
                         Console.WriteLine(message);
+                        allSuccessful = false;
                     }
                 }
                 context.SaveChanges();
                 log.Debug("Sent all initial notifications");
                 if (Program.Verbose)
                     Console.WriteLine("Sent all initial notifications");
+                return allSuccessful;
             }
         }
 
-        public Task SendFinalNotification(long tripInstanceId)
+        public Task<bool> SendFinalNotification(long tripInstanceId)
         {
             return SendFinalNotification(tripInstanceId, false);
         }
 
-        public async Task SendFinalNotification(long tripInstanceId, bool isUpdate)
+        public async Task<bool> SendFinalNotification(long tripInstanceId, bool isUpdate)
         {
             try
             {
@@ -576,7 +580,7 @@ namespace CarpoolPlanner.NotificationService
                 {
                     var tripInstance = context.GetTripInstanceById(tripInstanceId);
                     if (tripInstance == null)
-                        return;
+                        return true;
                     PickDrivers(tripInstance);
                     log.Debug("Drivers picked");
                     var availableSeats = tripInstance.GetAvailableSeats();
@@ -587,6 +591,7 @@ namespace CarpoolPlanner.NotificationService
                                          && uti.User.Status == UserStatus.Active
                                        select uti;
                     var sb = new StringBuilder(125);
+                    var allSuccessful = true;
                     foreach (var userTripInstance in utisToNotify)
                     {
                         try
@@ -595,14 +600,11 @@ namespace CarpoolPlanner.NotificationService
                             if (isUpdate)
                             {
                                 sb.Append("UPDATE: ");
-                                if (userTripInstance.FinalNotificationTime == null)
-                                    userTripInstance.FinalNotificationTime = DateTime.UtcNow;
                             }
-                            else
+                            else if (userTripInstance.FinalNotificationTime != null)
                             {
-                                if (userTripInstance.FinalNotificationTime != null)
-                                    continue; // Notification was already sent
-                                userTripInstance.FinalNotificationTime = DateTime.UtcNow;
+                                // Notification was already sent
+                                continue;
                             }
 
                             if (userTripInstance.CommuteMethod == CommuteMethod.Driver)
@@ -625,27 +627,36 @@ namespace CarpoolPlanner.NotificationService
                             sb.AppendFormat(".\nThere are {0} seats and {1} people coming.\n", availableSeats, requiredSeats);
                             sb.Append("\n" + tripInstance.GetStatusReport() + "\n");
                             sb.Append("\nFor more details, go to https://climbing.pororeplays.com"); // TODO: don't hard-code the url
-                            await SendNotification(userTripInstance.User, tripInstance.Trip.Name, sb.ToString()).ConfigureAwait(false);
+                            bool success = await SendNotification(userTripInstance.User, tripInstance.Trip.Name, sb.ToString()).ConfigureAwait(false);
                             sb.Clear();
+
+                            if (success)
+                            {
+                                if (userTripInstance.FinalNotificationTime == null)
+                                    userTripInstance.FinalNotificationTime = DateTime.UtcNow;
+                                context.SaveChanges();
+                            }
+                            else
+                            {
+                                allSuccessful = false;
+                            }
                         }
                         catch (Exception ex)
                         {
                             var logMessage = string.Concat("Error sending final notification to ", userTripInstance.User, ": ", ex.ToString());
                             log.Error(logMessage);
                             Console.WriteLine(logMessage);
+                            allSuccessful = false;
                         }
                     }
-                    context.SaveChanges();
-                    lock (prevTripInstances)
-                    {
-                        prevTripInstances[tripInstanceId] = tripInstance;
-                    }
+                    return allSuccessful;
                 }
             }
             catch (Exception ex)
             {
                 log.Error("Error sending final notification: " + ex.ToString());
                 Console.WriteLine("Error sending final notification: " + ex.Message);
+                return false;
             }
         }
 
