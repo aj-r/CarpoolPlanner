@@ -35,38 +35,58 @@ namespace CarpoolPlanner.NotificationService
 
             lock (instanceLock)
             {
-                return instance ?? (instance = new NotificationManager());
+                if (instance == null)
+                {
+                    instance = new NotificationManager(new CarpoolPlannerDbContextProvider(), new TwilioRestClientImpl())
+                        {
+                            SmsNumber = ConfigurationManager.AppSettings["TwilioPhoneNumber"],
+                            SmsCallbackUrl = ConfigurationManager.AppSettings["TwilioCallbackUrl"]
+                        };
+
+                    // TODO: figure out how to add root CAs to mono's trusted list, and remove this line.
+                    ServicePointManager.CertificatePolicy = new AllowAllCertPolicy();
+                }
+                return instance;
             }
         }
 
-        private readonly TimeSpan initialAdvanceNotificationTime;
-        private readonly TimeSpan reminderAdvanceNotificationTime;
-        private readonly TimeSpan finalAdvanceNotificationTime;
+        private readonly IDbContextProvider dbContextProvider;
+        private readonly ITwilioRestClient smsClient;
+
         private readonly Dictionary<long, Timer> initialTimers = new Dictionary<long, Timer>();
         private readonly Dictionary<long, Timer> reminderTimers = new Dictionary<long, Timer>();
         private readonly Dictionary<long, Timer> finalTimers = new Dictionary<long, Timer>();
         private readonly Dictionary<long, Timer> nextInstanceTimers = new Dictionary<long, Timer>();
-        private TwilioRestClient smsClient;
-        private string smsNumber;
-        private string smsCallbackUrl;
 
-        private NotificationManager()
+        /// <summary>
+        /// Creates a new <see cref="NotificationManager"/> instance.
+        /// This method should only be used for testing; otherwise you should use the singleton instance accessed with NotificationManager.GetInstance()
+        /// </summary>
+        /// <param name="dbContextProvider">The <see cref="IDbContextProvider"/> implementation to use.</param>
+        /// <param name="smsClient">The <see cref="ITwilioRestClient"/> implementation to use.</param>
+        public NotificationManager(IDbContextProvider dbContextProvider, ITwilioRestClient smsClient)
         {
-            smsClient = new TwilioRestClient(ConfigurationManager.AppSettings["TwilioAccountSid"], ConfigurationManager.AppSettings["TwilioAuthToken"]);
-            smsNumber = ConfigurationManager.AppSettings["TwilioPhoneNumber"];
-            smsCallbackUrl = ConfigurationManager.AppSettings["TwilioCallbackUrl"];
-            initialAdvanceNotificationTime = ParseHours(ConfigurationManager.AppSettings["InitialAdvanceNotificationTime"]);
-            reminderAdvanceNotificationTime = ParseHours(ConfigurationManager.AppSettings["ReminderAdvanceNotificationTime"]);
-            finalAdvanceNotificationTime = ParseHours(ConfigurationManager.AppSettings["FinalAdvanceNotificationTime"]);
-
-            // TODO: figure out how to add root CAs to mono's trusted list, and remove this line.
-            ServicePointManager.CertificatePolicy = new AllowAllCertPolicy();
+            this.dbContextProvider = dbContextProvider;
+            this.smsClient = smsClient;
         }
 
-        public async void Init()
+        public TimeSpan InitialAdvanceNotificationTime { get; set; }
+
+        public TimeSpan ReminderAdvanceNotificationTime { get; set; }
+
+        public TimeSpan FinalAdvanceNotificationTime { get; set; }
+
+        public string SmsNumber { get; set; }
+
+        public string SmsCallbackUrl { get; set; }
+
+        /// <summary>
+        /// Initializes the notification timers for each of the upcoming trip instances.
+        /// </summary>
+        public async void InitializeNotificationTimes()
         {
             const int maxRetryCount = 20;
-            using (var context = ApplicationDbContext.Create())
+            using (var context = dbContextProvider.GetContext())
             {
                 int retryCount = 0;
                 bool success = false;
@@ -96,9 +116,9 @@ namespace CarpoolPlanner.NotificationService
             if (tripInstance == null || tripInstance.Date + ApplicationDbContext.TripInstanceRemovalDelay < DateTime.UtcNow)
                 return;
             // Ask people if they are coming
-            var initialTime = tripInstance.Date - initialAdvanceNotificationTime;
-            var reminderTime = tripInstance.Date - reminderAdvanceNotificationTime;
-            var finalTime = tripInstance.Date - finalAdvanceNotificationTime;
+            var initialTime = tripInstance.Date - InitialAdvanceNotificationTime;
+            var reminderTime = tripInstance.Date - ReminderAdvanceNotificationTime;
+            var finalTime = tripInstance.Date - FinalAdvanceNotificationTime;
             // If we are past the reminder time, DO NOT send the initial notification; only send the reminder. The users don't want to receive 2 texts at the same time.
             if (DateTime.UtcNow < reminderTime)
                 await SetNextNotificationTime(initialTime, tripInstance.Id, initialTimers, SendInitialNotification).ConfigureAwait(false);
@@ -255,7 +275,7 @@ namespace CarpoolPlanner.NotificationService
             }, false);
 
             // Send the message
-            smsClient.SendSmsMessage(smsNumber, phone, message, smsCallbackUrl, m =>
+            smsClient.SendSmsMessage(SmsNumber, phone, message, SmsCallbackUrl, m =>
             {
                 // Log the result and mark the task as completed
                 if (m == null)
@@ -354,13 +374,13 @@ namespace CarpoolPlanner.NotificationService
         {
             string reply = null;
 
-            if (sentTime < DateTime.UtcNow - initialAdvanceNotificationTime || message == null || phone == null)
+            if (sentTime < DateTime.UtcNow - InitialAdvanceNotificationTime || message == null || phone == null)
             {
                 log.Warn("Received message that was sent too long ago. Ignoring message. Phone #: " + phone);
                 return reply; // Message was sent too long ago
             }
 
-            using (var context = ApplicationDbContext.Create())
+            using (var context = dbContextProvider.GetContext())
             {
                 var user = context.GetUserByPhoneNumber(phone);
                 if (user == null)
@@ -377,7 +397,7 @@ namespace CarpoolPlanner.NotificationService
                 // Infer which UserTripInstance the message applies to.
                 // This works assuming the user is not registered for overlapping trip instances.
                 var minDate = DateTime.UtcNow - ApplicationDbContext.TripInstanceRemovalDelay;
-                var maxDate = DateTime.UtcNow + initialAdvanceNotificationTime;
+                var maxDate = DateTime.UtcNow + InitialAdvanceNotificationTime;
                 var userTripInstances = context.UserTripInstances.Where(uti => uti.UserId == user.Id && uti.UserTrip.Attending
                     && uti.TripInstance.Date > minDate && uti.TripInstance.Date < maxDate)
                     .Include(uti => uti.TripInstance)
@@ -497,7 +517,7 @@ namespace CarpoolPlanner.NotificationService
 
         public async Task<bool> SendInitialNotification(long tripInstanceId, bool isReminder)
         {
-            using (var context = ApplicationDbContext.Create())
+            using (var context = dbContextProvider.GetContext())
             {
                 var tripInstance = context.GetTripInstanceById(tripInstanceId);
                 if (tripInstance == null)
@@ -508,8 +528,8 @@ namespace CarpoolPlanner.NotificationService
                 {
                     var nonNullCount = tripInstance.UserTripInstances.Count(uti => uti.Attending != null);
                     var inactiveCount = tripInstance.UserTripInstances.Count(uti => uti.User.Status != UserStatus.Active);
-                    log.Debug("Sending initial notification (up to " + tripInstance.UserTripInstances.Count + " users."
-                        + " (" + nonNullCount + " already responded; " + inactiveCount + " are inactive)");
+                    log.Debug("Sending initial notification (up to " + tripInstance.UserTripInstances.Count + " users. "
+                        + nonNullCount + " already responded; " + inactiveCount + " are inactive)");
 
                     var totalUtiCount = context.UserTripInstances.Where(uti => uti.TripInstanceId == tripInstance.Id);
                     log.Debug("Total UTI count: " + totalUtiCount);
@@ -576,7 +596,7 @@ namespace CarpoolPlanner.NotificationService
         {
             try
             {
-                using (var context = ApplicationDbContext.Create())
+                using (var context = dbContextProvider.GetContext())
                 {
                     var tripInstance = context.GetTripInstanceById(tripInstanceId);
                     if (tripInstance == null)
@@ -662,7 +682,7 @@ namespace CarpoolPlanner.NotificationService
 
         private async Task LoadNextTripInstance(long tripRecurrenceId, long oldTripInstanceId)
         {
-            using (var context = ApplicationDbContext.Create())
+            using (var context = dbContextProvider.GetContext())
             {
                 var tripRecurrence = context.TripRecurrences.Find(tripRecurrenceId);
                 var tripInstance = context.GetNextTripInstance(tripRecurrence, TimeSpan.Zero);

@@ -74,7 +74,7 @@ namespace CarpoolPlanner.NotificationService
 
             log.Info("CarpoolPlanner notification service started");
             AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;
-            NotificationManager.GetInstance().Init();
+            NotificationManager.GetInstance().InitializeNotificationTimes();
             var listener = new ChangeListener();
             listener.Start();
             if (Verbose)

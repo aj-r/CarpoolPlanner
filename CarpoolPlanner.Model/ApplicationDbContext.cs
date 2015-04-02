@@ -13,7 +13,7 @@ using log4net;
 
 namespace CarpoolPlanner.Model
 {
-    public class ApplicationDbContext : DbContext
+    public class ApplicationDbContext : DbContext, IApplicationDbContext
     {
         public static readonly TimeSpan TripInstanceRemovalDelay = TimeSpan.FromHours(1); // TODO: make this a DB setting? maybe a property of Trip.
         private static object tripInstanceCreationLock = new object();
@@ -49,6 +49,7 @@ namespace CarpoolPlanner.Model
             };
         }
 
+        [Obsolete("Use IDbContextProvider.GetContext() instead.")]
         public static ApplicationDbContext Create()
         {
             return new ApplicationDbContext();
