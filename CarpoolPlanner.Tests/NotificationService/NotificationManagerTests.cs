@@ -23,7 +23,7 @@ namespace CarpoolPlanner.Tests.NotificationService
             var user = GetTestUser();
             var mockTwilioClient = new Mock<ISmsClient>();
             mockTwilioClient.Setup(t => t.SendMessage(user.Phone, "Test message", It.IsAny<CancellationToken>()))
-                .Returns(Task.FromResult(true))
+                .ReturnsAsync(true)
                 .Callback(() => ++sendCount);
             var manager = GetTestNotificationManager(Mock.Of<IDbContextProvider>(), mockTwilioClient.Object);
 
@@ -34,12 +34,26 @@ namespace CarpoolPlanner.Tests.NotificationService
         }
 
         [Test]
+        public async Task SendNotification_ShouldFail()
+        {
+            var user = GetTestUser();
+            var mockTwilioClient = new Mock<ISmsClient>();
+            mockTwilioClient.Setup(t => t.SendMessage(user.Phone, "Test message", It.IsAny<CancellationToken>()))
+                .ReturnsAsync(false);
+            var manager = GetTestNotificationManager(Mock.Of<IDbContextProvider>(), mockTwilioClient.Object);
+
+            var success = await manager.SendNotification(user, "Test subject", "Test message");
+
+            Assert.That(success, Is.False, "SendNotification failed.");
+        }
+
+        [Test]
         public async Task SendNotification_ShouldNotSend()
         {
             var sent = false;
             var mockTwilioClient = new Mock<ISmsClient>();
             mockTwilioClient.Setup(t => t.SendMessage(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
-                .Returns(Task.FromResult(true))
+                .ReturnsAsync(true)
                 .Callback(() => sent = true);
             var manager = GetTestNotificationManager(Mock.Of<IDbContextProvider>(), mockTwilioClient.Object);
             var user = GetTestUser();
@@ -59,7 +73,7 @@ namespace CarpoolPlanner.Tests.NotificationService
             var saved = false;
             var mockTwilioClient = new Mock<ISmsClient>();
             mockTwilioClient.Setup(t => t.SendMessage(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
-                .Returns(Task.FromResult(true))
+                .ReturnsAsync(true)
                 .Callback(() => ++sendCount);
 
             var tripInstance = GetTestTripInstance();
@@ -88,7 +102,7 @@ namespace CarpoolPlanner.Tests.NotificationService
             var sendCount = 0;
             var mockTwilioClient = new Mock<ISmsClient>();
             mockTwilioClient.Setup(t => t.SendMessage(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
-                .Returns(Task.FromResult(true))
+                .ReturnsAsync(true)
                 .Callback(() => ++sendCount);
 
             var tripInstance = GetTestTripInstance();
@@ -105,37 +119,10 @@ namespace CarpoolPlanner.Tests.NotificationService
             Assert.That(success, Is.True, "SendNotification failed.");
             Assert.That(sendCount, Is.EqualTo(0), "Sent wrong numer of messages.");
         }
-        /*
-        [Test]
-        public async Task SendNotification_ShouldSplit_IfTooLong()
-        {
-            // Twilio is supposed to split the messages up automatically, but that doesn't seem to be working, so we have to do it manually.
-            // This test is to make sure the manual splitting works. If Twilio fixes their stuff, we can remove this test.
 
-            var sendCount = 0;
-            var mockTwilioClient = new Mock<ISmsClient>();
-            mockTwilioClient.Setup(t => t.SendMessage(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
-                .Returns(Task.FromResult(true))
-                .Callback((string to, string message, CancellationToken token) =>
-                {
-                    Assert.That(message.Length, Is.AtMost(160), "Message was too long.");
-                    ++sendCount;
-                });
-
-            var user = GetTestUser();
-
-            var manager = GetTestNotificationManager(Mock.Of<IDbContextProvider>(), mockTwilioClient.Object);
-
-            var success = await manager.SendNotification(user, "Test subject", @"Test very long message that is greater than 160 characters.
-Lorum ipsum dolor sit amet consectetor adipiscing elit. Praesent commodo nisi nec turpis finibus, et interdum libero sollicitudin. Vestibulum ante ipsum metus.");
-
-            Assert.That(success, Is.True, "SendNotification failed.");
-            Assert.That(sendCount, Is.EqualTo(2), "Sent incorrect number of messages.");
-        }
         //TODO: test with inactive users
         //TODO: test with non-null status
         //TODO: test that it doesn't save the notification time if it failed to send
-        */
 
         [Test]
         public async Task SetNextNotificationTimes_ShouldSendInitialNotification()
@@ -143,7 +130,7 @@ Lorum ipsum dolor sit amet consectetor adipiscing elit. Praesent commodo nisi ne
             var sendCount = 0;
             var mockTwilioClient = new Mock<ISmsClient>();
             mockTwilioClient.Setup(t => t.SendMessage(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
-                .Returns(Task.FromResult(true))
+                .ReturnsAsync(true)
                 .Callback(() => ++sendCount);
 
             var tripInstance = GetTestTripInstance();
@@ -167,7 +154,7 @@ Lorum ipsum dolor sit amet consectetor adipiscing elit. Praesent commodo nisi ne
             var sendCount = 0;
             var mockTwilioClient = new Mock<ISmsClient>();
             mockTwilioClient.Setup(t => t.SendMessage(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
-                .Returns(Task.FromResult(true))
+                .ReturnsAsync(true)
                 .Callback(() => ++sendCount);
 
             var tripInstance = GetTestTripInstance();

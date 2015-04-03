@@ -78,6 +78,7 @@
     <Compile Include="Model\UserTripRecurrenceTests.cs" />
     <Compile Include="NotificationService\NotificationManagerTests.cs" />
     <Compile Include="NotificationService\TaskExtensionsTests.cs" />
+    <Compile Include="NotificationService\TwilioSmsClientTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
