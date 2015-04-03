@@ -6,15 +6,17 @@ using System.Threading.Tasks;
 
 namespace CarpoolPlanner.Model
 {
+    /// <summary>
+    /// A provider used to access the Carpool Planner database context.
+    /// </summary>
     public class CarpoolPlannerDbContextProvider : IDbContextProvider
     {
-        #region IDbContextProvider Members
-
+        /// <summary>
+        /// Gets a database context instance.
+        /// </summary>
         public IApplicationDbContext GetContext()
         {
             return new ApplicationDbContext();
         }
-
-        #endregion
     }
 }

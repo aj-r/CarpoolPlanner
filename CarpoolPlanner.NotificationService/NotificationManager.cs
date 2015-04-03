@@ -83,9 +83,9 @@ namespace CarpoolPlanner.NotificationService
         /// <summary>
         /// Initializes the notification timers for each of the upcoming trip instances.
         /// </summary>
-        public async void InitializeNotificationTimes()
+        public async Task InitializeNotificationTimes()
         {
-            const int maxRetryCount = 20;
+            const int maxRetryCount = 5;
             using (var context = dbContextProvider.GetContext())
             {
                 int retryCount = 0;
@@ -101,10 +101,11 @@ namespace CarpoolPlanner.NotificationService
                             if (tripInstance != null)
                                 await SetNextNotificationTimes(tripInstance, tripRecurrence.Id).ConfigureAwait(false);
                         }
+                        success = true;
                     }
                     catch (Exception ex)
                     {
-                        Program.HandleException(ex);
+                        GeneralExceptionHandler.Raise(ex);
                         retryCount++;
                     }
                 } while (!success && retryCount < maxRetryCount);
@@ -115,6 +116,9 @@ namespace CarpoolPlanner.NotificationService
         {
             if (tripInstance == null || tripInstance.Date + ApplicationDbContext.TripInstanceRemovalDelay < DateTime.UtcNow)
                 return;
+
+            log.Debug("Setting next notification times (trip instance date: " + tripInstance.Date.ToString("u"));
+
             // Ask people if they are coming
             var initialTime = tripInstance.Date - InitialAdvanceNotificationTime;
             var reminderTime = tripInstance.Date - ReminderAdvanceNotificationTime;
@@ -130,7 +134,8 @@ namespace CarpoolPlanner.NotificationService
             if (tripRecurrenceId > 0)
             {
                 await SetNextNotificationTime(tripInstance.Date + ApplicationDbContext.TripInstanceRemovalDelay, tripRecurrenceId, nextInstanceTimers,
-                    id => { return LoadNextTripInstance(id, tripInstance.Id); });
+                    id => { return LoadNextTripInstance(id, tripInstance.Id); })
+                    .ConfigureAwait(false);
             }
         }
 
@@ -145,7 +150,7 @@ namespace CarpoolPlanner.NotificationService
                 }
                 catch (Exception ex)
                 {
-                    Program.HandleException(ex);
+                    GeneralExceptionHandler.Raise(ex);
                 }
                 return;
             }
@@ -179,7 +184,7 @@ namespace CarpoolPlanner.NotificationService
                         }
                         catch (Exception ex)
                         {
-                            Program.HandleException(ex);
+                            GeneralExceptionHandler.Raise(ex);
                         }
                     };
                     dictionary.Add(id, timer);
@@ -247,70 +252,88 @@ namespace CarpoolPlanner.NotificationService
         /// <param name="message">The message to send</param>
         /// <param name="force">If true, will send the message even if the user's notification settings are all turned off (assuming the user has specified an e-mail or phone number).</param>
         /// <param name="token"></param>
-        public Task<bool> SendSMS(User user, string message, CancellationToken token)
+        public async Task<bool> SendSMS(User user, string message, CancellationToken token)
         {
             if (user == null)
             {
                 log.Warn("User is null. This probably indicates a bug.");
-                return Task.FromResult(false);
+                return false;
             }
             var phone = ApplicationDbContext.NormalizePhoneNumber(user.Phone);
             if (phone == null)
             {
                 log.Warn("Normalized phone is null. This probably indicates a bug.");
-                return Task.FromResult(false);
+                return false;
             }
 
-            // Set a timeout
-            var tcs = new TaskCompletionSource<bool>();
-            var cts = CancellationTokenSource.CreateLinkedTokenSource(token);
-            cts.CancelAfter((int)sendNotificationTimeout.TotalMilliseconds);
-            cts.Token.Register(() =>
+            // Twilio is supposed to split the messages up automatically, but that doesn't seem to be working, so do it manually.
+            var tasks = new List<Task<bool>>();
+            var messages = SplitMessage(message, 160);
+            foreach (var subMessage in messages)
             {
-                if (!tcs.TrySetResult(false))
-                    return;
-                var logMessage = "Timed out while sending SMS to " + phone;
-                log.ErrorFormat(logMessage);
-                Console.WriteLine(logMessage);
-            }, false);
+                // Set a timeout
+                var tcs = new TaskCompletionSource<bool>();
+                var cts = CancellationTokenSource.CreateLinkedTokenSource(token);
+                cts.CancelAfter((int)sendNotificationTimeout.TotalMilliseconds);
+                cts.Token.Register(() =>
+                {
+                    if (!tcs.TrySetResult(false))
+                        return;
+                    var logMessage = "Timed out while sending SMS to " + phone;
+                    log.ErrorFormat(logMessage);
+                    Console.WriteLine(logMessage);
+                }, false);
 
-            // Send the message
-            smsClient.SendSmsMessage(SmsNumber, phone, message, SmsCallbackUrl, m =>
-            {
-                // Log the result and mark the task as completed
-                if (m == null)
+                // Send the message
+                smsClient.SendSmsMessage(SmsNumber, phone, subMessage, SmsCallbackUrl, m =>
                 {
-                    log.Warn("Twilio returned a null message.");
-                    if (Program.Verbose)
-                        Console.WriteLine("Warning: Twilio returned a null message.");
-                    tcs.TrySetResult(false);
-                    return;
-                }
-                try
-                {
-                    // Status should be "queued" at this point. If null, that probably indicates an authentication problem.
-                    // I believe you need to set a callback URL to get the sent/error statuses, and that doesn't work well for local testing (or with Tasks).
-                    if (m.Status != null)
+                    // Log the result and mark the task as completed
+                    if (m == null)
                     {
-                        log.Debug("SMS message sent.");
+                        log.Warn("Twilio returned a null message.");
                         if (Program.Verbose)
-                            Console.WriteLine("SMS sent successfully.");
-                        tcs.TrySetResult(true);
+                            Console.WriteLine("Warning: Twilio returned a null message.");
+                        tcs.TrySetResult(false);
+                        return;
                     }
-                    else
+                    try
                     {
-                        log.ErrorFormat("Failed to send SMS to " + phone);
-                        Console.WriteLine("Failed to send SMS to " + phone);
+                        // Status should be "queued" at this point. If null, that probably indicates an authentication problem.
+                        // I believe you need to set a callback URL to get the sent/error statuses, and that doesn't work well for local testing (or with Tasks).
+                        if (m.Status != null)
+                        {
+                            log.Debug("SMS message sent.");
+                            if (Program.Verbose)
+                                Console.WriteLine("SMS sent successfully.");
+                            tcs.TrySetResult(true);
+                        }
+                        else
+                        {
+                            log.ErrorFormat("Failed to send SMS to " + phone);
+                            Console.WriteLine("Failed to send SMS to " + phone);
+                            tcs.TrySetResult(false);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        log.Error("Error sending SMS to " + phone + ": " + ex);
                         tcs.TrySetResult(false);
                     }
-                }
-                catch (Exception ex)
-                {
-                    log.Error("Error sending SMS to " + phone + ": " + ex);
-                    tcs.TrySetResult(false);
-                }
-            });
-            return tcs.Task;
+                });
+                tasks.Add(tcs.Task);
+            }
+            var results = await Task.WhenAll(tasks);
+            return results.All(r => r);
+        }
+
+        private string[] SplitMessage(string message, int maxLength)
+        {
+            if (message == null)
+                return new string[0];
+            var messages = new string[(message.Length + maxLength - 1) / maxLength];
+            for (var i = 0; i < messages.Length; ++i)
+                messages[i] = message.Substring(maxLength * i, Math.Min(maxLength, message.Length - maxLength * i));
+            return messages;
         }
 
         /// <summary>
@@ -499,7 +522,7 @@ namespace CarpoolPlanner.NotificationService
                     // Send a final notification update
                     // TODO: send a special message that highlights the change, instead of just sending the whole thing again.
                     // But make sure to mention if there are not enough drivers.
-                    SendFinalNotification(tripInstance.Id, true);
+                    SendFinalNotification(tripInstance.Id, true).WithErrorHandler();
                 }
             }
             return reply;
@@ -531,7 +554,7 @@ namespace CarpoolPlanner.NotificationService
                     log.Debug("Sending initial notification (up to " + tripInstance.UserTripInstances.Count + " users. "
                         + nonNullCount + " already responded; " + inactiveCount + " are inactive)");
 
-                    var totalUtiCount = context.UserTripInstances.Where(uti => uti.TripInstanceId == tripInstance.Id);
+                    var totalUtiCount = context.UserTripInstances.Count(uti => uti.TripInstanceId == tripInstance.Id);
                     log.Debug("Total UTI count: " + totalUtiCount);
                 }
                 var allSuccessful = true;

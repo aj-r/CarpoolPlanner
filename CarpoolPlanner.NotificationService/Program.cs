@@ -21,8 +21,19 @@ namespace CarpoolPlanner.NotificationService
 
         static void Main(string[] args)
         {
-            XmlConfigurator.Configure();
+            GeneralExceptionHandler.ExceptionEncountered += ex => HandleException(ex);
+
+            AppDomain.CurrentDomain.UnhandledException += GeneralExceptionHandler.Raise;
+            // Attempt to catch exceptions that occur in unobserved tasks. This is a last resort and is not guaranteed to work,
+            // so you should try to never have unobserved tasks. If you don't want to await the task, use the WithErrorHandler() extension instead.
+            TaskScheduler.UnobservedTaskException += (s, e) =>
+            {
+                GeneralExceptionHandler.Raise(e.Exception);
+                e.SetObserved();
+            };
             
+            XmlConfigurator.Configure();
+
             if (args.Length >= 1)
             {
                 switch (args[0])
@@ -43,7 +54,8 @@ namespace CarpoolPlanner.NotificationService
                         }
                         string email = args[1];
                         var manager = NotificationManager.GetInstance();
-                        using (var context = ApplicationDbContext.Create())
+                        var contextProvider = new CarpoolPlannerDbContextProvider();
+                        using (var context = contextProvider.GetContext())
                         {
                             var user = context.Users.FirstOrDefault(u => u.Email == email);
                             if (user == null)
@@ -73,8 +85,8 @@ namespace CarpoolPlanner.NotificationService
             }
 
             log.Info("CarpoolPlanner notification service started");
-            AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;
-            NotificationManager.GetInstance().InitializeNotificationTimes();
+
+            NotificationManager.GetInstance().InitializeNotificationTimes().WithErrorHandler();
             var listener = new ChangeListener();
             listener.Start();
             if (Verbose)
@@ -99,12 +111,7 @@ namespace CarpoolPlanner.NotificationService
             listener.Stop();
         }
 
-        static void OnUnhandledException(object sender, UnhandledExceptionEventArgs e)
-        {
-            HandleException((Exception)e.ExceptionObject);
-        }
-
-        public static void HandleException(Exception ex)
+        private static void HandleException(Exception ex)
         {
             log.Error(ex.ToString());
             Console.Error.WriteLine(ex.ToString());

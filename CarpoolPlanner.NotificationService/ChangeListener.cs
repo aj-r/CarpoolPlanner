@@ -15,13 +15,29 @@ using Rest.Server;
 
 namespace CarpoolPlanner.NotificationService
 {
+    /// <summary>
+    /// A REST service that contains routes that listen for change notifications from the web site.
+    /// </summary>
+    /// <remarks>
+    /// This is used for inter-process communication between the Notification Service and the MVC application.
+    /// </remarks>
     public class ChangeListener : RestServer
     {
         private static readonly ILog log = LogManager.GetLogger(typeof(ChangeListener));
 
+        private readonly IDbContextProvider contextProvider;
+
         public ChangeListener()
-            : base(23122)
+            : this(new CarpoolPlannerDbContextProvider())
         { }
+
+        public ChangeListener(IDbContextProvider contextProvider)
+            : base(23122)
+        {
+            if (contextProvider == null)
+                throw new ArgumentNullException("contextProvider");
+            this.contextProvider = contextProvider;
+        }
 
         [RestMethod(Name = "/update-ti", ParamCount = 2)]
         public string UpdateTripInstance(string[] args)
@@ -31,7 +47,7 @@ namespace CarpoolPlanner.NotificationService
             var tripInstanceId = long.Parse(args[0]);
             var tripRecurrenceId = long.Parse(args[1]);
             TripInstance tripInstance;
-            using (var context = ApplicationDbContext.Create())
+            using (var context = contextProvider.GetContext())
             {
                 tripInstance = context.TripInstances.Find(tripInstanceId);
             }
@@ -39,7 +55,7 @@ namespace CarpoolPlanner.NotificationService
                 return "Trip instance not found";
             if (Program.Verbose)
                 Console.WriteLine("Updating notifications");
-            NotificationManager.GetInstance().SetNextNotificationTimes(tripInstance, tripRecurrenceId);
+            NotificationManager.GetInstance().SetNextNotificationTimes(tripInstance, tripRecurrenceId).WithErrorHandler();
             return "Success";
         }
 
@@ -50,7 +66,7 @@ namespace CarpoolPlanner.NotificationService
                 Console.WriteLine("Received notify-ti message (" + args[0] + ")");
             var tripInstanceId = long.Parse(args[0]);
             TripInstance tripInstance;
-            using (var context = ApplicationDbContext.Create())
+            using (var context = contextProvider.GetContext())
             {
                 tripInstance = context.TripInstances.Include(ti => ti.UserTripInstances).FirstOrDefault(ti => ti.Id == tripInstanceId);
             }
@@ -61,7 +77,7 @@ namespace CarpoolPlanner.NotificationService
             {
                 if (Program.Verbose)
                     Console.WriteLine("Re-notifying");
-                NotificationManager.GetInstance().SendFinalNotification(tripInstanceId, true);
+                NotificationManager.GetInstance().SendFinalNotification(tripInstanceId, true).WithErrorHandler();
             }
             return "Success";
         }
@@ -73,7 +89,7 @@ namespace CarpoolPlanner.NotificationService
                 Console.WriteLine("Received user-register message (" + args[0] + ")");
             var userId = long.Parse(args[0]);
             User user;
-            using (var context = ApplicationDbContext.Create())
+            using (var context = contextProvider.GetContext())
             {
                 user = context.Users.Find(userId);
                 if (user == null)

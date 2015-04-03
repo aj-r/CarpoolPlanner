@@ -13,6 +13,9 @@ using log4net;
 
 namespace CarpoolPlanner.Model
 {
+    /// <summary>
+    /// A database context for accessing the CarpoolPlanner database.
+    /// </summary>
     public class ApplicationDbContext : DbContext, IApplicationDbContext
     {
         public static readonly TimeSpan TripInstanceRemovalDelay = TimeSpan.FromHours(1); // TODO: make this a DB setting? maybe a property of Trip.
@@ -74,7 +77,7 @@ namespace CarpoolPlanner.Model
         /// <summary>
         /// Gets all UserTrips for the specified user.
         /// </summary>
-        /// <returns>An IEnumerable&lt;UserTrip&gt;.</returns>
+        /// <returns>A <see cref="IQueryable{UserTrip}"/>.</returns>
         public IQueryable<UserTrip> GetUserTrips(long userId)
         {
             return UserTrips.Where(ut => ut.UserId == userId);
@@ -83,7 +86,7 @@ namespace CarpoolPlanner.Model
         /// <summary>
         /// Gets all UserTripRecurrences for the specified user.
         /// </summary>
-        /// <returns>An IEnumerable&lt;UserTrip&gt;.</returns>
+        /// <returns>A <see cref="IQueryable{UserTrip}"/>.</returns>
         public IQueryable<UserTripRecurrence> GetUserTripRecurrences(long userId)
         {
             return UserTripRecurrences.Where(ut => ut.UserId == userId);

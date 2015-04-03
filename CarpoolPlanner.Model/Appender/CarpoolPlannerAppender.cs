@@ -10,11 +10,24 @@ namespace CarpoolPlanner.Model.Appender
 {
     public class CarpoolPlannerAppender : AppenderSkeleton
     {
+        private readonly IDbContextProvider contextProvider;
+
+        public CarpoolPlannerAppender()
+            : this(new CarpoolPlannerDbContextProvider())
+        { }
+
+        public CarpoolPlannerAppender(IDbContextProvider contextProvider)
+        {
+            if (contextProvider == null)
+                throw new ArgumentNullException("contextProvider");
+            this.contextProvider = contextProvider;
+        }
+
         protected override void Append(LoggingEvent loggingEvent)
         {
             try
             {
-                using (var context = ApplicationDbContext.Create())
+                using (var context = contextProvider.GetContext())
                 {
                     var userId = ThreadContext.Properties["UserId"];
                     var ndc = ThreadContext.Stacks["NDC"];

@@ -7,6 +7,9 @@ using System.Threading.Tasks;
 
 namespace CarpoolPlanner.Model
 {
+    /// <summary>
+    /// An interface for accessing stored CarpoolPlanner data.
+    /// </summary>
     public interface IApplicationDbContext : IDisposable
     {
         IDbSet<User> Users { get; }
