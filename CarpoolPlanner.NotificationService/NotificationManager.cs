@@ -24,7 +24,6 @@ namespace CarpoolPlanner.NotificationService
     public class NotificationManager
     {
         private static readonly ILog log = LogManager.GetLogger(typeof(NotificationManager));
-        private static readonly TimeSpan sendNotificationTimeout = TimeSpan.FromSeconds(5);
         private static readonly object instanceLock = new object();
         private static NotificationManager instance;
 
@@ -37,11 +36,12 @@ namespace CarpoolPlanner.NotificationService
             {
                 if (instance == null)
                 {
-                    instance = new NotificationManager(new CarpoolPlannerDbContextProvider(), new TwilioRestClientImpl())
-                        {
-                            SmsNumber = ConfigurationManager.AppSettings["TwilioPhoneNumber"],
-                            SmsCallbackUrl = ConfigurationManager.AppSettings["TwilioCallbackUrl"]
-                        };
+                    instance = new NotificationManager(new CarpoolPlannerDbContextProvider(), new TwilioSmsClient())
+                    {
+                        InitialAdvanceNotificationTime = ParseHours(ConfigurationManager.AppSettings["InitialAdvanceNotificationTime"]),
+                        ReminderAdvanceNotificationTime = ParseHours(ConfigurationManager.AppSettings["ReminderAdvanceNotificationTime"]),
+                        FinalAdvanceNotificationTime = ParseHours(ConfigurationManager.AppSettings["FinalAdvanceNotificationTime"]),
+                    };
 
                     // TODO: figure out how to add root CAs to mono's trusted list, and remove this line.
                     ServicePointManager.CertificatePolicy = new AllowAllCertPolicy();
@@ -51,7 +51,7 @@ namespace CarpoolPlanner.NotificationService
         }
 
         private readonly IDbContextProvider dbContextProvider;
-        private readonly ITwilioRestClient smsClient;
+        private readonly ISmsClient smsClient;
 
         private readonly Dictionary<long, Timer> initialTimers = new Dictionary<long, Timer>();
         private readonly Dictionary<long, Timer> reminderTimers = new Dictionary<long, Timer>();
@@ -63,8 +63,8 @@ namespace CarpoolPlanner.NotificationService
         /// This method should only be used for testing; otherwise you should use the singleton instance accessed with NotificationManager.GetInstance()
         /// </summary>
         /// <param name="dbContextProvider">The <see cref="IDbContextProvider"/> implementation to use.</param>
-        /// <param name="smsClient">The <see cref="ITwilioRestClient"/> implementation to use.</param>
-        public NotificationManager(IDbContextProvider dbContextProvider, ITwilioRestClient smsClient)
+        /// <param name="smsClient">The <see cref="ISmsClient"/> implementation to use.</param>
+        public NotificationManager(IDbContextProvider dbContextProvider, ISmsClient smsClient)
         {
             this.dbContextProvider = dbContextProvider;
             this.smsClient = smsClient;
@@ -75,10 +75,6 @@ namespace CarpoolPlanner.NotificationService
         public TimeSpan ReminderAdvanceNotificationTime { get; set; }
 
         public TimeSpan FinalAdvanceNotificationTime { get; set; }
-
-        public string SmsNumber { get; set; }
-
-        public string SmsCallbackUrl { get; set; }
 
         /// <summary>
         /// Initializes the notification timers for each of the upcoming trip instances.
@@ -116,8 +112,6 @@ namespace CarpoolPlanner.NotificationService
         {
             if (tripInstance == null || tripInstance.Date + ApplicationDbContext.TripInstanceRemovalDelay < DateTime.UtcNow)
                 return;
-
-            log.Debug("Setting next notification times (trip instance date: " + tripInstance.Date.ToString("u"));
 
             // Ask people if they are coming
             var initialTime = tripInstance.Date - InitialAdvanceNotificationTime;
@@ -238,7 +232,7 @@ namespace CarpoolPlanner.NotificationService
         /// Sends a notification message to the specified user.
         /// </summary>
         /// <param name="user">The user to whom the notification will be sent.</param>
-        /// <param name="message">The message to send</param>
+        /// <param name="message">The message to send.</param>
         /// <param name="force">If true, will send the message even if the user's notification settings are all turned off (assuming the user has specified an e-mail or phone number).</param>
         public Task<bool> SendSMS(User user, string message)
         {
@@ -249,91 +243,25 @@ namespace CarpoolPlanner.NotificationService
         /// Sends a notification message to the specified user.
         /// </summary>
         /// <param name="user">The user to whom the notification will be sent.</param>
-        /// <param name="message">The message to send</param>
+        /// <param name="message">The message to send.</param>
         /// <param name="force">If true, will send the message even if the user's notification settings are all turned off (assuming the user has specified an e-mail or phone number).</param>
-        /// <param name="token"></param>
-        public async Task<bool> SendSMS(User user, string message, CancellationToken token)
+        /// <param name="token">A token that can be used to cancel the operation.</param>
+        public Task<bool> SendSMS(User user, string message, CancellationToken token)
         {
             if (user == null)
             {
                 log.Warn("User is null. This probably indicates a bug.");
-                return false;
+                return Task.FromResult(false);
             }
             var phone = ApplicationDbContext.NormalizePhoneNumber(user.Phone);
             if (phone == null)
             {
                 log.Warn("Normalized phone is null. This probably indicates a bug.");
-                return false;
+                return Task.FromResult(false);
             }
 
             // Twilio is supposed to split the messages up automatically, but that doesn't seem to be working, so do it manually.
-            var tasks = new List<Task<bool>>();
-            var messages = SplitMessage(message, 160);
-            foreach (var subMessage in messages)
-            {
-                // Set a timeout
-                var tcs = new TaskCompletionSource<bool>();
-                var cts = CancellationTokenSource.CreateLinkedTokenSource(token);
-                cts.CancelAfter((int)sendNotificationTimeout.TotalMilliseconds);
-                cts.Token.Register(() =>
-                {
-                    if (!tcs.TrySetResult(false))
-                        return;
-                    var logMessage = "Timed out while sending SMS to " + phone;
-                    log.ErrorFormat(logMessage);
-                    Console.WriteLine(logMessage);
-                }, false);
-
-                // Send the message
-                smsClient.SendSmsMessage(SmsNumber, phone, subMessage, SmsCallbackUrl, m =>
-                {
-                    // Log the result and mark the task as completed
-                    if (m == null)
-                    {
-                        log.Warn("Twilio returned a null message.");
-                        if (Program.Verbose)
-                            Console.WriteLine("Warning: Twilio returned a null message.");
-                        tcs.TrySetResult(false);
-                        return;
-                    }
-                    try
-                    {
-                        // Status should be "queued" at this point. If null, that probably indicates an authentication problem.
-                        // I believe you need to set a callback URL to get the sent/error statuses, and that doesn't work well for local testing (or with Tasks).
-                        if (m.Status != null)
-                        {
-                            log.Debug("SMS message sent.");
-                            if (Program.Verbose)
-                                Console.WriteLine("SMS sent successfully.");
-                            tcs.TrySetResult(true);
-                        }
-                        else
-                        {
-                            log.ErrorFormat("Failed to send SMS to " + phone);
-                            Console.WriteLine("Failed to send SMS to " + phone);
-                            tcs.TrySetResult(false);
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        log.Error("Error sending SMS to " + phone + ": " + ex);
-                        tcs.TrySetResult(false);
-                    }
-                });
-                tasks.Add(tcs.Task);
-            }
-            var results = await Task.WhenAll(tasks);
-            return results.All(r => r);
-        }
-
-        private string[] SplitMessage(string message, int maxLength)
-        {
-            if (message == null)
-                return new string[0];
-            var messages = new string[(message.Length + maxLength - 1) / maxLength];
-            for (var i = 0; i < messages.Length; ++i)
-                messages[i] = message.Substring(maxLength * i, Math.Min(maxLength, message.Length - maxLength * i));
-            return messages;
+            return smsClient.SendMessage(phone, message, token);
         }
 
         /// <summary>
@@ -832,7 +760,7 @@ namespace CarpoolPlanner.NotificationService
             }
         }
 
-        private TimeSpan ParseHours(string s)
+        private static TimeSpan ParseHours(string s)
         {
             double hours;
             if (s == null || !double.TryParse(s, out hours))

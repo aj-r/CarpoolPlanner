@@ -73,12 +73,12 @@
   <ItemGroup>
     <Compile Include="ChangeListener.cs" />
     <Compile Include="GeneralExceptionHandler.cs" />
-    <Compile Include="ITwilioRestClient.cs" />
+    <Compile Include="ISmsClient.cs" />
     <Compile Include="NotificationManager.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TaskExtensions.cs" />
-    <Compile Include="TwilioRestClientImpl.cs" />
+    <Compile Include="TwilioSmsClient.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="App.config">
