@@ -241,7 +241,7 @@ namespace CarpoolPlanner.Model
             // Add an underscore before each capital letter (but not before the first letter) to get the object name.
             var result = Regex.Replace(clrName, ".[A-Z]", m => m.Value[0] + "_" + m.Value[1]);
             // Table names in MySql are all lower case.
-            return result.ToLower();
+            return result.ToLowerInvariant();
         }
 
         public override int SaveChanges()

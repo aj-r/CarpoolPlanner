@@ -86,13 +86,15 @@ namespace CarpoolPlanner.Tests.NotificationService
 
             var success = await manager.SendInitialNotification(2);
 
-            Assert.That(success, Is.True, "SendNotification failed.");
+            Assert.That(success, Is.True, "SendInitialNotification failed.");
             Assert.That(sendCount, Is.EqualTo(3), "Sent wrong numer of messages.");
-            Assert.That(saved, Is.True, "SendNotification did not save initial notification times.");
+            Assert.That(saved, Is.True, "SendInitialNotification did not save initial notification times.");
             foreach (var userTripInstnace in tripInstance.UserTripInstances)
             {
                 Assert.That(userTripInstnace.InitialNotificationTime, Is.Not.Null);
                 Assert.That(userTripInstnace.InitialNotificationTime, Is.AtMost(DateTime.UtcNow));
+                Assert.That(userTripInstnace.ReminderNotificationTime, Is.Null);
+                Assert.That(userTripInstnace.FinalNotificationTime, Is.Null);
             }
         }
 
@@ -116,13 +118,159 @@ namespace CarpoolPlanner.Tests.NotificationService
 
             var success = await manager.SendInitialNotification(2);
 
-            Assert.That(success, Is.True, "SendNotification failed.");
+            Assert.That(success, Is.True, "SendInitialNotification failed.");
             Assert.That(sendCount, Is.EqualTo(0), "Sent wrong numer of messages.");
         }
 
-        //TODO: test with inactive users
-        //TODO: test with non-null status
-        //TODO: test that it doesn't save the notification time if it failed to send
+        [Test]
+        public async Task SendInitialNotification_ShouldNotSend_IfAlreadyConfirmed()
+        {
+            var sendCount = 0;
+            var mockTwilioClient = new Mock<ISmsClient>();
+            mockTwilioClient.Setup(t => t.SendMessage(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(true)
+                .Callback(() => ++sendCount);
+
+            var tripInstance = GetTestTripInstance();
+            tripInstance.UserTripInstances[1L].Attending = true;
+            tripInstance.UserTripInstances[2L].Attending = false;
+            var mockContext = new Mock<IApplicationDbContext>();
+            mockContext.Setup(c => c.GetTripInstanceById(2)).Returns(tripInstance);
+            var mockContextProvider = Mock.Of<IDbContextProvider>(p => p.GetContext() == mockContext.Object);
+
+            var manager = GetTestNotificationManager(mockContextProvider, mockTwilioClient.Object);
+
+            var success = await manager.SendInitialNotification(2);
+
+            Assert.That(success, Is.True, "SendInitialNotification failed.");
+            Assert.That(sendCount, Is.EqualTo(1), "Sent wrong numer of messages.");
+        }
+
+        [Test]
+        public async Task SendInitialNotification_ShouldNotSend_ToNonActiveUsers()
+        {
+            var sendCount = 0;
+            var mockTwilioClient = new Mock<ISmsClient>();
+            mockTwilioClient.Setup(t => t.SendMessage(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(true)
+                .Callback(() => ++sendCount);
+
+            var tripInstance = GetTestTripInstance();
+            tripInstance.UserTripInstances[1L].User.Status = UserStatus.Unapproved;
+            tripInstance.UserTripInstances[2L].User.Status = UserStatus.Disabled;
+            var mockContext = new Mock<IApplicationDbContext>();
+            mockContext.Setup(c => c.GetTripInstanceById(2)).Returns(tripInstance);
+            var mockContextProvider = Mock.Of<IDbContextProvider>(p => p.GetContext() == mockContext.Object);
+
+            var manager = GetTestNotificationManager(mockContextProvider, mockTwilioClient.Object);
+
+            var success = await manager.SendInitialNotification(2);
+
+            Assert.That(success, Is.True, "SendInitialNotification failed.");
+            Assert.That(sendCount, Is.EqualTo(1), "Sent wrong numer of messages.");
+        }
+
+        [Test]
+        public async Task SendInitialNotification_ShouldNotSaveTime_IfFailed()
+        {
+            // When failing to send a notification, it shouldn't save the notification time because the notification wasn't actually sent.
+            var sendCount = 0;
+            var mockTwilioClient = new Mock<ISmsClient>();
+            mockTwilioClient.Setup(t => t.SendMessage(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(false)
+                .Callback(() => ++sendCount);
+
+            var tripInstance = GetTestTripInstance();
+            var mockContext = new Mock<IApplicationDbContext>();
+            mockContext.Setup(c => c.GetTripInstanceById(2)).Returns(tripInstance);
+            var mockContextProvider = Mock.Of<IDbContextProvider>(p => p.GetContext() == mockContext.Object);
+
+            var manager = GetTestNotificationManager(mockContextProvider, mockTwilioClient.Object);
+
+            var success = await manager.SendInitialNotification(2);
+
+            Assert.That(success, Is.False, "SendInitialNotification should have failed.");
+            Assert.That(sendCount, Is.EqualTo(3), "Sent wrong numer of messages.");
+            foreach (var userTripInstnace in tripInstance.UserTripInstances)
+            {
+                Assert.That(userTripInstnace.InitialNotificationTime, Is.Null, "SendInitialNotification saved the notification time but should not have.");
+                Assert.That(userTripInstnace.ReminderNotificationTime, Is.Null);
+                Assert.That(userTripInstnace.FinalNotificationTime, Is.Null);
+            }
+        }
+
+        [Test]
+        public async Task SendReminderNotification_ShouldSend()
+        {
+            var sendCount = 0;
+            var saved = false;
+            var mockTwilioClient = new Mock<ISmsClient>();
+            mockTwilioClient.Setup(t => t.SendMessage(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(true)
+                .Callback(() => ++sendCount);
+
+            var tripInstance = GetTestTripInstance();
+            var mockContext = new Mock<IApplicationDbContext>();
+            mockContext.Setup(c => c.GetTripInstanceById(2)).Returns(tripInstance);
+            mockContext.Setup(c => c.SaveChanges()).Callback(() => saved = true);
+            var mockContextProvider = Mock.Of<IDbContextProvider>(p => p.GetContext() == mockContext.Object);
+
+            var manager = GetTestNotificationManager(mockContextProvider, mockTwilioClient.Object);
+
+            var success = await manager.SendInitialNotification(2, true);
+
+            Assert.That(success, Is.True, "SendInitialNotification failed.");
+            Assert.That(sendCount, Is.EqualTo(3), "Sent wrong numer of messages.");
+            Assert.That(saved, Is.True, "SendInitialNotification did not save initial notification times.");
+            foreach (var userTripInstnace in tripInstance.UserTripInstances)
+            {
+                Assert.That(userTripInstnace.InitialNotificationTime, Is.Not.Null);
+                Assert.That(userTripInstnace.InitialNotificationTime, Is.AtMost(DateTime.UtcNow));
+                Assert.That(userTripInstnace.ReminderNotificationTime, Is.Not.Null);
+                Assert.That(userTripInstnace.ReminderNotificationTime, Is.AtMost(DateTime.UtcNow));
+                Assert.That(userTripInstnace.FinalNotificationTime, Is.Null);
+            }
+        }
+
+        [Test]
+        public async Task SendFinalNotification_ShouldSend()
+        {
+            var sendCount = 0;
+            string sentToPhone = null;
+            var saved = false;
+            var mockTwilioClient = new Mock<ISmsClient>();
+            mockTwilioClient.Setup(t => t.SendMessage(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(true)
+                .Callback((string to, string m, CancellationToken t) =>
+                {
+                    ++sendCount;
+                    sentToPhone = to;
+                });
+
+            var tripInstance = GetTestTripInstance();
+            tripInstance.UserTripInstances[1L].Attending = false;
+            tripInstance.UserTripInstances[2L].Attending = true;
+            var mockContext = new Mock<IApplicationDbContext>();
+            mockContext.Setup(c => c.GetTripInstanceById(2)).Returns(tripInstance);
+            mockContext.Setup(c => c.SaveChanges()).Callback(() => saved = true);
+            var mockContextProvider = Mock.Of<IDbContextProvider>(p => p.GetContext() == mockContext.Object);
+
+            var manager = GetTestNotificationManager(mockContextProvider, mockTwilioClient.Object);
+
+            var success = await manager.SendFinalNotification(2);
+
+            Assert.That(success, Is.True, "SendFinalNotification failed.");
+            // Only 1 user has Attending = true, so we should only get 1 notification.
+            Assert.That(sendCount, Is.EqualTo(1), "Sent wrong numer of messages.");
+            // The message should be sent to the second user
+            Assert.That(sentToPhone, Is.EqualTo("+15555552222"), "Sent to the wrong user.");
+            Assert.That(saved, Is.True, "SendFinalNotification did not save initial notification times.");
+            foreach (var userTripInstnace in tripInstance.UserTripInstances.Where(uti => uti.Attending == true))
+            {
+                Assert.That(userTripInstnace.FinalNotificationTime, Is.Not.Null);
+                Assert.That(userTripInstnace.FinalNotificationTime, Is.AtMost(DateTime.UtcNow));
+            }
+        }
 
         [Test]
         public async Task SetNextNotificationTimes_ShouldSendInitialNotification()
@@ -135,7 +283,7 @@ namespace CarpoolPlanner.Tests.NotificationService
 
             var tripInstance = GetTestTripInstance();
             tripInstance.Date = DateTime.UtcNow + TimeSpan.FromHours(4);
-            var mockContext = Mock.Of<IApplicationDbContext>((c => c.GetTripInstanceById(2) == tripInstance));
+            var mockContext = Mock.Of<IApplicationDbContext>(c => c.GetTripInstanceById(2) == tripInstance);
             var mockContextProvider = Mock.Of<IDbContextProvider>(p => p.GetContext() == mockContext);
 
             var manager = GetTestNotificationManager(mockContextProvider, mockTwilioClient.Object);
@@ -144,8 +292,28 @@ namespace CarpoolPlanner.Tests.NotificationService
 
             Assert.That(sendCount, Is.EqualTo(3), "Sent wrong numer of messages.");
         }
-        //TODO: test with reminder notification, final notification.
-        //TODO: after the event is over.
+
+        [Test]
+        public async Task SetNextNotificationTimes_ShouldNotSend_AfterEvent()
+        {
+            var sendCount = 0;
+            var mockTwilioClient = new Mock<ISmsClient>();
+            mockTwilioClient.Setup(t => t.SendMessage(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(true)
+                .Callback(() => ++sendCount);
+
+            var tripInstance = GetTestTripInstance();
+            tripInstance.Date = DateTime.UtcNow - TimeSpan.FromHours(2);
+            var mockContext = Mock.Of<IApplicationDbContext>(c => c.GetTripInstanceById(2) == tripInstance);
+            var mockContextProvider = Mock.Of<IDbContextProvider>(p => p.GetContext() == mockContext);
+
+            var manager = GetTestNotificationManager(mockContextProvider, mockTwilioClient.Object);
+
+            await manager.SetNextNotificationTimes(tripInstance, 0);
+
+            Assert.That(sendCount, Is.EqualTo(0), "Sent wrong numer of messages.");
+        }
+
         //TODO: test before initial notification with timers somehow?
 
         [Test]
@@ -189,7 +357,7 @@ namespace CarpoolPlanner.Tests.NotificationService
 
         private User GetTestUser()
         {
-            return new User { Id = 1, Phone = "+15555556666", PhoneNotify = true, CommuteMethod = CommuteMethod.NeedRide, Status = UserStatus.Active };
+            return new User { Id = 1, Phone = "+15555551111", PhoneNotify = true, CommuteMethod = CommuteMethod.NeedRide, Status = UserStatus.Active };
         }
 
         private TripInstance GetTestTripInstance()
@@ -209,7 +377,7 @@ namespace CarpoolPlanner.Tests.NotificationService
 
             var user2 = GetTestUser();
             user2.Id = 2;
-            user2.Phone = "+15555557777";
+            user2.Phone = "+15555552222";
             tripInstance.UserTripInstances.Add(new UserTripInstance
             {
                 UserId = 2,
@@ -220,7 +388,7 @@ namespace CarpoolPlanner.Tests.NotificationService
 
             var user3 = GetTestUser();
             user3.Id = 3;
-            user3.Phone = "+15555558888";
+            user3.Phone = "+15555553333";
             tripInstance.UserTripInstances.Add(new UserTripInstance
             {
                 UserId = 3,
