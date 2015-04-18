@@ -17,8 +17,6 @@ namespace CarpoolPlanner.NotificationService
         private readonly TwilioRestClient innerClient;
         private readonly string from;
         private readonly string statusCallbackUrl;
-        // TODO: For debugging only; remove
-        private readonly string accountSid;
 
         public TwilioSmsClient()
             : this(ConfigurationManager.AppSettings["TwilioAccountSid"],
@@ -32,8 +30,6 @@ namespace CarpoolPlanner.NotificationService
             innerClient = new TwilioRestClient(accountSid, authToken);
             this.from = from;
             this.statusCallbackUrl = statusCallbackUrl;
-
-            this.accountSid = accountSid;
         }
 
         public string From { get { return from; } }
@@ -42,8 +38,16 @@ namespace CarpoolPlanner.NotificationService
 
         public async Task<bool> SendMessage(string to, string message, CancellationToken token)
         {
-            var tasks = new List<Task<bool>>();
+            var success = true;
+
+            // HACK: certain special characters reduce the message size limit to 70.
+            // Replace those characters to get the 160 character message limit.
+            message = message.Replace("ë", "e");
+
+            // Twilio is supposed to automatically split messages greater than 160 characters.
+            // However, it instead seems to fail silently for those messages, so we need to split them manually.
             var messages = SplitMessage(message, 160);
+
             foreach (var subMessage in messages)
             {
                 // Set a timeout
@@ -58,9 +62,6 @@ namespace CarpoolPlanner.NotificationService
                     log.ErrorFormat(logMessage);
                     Console.WriteLine(logMessage);
                 }, false);
-
-                if (Program.Verbose)
-                    Console.WriteLine("AccointSid: " + accountSid);
 
                 // Send the message
                 innerClient.SendSmsMessage(From, to, subMessage, statusCallbackUrl, m =>
@@ -78,7 +79,6 @@ namespace CarpoolPlanner.NotificationService
                         // I believe you need to set a callback URL to get the sent/error statuses, and that doesn't work well for local testing (or with Tasks).
                         if (m.Status != null)
                         {
-                            log.Debug("SMS message sent.");
                             tcs.TrySetResult(true);
                         }
                         else
@@ -94,10 +94,11 @@ namespace CarpoolPlanner.NotificationService
                         tcs.TrySetResult(false);
                     }
                 });
-                tasks.Add(tcs.Task);
+                // Wait for the message to be sent before continuing.
+                // This helps messages to be received in the correct order.
+                success = await tcs.Task && success;
             }
-            var results = await Task.WhenAll(tasks);
-            return results.All(r => r);
+            return success;
         }
 
         public static string[] SplitMessage(string message, int maxLength)
