@@ -187,7 +187,7 @@ namespace CarpoolPlanner {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Register.
+        ///   Looks up a localized string similar to Sign up.
         /// </summary>
         public static string Register {
             get {
