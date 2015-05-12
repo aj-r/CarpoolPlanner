@@ -7,7 +7,6 @@ using CarpoolPlanner.ViewModel;
 
 namespace CarpoolPlanner.Controllers
 {
-    [Authorize]
     public class NotificationsController : CarpoolControllerBase
     {
         public ActionResult Index()

@@ -4,7 +4,7 @@
   <label class="col-md-2 control-label" title="Your e-mail address. Used for logging in.">@Resources.Email</label>
   <div class="col-md-10">
     <input type="email" ng-model="model.user.email" class="form-control" required val-friendly-name="@Resources.Email" />
-    <div class="checkbox">
+    <div class="checkbox" style="display: none;"><!-- Hide this for now because it is not fully functional. -->
       <label>
         <input type="checkbox" ng-model="model.user.emailNotify" />
         Send notifications via e-mail

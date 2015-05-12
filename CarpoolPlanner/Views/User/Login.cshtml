@@ -27,6 +27,12 @@
 
 <h2>@Resources.Login</h2>
 <div class="form-horizontal" ng-controller="loginCtrl">
+  <p ng-hide="reason">
+    Welcome to Climbers Carpool! It allows you to use your phone to confirm which days you are coming, and see who is coming on each day.
+    <a ng-href="@Url.Action("Register", "User"){{ model.email ? '?email=' + encodeURIComponent(model.email) : '' }}">Sign up</a> or log in to get started.
+    <br />
+    For more info, see the @Html.ActionLink("notifications", "Index", "Notifications") page.
+  </p>
   <form method="post" name="loginForm" ng-submit="submitLogin()" novalidate focus-first-empty focus-first-invalid>
     <div class="form-group">
       <div class="col-sm-offset-2 col-sm-10 text-success" ng-if="reason == 'logout'">
@@ -66,7 +72,7 @@
       <div class="col-sm-offset-2 col-sm-10">
         <cp-message></cp-message>
         <val-summary></val-summary>
-        <div><a ng-href="@Url.Action("Register", "User"){{ model.email ? '?email=' + encodeURIComponent(model.email) : '' }}">Register as a new user</a></div>
+        <div><a ng-href="@Url.Action("Register", "User"){{ model.email ? '?email=' + encodeURIComponent(model.email) : '' }}">Sign up as a new user</a></div>
       </div>
     </div>
   </form>
