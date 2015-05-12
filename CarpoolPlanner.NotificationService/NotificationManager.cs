@@ -596,7 +596,7 @@ namespace CarpoolPlanner.NotificationService
                             sb.Append(" at ");
                             sb.Append(tripInstance.Date.ToLocalTime().ToString("h:mm tt"));
                             sb.AppendFormat(".\nThere are {0} seats and {1} people coming.\n", availableSeats, requiredSeats);
-                            sb.Append("\n" + tripInstance.GetStatusReport() + "\n");
+                            sb.Append("\n" + GetStatusReport(tripInstance) + "\n");
                             sb.Append("\nFor more details, go to https://climbing.pororeplays.com"); // TODO: don't hard-code the url
                             bool success = await SendNotification(userTripInstance.User, tripInstance.Trip.Name, sb.ToString()).ConfigureAwait(false);
                             sb.Clear();
@@ -640,6 +640,60 @@ namespace CarpoolPlanner.NotificationService
                 if (tripInstance != null)
                     await SetNextNotificationTimes(tripInstance, tripRecurrence.Id).ConfigureAwait(false);
             }
+        }
+
+        /// <summary>
+        /// Gets a string that lists the statuses of all users who are attending (or who want to attend).
+        /// </summary>
+        /// <returns>A string.</returns>
+        private static string GetStatusReport(TripInstance tripInstance)
+        {
+            var drivers = (from uti in tripInstance.UserTripInstances
+                           where uti.Attending == true && uti.CommuteMethod == CommuteMethod.Driver && uti.User.Status == UserStatus.Active
+                           select uti.User.Name ?? uti.User.Email).ToList();
+            var passengers = (from uti in tripInstance.UserTripInstances
+                              where uti.Attending == true && uti.CommuteMethod == CommuteMethod.NeedRide && uti.User.Status == UserStatus.Active
+                              select uti.User.Name ?? uti.User.Email).ToList();
+            var ownRide = (from uti in tripInstance.UserTripInstances
+                           where uti.Attending == true && uti.CommuteMethod == CommuteMethod.HaveRide && uti.User.Status == UserStatus.Active
+                           select uti.User.Name ?? uti.User.Email).ToList();
+            var kickedUsers = (from uti in tripInstance.UserTripInstances
+                               where uti.Attending == false && uti.NoRoom && uti.User.Status == UserStatus.Active
+                               select uti.User.Name ?? uti.User.Email).ToList();
+            var sb = new StringBuilder(75);
+            if (drivers.Count > 0)
+            {
+                sb.Append("\nDrivers:\n");
+                foreach (var userName in drivers)
+                {
+                    sb.Append(userName + "\n");
+                }
+            }
+            if (passengers.Count > 0)
+            {
+                sb.Append("\nPassengers:\n");
+                foreach (var userName in passengers)
+                {
+                    sb.Append(userName + "\n");
+                }
+            }
+            if (ownRide.Count > 0)
+            {
+                sb.Append("\nHave own ride:\n");
+                foreach (var userName in ownRide)
+                {
+                    sb.Append(userName + "\n");
+                }
+            }
+            if (kickedUsers.Count > 0)
+            {
+                sb.Append("\nWaiting list:\n");
+                foreach (var userName in kickedUsers)
+                {
+                    sb.Append(userName + "\n");
+                }
+            }
+            return sb.ToString().Trim('\n');
         }
 
         public void PickDrivers(TripInstance tripInstance)
