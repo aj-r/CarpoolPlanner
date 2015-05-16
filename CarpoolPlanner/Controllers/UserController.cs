@@ -22,6 +22,19 @@ namespace CarpoolPlanner.Controllers
         private const int hashSize = 24;
         private const int defaultIterationCount = 1000;
 
+        private IDbContextProvider dbProvider;
+
+        public UserController()
+            : this(new CarpoolPlannerDbContextProvider())
+        { }
+
+        public UserController(IDbContextProvider dbProvider)
+        {
+            if (dbProvider == null)
+                throw new ArgumentNullException("dbProvider");
+            this.dbProvider = dbProvider;
+        }
+
         [AllowAnonymous]
         public ActionResult Login()
         {
@@ -32,7 +45,7 @@ namespace CarpoolPlanner.Controllers
         [AllowAnonymous]
         public ActionResult Login(LoginViewModel model)
         {
-            using (var context = ApplicationDbContext.Create())
+            using (var context = dbProvider.GetContext())
             {
                 var user = context.Users.FirstOrDefault(u => u.Email == model.Email);
                 if (IsPasswordCorrect(user, model.Password))
@@ -75,7 +88,7 @@ namespace CarpoolPlanner.Controllers
             var model = new UserListViewModel();
             if (AppUtils.CurrentUser.Status == UserStatus.Active)
             {
-                using(var context = ApplicationDbContext.Create())
+                using (var context = dbProvider.GetContext())
                 {
                     IQueryable<User> query = context.Users;
                     if (!AppUtils.IsUserAdmin())
@@ -132,7 +145,7 @@ namespace CarpoolPlanner.Controllers
             // Override any bad data the client may have sent.
             model.User.IsAdmin = false;
             model.User.Status = UserStatus.Unapproved;
-            using (var context = ApplicationDbContext.Create())
+            using (var context = dbProvider.GetContext())
             {
                 if (context.Users.Any(u => u.Email == model.User.Email))
                 {
@@ -170,7 +183,7 @@ namespace CarpoolPlanner.Controllers
                 model.SetMessage("You are not authorized to update the specified user.", MessageType.Error);
                 return Ng(model);
             }
-            using (var context = ApplicationDbContext.Create())
+            using (var context = dbProvider.GetContext())
             {
                 var serverUser = context.Users.Find(model.User.Id);
                 if (serverUser == null)
@@ -237,7 +250,7 @@ namespace CarpoolPlanner.Controllers
                 model.NewPassword = "";
                 return Ng(model);
             }
-            using (var context = ApplicationDbContext.Create())
+            using (var context = dbProvider.GetContext())
             {
                 var user = context.Users.Find(model.UserId);
                 if (!IsPasswordCorrect(user, model.OldPassword))
@@ -249,7 +262,7 @@ namespace CarpoolPlanner.Controllers
                 }
                 SetPassword(user, model.NewPassword);
                 context.SaveChanges();
-                log.Info(string.Concat("User ", + user.Id, " changed his/her password"));
+                log.Info(string.Concat("User ", model.UserId, " changed his/her password"));
                 AppUtils.UpdateCachedUser(user);
             }
             model.OldPassword = "";
@@ -272,7 +285,7 @@ namespace CarpoolPlanner.Controllers
             }
             var updateNotifications = false;
             var tripInstancesToUpdate = new List<long>();
-            using (var context = ApplicationDbContext.Create())
+            using (var context = dbProvider.GetContext())
             {
                 var serverUser = context.Users.Find(model.User.Id);
                 if (serverUser == null)

@@ -153,7 +153,6 @@ namespace CarpoolPlanner.NotificationService
                 log.Debug("Interval is too long for timer. Setting extended timer.");
                 await SetNextNotificationTime(DateTime.UtcNow.AddMilliseconds(int.MaxValue - 1), id, dictionary, id2 =>
                     {
-                        log.Debug("Extended timer elapsed.");
                         return SetNextNotificationTime(time, id2, dictionary, action);
                     }).ConfigureAwait(false);
                 return;
@@ -166,7 +165,6 @@ namespace CarpoolPlanner.NotificationService
                     timer = new Timer();
                     timer.Elapsed += async (sender, e) =>
                     {
-                        log.Debug("Timer elapsed");
                         try
                         {
                             timer.Stop();
@@ -202,7 +200,6 @@ namespace CarpoolPlanner.NotificationService
             var tasks = new List<Task<bool>>(2);
             if (user == null)
                 return false;
-            log.Debug("Attempting to send notification to " + user.Email + " (phone: " + user.Phone + ", message length: " + message.Length + ")");
             if (Program.Verbose)
                 Console.WriteLine("Attempting to send notification...");
             bool sendEmail = user.EmailNotify && !string.IsNullOrEmpty(user.Email);
@@ -475,16 +472,6 @@ namespace CarpoolPlanner.NotificationService
                     return true;
                 var zonedDateTime = Instant.FromDateTimeUtc(tripInstance.Date).InZone(tripInstance.Trip.DateTimeZone);
                 var sb = new StringBuilder(250);
-                if (log.IsDebugEnabled)
-                {
-                    var nonNullCount = tripInstance.UserTripInstances.Count(uti => uti.Attending != null);
-                    var inactiveCount = tripInstance.UserTripInstances.Count(uti => uti.User.Status != UserStatus.Active);
-                    log.Debug("Sending initial notification (up to " + tripInstance.UserTripInstances.Count + " users. "
-                        + nonNullCount + " already responded; " + inactiveCount + " are inactive)");
-
-                    var totalUtiCount = context.UserTripInstances.Count(uti => uti.TripInstanceId == tripInstance.Id);
-                    log.Debug("Total UTI count: " + totalUtiCount);
-                }
                 var allSuccessful = true;
                 foreach (var userTripInstance in tripInstance.UserTripInstances.Where(uti => uti.Attending == null && uti.User.Status == UserStatus.Active))
                 {
@@ -493,7 +480,6 @@ namespace CarpoolPlanner.NotificationService
                         if ((isReminder && userTripInstance.ReminderNotificationTime != null)
                             || (!isReminder && userTripInstance.InitialNotificationTime != null))
                         {
-                            log.Debug("Skipping sending initial notification to " + userTripInstance.User.Email + ". This user has already been notified.");
                             continue; // Notification was already sent
                         }
 
@@ -553,7 +539,6 @@ namespace CarpoolPlanner.NotificationService
                     if (tripInstance == null)
                         return true;
                     PickDrivers(tripInstance);
-                    log.Debug("Drivers picked");
                     var availableSeats = tripInstance.GetAvailableSeats();
                     var requiredSeats = tripInstance.GetRequiredSeats();
                     context.SaveChanges();
@@ -567,7 +552,6 @@ namespace CarpoolPlanner.NotificationService
                     {
                         try
                         {
-                            log.Debug("Sending final notification to user: " + userTripInstance.User.Email);
                             if (isUpdate)
                             {
                                 sb.Append("UPDATE: ");
