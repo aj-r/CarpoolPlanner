@@ -421,7 +421,7 @@ app.directive('cpDisabledValue', ['$window', function($window) {
   };
 }]);
 
-// Add a $submit method to forms to allow programmatic submittion
+// Add a $submit method to forms to allow programmatic submission
 app.directive('form', function() {
   return {
     require: 'form',

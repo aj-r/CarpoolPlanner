@@ -157,6 +157,7 @@
     <Compile Include="NgResultData.cs" />
     <Compile Include="NotificationServiceClient.cs" />
     <Compile Include="PagedListConverter.cs" />
+    <Compile Include="ReflectionUtils.cs" />
     <Compile Include="Resources.Designer.cs">
       <DependentUpon>Resources.resx</DependentUpon>
       <AutoGen>True</AutoGen>
