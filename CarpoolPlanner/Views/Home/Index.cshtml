@@ -7,7 +7,7 @@
 }
 @section headScripts{
 <script type="text/javascript">
-  var tripCtrl = app.controller('tripCtrl', function($scope) {
+  app.controller('tripCtrl', function($scope) {
     var first = true;
     $scope.expandedGroups = [];
     for (var i = 0; i < $scope.model.trips.length; i++) {
@@ -40,7 +40,7 @@
     }
   });
 
-  var tripCtrl = app.directive('expandWhenChecked', function() {
+  app.directive('expandWhenChecked', function() {
     return {
       restrict: 'A',
       require: 'ngModel',
