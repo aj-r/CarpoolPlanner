@@ -6,4 +6,5 @@ obj
 /CarpoolPlanner/App_Data/*.ldf
 packages/*.*.*
 /TestResults
+/.vs
 *.pubxml
